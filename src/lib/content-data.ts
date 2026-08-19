@@ -40,7 +40,7 @@ export async function getPublishedArticles(): Promise<ContentArticle[]> {
     const normalized = articles.map((article) => ({
       ...article,
       excerpt: article.excerpt ?? "",
-      author: article.author ?? "OVIPeps Research Team",
+      author: article.author ?? "OVIpeps Research Team",
       readingTime: article.readingTime ?? 1,
       publishedAt: article.publishedAt ?? article.updatedAt,
     }));
@@ -75,7 +75,7 @@ export async function getPublishedArticle(slug: string) {
       return {
         ...article,
         excerpt: article.excerpt ?? "",
-        author: article.author ?? "OVIPeps Research Team",
+        author: article.author ?? "OVIpeps Research Team",
         readingTime: article.readingTime ?? 1,
         publishedAt: article.publishedAt ?? article.updatedAt,
       } satisfies ContentArticle;

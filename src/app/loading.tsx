@@ -3,7 +3,7 @@ export default function Loading() {
     <div
       className="relative flex min-h-[65vh] items-center justify-center overflow-hidden bg-gradient-to-b from-sky/5 to-background"
       role="status"
-      aria-label="Loading OVIPeps"
+      aria-label="Loading OVIpeps"
     >
       <div className="absolute h-80 w-80 rounded-full bg-cyan/10 blur-3xl animate-pulse-glow" />
       <div className="relative flex flex-col items-center">

@@ -7,7 +7,7 @@ import { ContactForm } from "@/components/contact/contact-form";
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
-    "Get in touch with OVIPeps support for order inquiries, documentation requests, and research product questions.",
+    "Get in touch with OVIpeps support for order inquiries, documentation requests, and research product questions.",
 };
 
 export default function ContactPage() {

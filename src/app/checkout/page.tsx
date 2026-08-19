@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 
 export const metadata: Metadata = {
-  title: "Checkout | OVIPeps",
+  title: "Checkout | OVIpeps",
   description: "Complete your research peptide order",
 };
 

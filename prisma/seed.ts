@@ -18,7 +18,7 @@ async function main() {
       email: "admin@ovipeps.ca",
       passwordHash: adminPassword,
       firstName: "Admin",
-      lastName: "OVIPeps",
+      lastName: "OVIpeps",
       role: "ADMIN",
     },
   });
@@ -197,7 +197,7 @@ async function main() {
     { key: "affiliate_default_commission", value: "10" },
     { key: "affiliate_attribution_days", value: "30" },
     { key: "commission_hold_days", value: "14" },
-    { key: "site_name", value: "OVIPeps" },
+    { key: "site_name", value: "OVIpeps" },
     { key: "support_email", value: "support@ovipeps.ca" },
     { key: "research_disclaimer", value: "All products are sold for research purposes only. Not for human consumption." },
   ];
@@ -237,14 +237,14 @@ async function main() {
       slug: "peptides-101-introduction",
       excerpt: "Understanding peptide research compounds, their applications in laboratory settings, and responsible handling practices.",
       category: "PEPTIDES_101" as const,
-      author: "OVIPeps Research Team",
+      author: "OVIpeps Research Team",
       content: `## What Are Research Peptides?
 
 Research peptides are short chains of amino acids synthesized for laboratory and scientific research purposes. They are used in controlled research environments to study biological processes, cellular mechanisms, and molecular interactions.
 
 ## Research-Use-Only Classification
 
-All peptide products sold through OVIPeps are intended exclusively for in-vitro research and laboratory use. They are not approved for human consumption, medical treatment, or diagnostic purposes.
+All peptide products sold through OVIpeps are intended exclusively for in-vitro research and laboratory use. They are not approved for human consumption, medical treatment, or diagnostic purposes.
 
 ## Quality Considerations for Researchers
 
@@ -275,7 +275,7 @@ Explore our [Research Hub](/research) for additional guides on COA interpretatio
       slug: "understanding-coas",
       excerpt: "Learn how to read and interpret Certificates of Analysis for research peptide batches.",
       category: "COA_EDUCATION" as const,
-      author: "OVIPeps Research Team",
+      author: "OVIpeps Research Team",
       content: `## What Is a Certificate of Analysis?
 
 A Certificate of Analysis (COA) is a document provided by an independent testing laboratory that reports analytical results for a specific product batch. For research compounds, COAs typically include identity confirmation, purity assessment, and other relevant analytical data.
@@ -289,7 +289,7 @@ When reviewing a COA in our [Lab Results library](/lab-results), look for:
 - **Analytical methods** used
 - **Results summary** with measured values
 
-## How OVIPeps Handles Documentation
+## How OVIpeps Handles Documentation
 
 We associate COA documents with specific product batches. When documentation is available for a batch, it appears in our COA library and on the corresponding product page.
 
@@ -308,7 +308,7 @@ Visit our [COA Library](/lab-results) to search available batch documentation.`,
       slug: "storage-handling",
       excerpt: "Best practices for storing lyophilized and reconstituted research peptides in laboratory settings.",
       category: "STORAGE_HANDLING" as const,
-      author: "OVIPeps Research Team",
+      author: "OVIpeps Research Team",
       content: `## Lyophilized (Freeze-Dried) Storage
 
 Most research peptides are supplied in lyophilized powder form. General laboratory storage guidelines:
@@ -349,7 +349,7 @@ Our [Peptide Calculator](/calculator) helps researchers calculate concentrations
   }
 
   const faqs = [
-    { question: "Are OVIPeps products for human use?", answer: "No. All products are sold strictly for research and laboratory use only. They are not intended for human consumption, medical treatment, or diagnostic purposes.", category: "RESEARCH" as const },
+    { question: "Are OVIpeps products for human use?", answer: "No. All products are sold strictly for research and laboratory use only. They are not intended for human consumption, medical treatment, or diagnostic purposes.", category: "RESEARCH" as const },
     { question: "How do I pay for my order?", answer: "We accept Interac e-Transfer for Canadian orders. After placing your order, you will receive payment instructions with your unique order number to include in the transfer message.", category: "PAYMENT" as const },
     { question: "How long does shipping take?", answer: "Orders are typically processed within 1–2 business days after payment confirmation. Shipping times vary by province and carrier selection.", category: "SHIPPING" as const },
     { question: "Can I access COA documents?", answer: "Yes. Available Certificates of Analysis are published in our Lab Results library. Search by product name, batch number, or lot number.", category: "COA" as const },

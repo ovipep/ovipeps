@@ -7,7 +7,7 @@ import { LegalSectionList } from "@/components/content/legal-section";
 export const metadata: Metadata = {
   title: "Returns & Refunds",
   description:
-    "OVIPeps returns and refund policy for research peptide orders — eligibility, timelines, and how to request support.",
+    "OVIpeps returns and refund policy for research peptide orders — eligibility, timelines, and how to request support.",
 };
 
 export default function ReturnsPage() {
@@ -40,7 +40,7 @@ export default function ReturnsPage() {
               content: (
                 <>
                   <p>
-                    OVIPeps stands behind the quality of our research materials. Because
+                    OVIpeps stands behind the quality of our research materials. Because
                     peptides and laboratory supplies require controlled handling, our
                     return policy balances researcher needs with product integrity and
                     safety requirements.
@@ -57,7 +57,7 @@ export default function ReturnsPage() {
                   <ul>
                     <li>You received the incorrect product or variant</li>
                     <li>Your order arrived with verifiable shipping damage</li>
-                    <li>A product was shipped in error by OVIPeps</li>
+                    <li>A product was shipped in error by OVIpeps</li>
                   </ul>
                   <p>
                     To be eligible, items must be unopened, unused, and in their
@@ -113,7 +113,7 @@ export default function ReturnsPage() {
                   </p>
                   <p>
                     Original shipping charges are non-refundable unless the return is
-                    due to an OVIPeps error.
+                    due to an OVIpeps error.
                   </p>
                 </>
               ),

@@ -160,7 +160,7 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-5 border-t border-white/10 pt-8 sm:flex-row">
           <p className="text-xs text-white/45">
-            &copy; {year} OVIPeps. All rights reserved. Prices in CAD.
+            &copy; {year} OVIpeps. All rights reserved. Prices in CAD.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">

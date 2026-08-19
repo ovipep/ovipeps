@@ -1,8 +1,8 @@
-# OVIPeps — Deployment Guide
+# OVIpeps — Deployment Guide
 
 ## Vercel + Turso (Recommended)
 
-OVIPeps uses **Turso** (libSQL) for production — a serverless SQLite-compatible database that works on Vercel.
+OVIpeps uses **Turso** (libSQL) for production — a serverless SQLite-compatible database that works on Vercel.
 
 ### 1. Create Turso Database
 

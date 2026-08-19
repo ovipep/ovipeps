@@ -146,7 +146,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             <div className="sticky top-24 rounded-xl border border-border bg-muted/30 p-5 text-sm">
               <p className="font-semibold text-navy-deep">Research notice</p>
               <p className="mt-2 leading-relaxed text-muted-foreground">
-                OVIPeps content is for educational purposes in qualified laboratory
+                OVIpeps content is for educational purposes in qualified laboratory
                 settings. Products are not intended for human consumption.
               </p>
               <Link

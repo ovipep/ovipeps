@@ -49,11 +49,11 @@ export async function generateMetadata({
   const product = await getProductBySlug(slug);
 
   if (!product) {
-    return { title: "Product Not Found | OVIPeps" };
+    return { title: "Product Not Found | OVIpeps" };
   }
 
   return {
-    title: product.metaTitle ?? `${product.name} | OVIPeps`,
+    title: product.metaTitle ?? `${product.name} | OVIpeps`,
     description:
       product.metaDescription ??
       product.shortDescription ??
@@ -96,7 +96,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     sku: product.variants[0]?.sku,
     brand: {
       "@type": "Brand",
-      name: "OVIPeps",
+      name: "OVIpeps",
     },
     offers: product.variants.map((variant) => ({
       "@type": "Offer",

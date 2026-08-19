@@ -1,4 +1,4 @@
-# OVIPeps
+# OVIpeps
 
 Premium Canadian research-peptide e-commerce platform built with Next.js 16, Prisma, and SQLite.
 

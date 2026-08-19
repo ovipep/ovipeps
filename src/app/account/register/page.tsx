@@ -4,7 +4,7 @@ import { PageHero } from "@/components/content/page-hero";
 
 export const metadata: Metadata = {
   title: "Create Account",
-  description: "Create an OVIPeps account to track orders and manage your research profile.",
+  description: "Create an OVIpeps account to track orders and manage your research profile.",
 };
 
 export default function RegisterPage() {

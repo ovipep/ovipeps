@@ -362,7 +362,7 @@ export function PeptideCalculator() {
             This calculator is a laboratory research utility for reconstitution
             mathematics. It does not provide medical advice, human dosing
             recommendations, or instructions for administration. Products from
-            OVIPeps are intended for qualified laboratory research only.
+            OVIpeps are intended for qualified laboratory research only.
           </p>
         </div>
       </div>

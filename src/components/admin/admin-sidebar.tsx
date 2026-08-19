@@ -36,7 +36,7 @@ export function AdminSidebar() {
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Admin
         </p>
-        <p className="text-sm font-semibold text-navy-deep">OVIPeps</p>
+        <p className="text-sm font-semibold text-navy-deep">OVIpeps</p>
       </div>
       <nav className="flex flex-col gap-0.5 p-3">
         {navItems.map((item) => {

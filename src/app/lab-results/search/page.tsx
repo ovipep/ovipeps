@@ -5,9 +5,9 @@ import { CoaSearch } from "@/components/coa/coa-search";
 import { searchPublishedCoaDocuments } from "@/lib/coa";
 
 export const metadata: Metadata = {
-  title: "Batch & Lot Search | COA Library | OVIPeps",
+  title: "Batch & Lot Search | COA Library | OVIpeps",
   description:
-    "Search OVIPeps certificates of analysis by batch number or lot number. Locate third-party purity documentation for your research materials.",
+    "Search OVIpeps certificates of analysis by batch number or lot number. Locate third-party purity documentation for your research materials.",
 };
 
 interface SearchPageProps {

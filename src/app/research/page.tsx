@@ -19,7 +19,7 @@ import type { ArticleCategory } from "@/generated/prisma/enums";
 export const metadata: Metadata = {
   title: "Research Hub",
   description:
-    "Educational articles, peptide guides, COA resources, and laboratory protocols from OVIPeps — Canada's research-grade peptide supplier.",
+    "Educational articles, peptide guides, COA resources, and laboratory protocols from OVIpeps — Canada's research-grade peptide supplier.",
 };
 
 export default async function ResearchPage() {

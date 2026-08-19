@@ -15,7 +15,7 @@ import { SITE_NAME } from "@/lib/content";
 export const metadata: Metadata = {
   title: "Partner Program",
   description:
-    "Join the OVIPeps Partner Program. Earn commission promoting research-grade peptides to qualified laboratories across Canada.",
+    "Join the OVIpeps Partner Program. Earn commission promoting research-grade peptides to qualified laboratories across Canada.",
 };
 
 const benefits = [
@@ -50,7 +50,7 @@ const steps = [
     step: "01",
     title: "Apply",
     description:
-      "Tell us about your audience, platform, and how you plan to introduce OVIPeps to qualified researchers.",
+      "Tell us about your audience, platform, and how you plan to introduce OVIpeps to qualified researchers.",
   },
   {
     step: "02",
@@ -77,7 +77,7 @@ export default function AffiliatesPage() {
     <>
       <PageHero
         eyebrow="Partner Program"
-        title="Earn with OVIPeps"
+        title="Earn with OVIpeps"
         description={`Partner with ${SITE_NAME} and earn commission by connecting qualified researchers with research-grade peptides backed by documentation and Canadian fulfillment.`}
       >
         <div className="flex flex-wrap gap-4">
@@ -175,7 +175,7 @@ export default function AffiliatesPage() {
             <p className="mt-3 leading-relaxed text-white/75">
               We work with content creators, educators, and publishers who reach
               qualified laboratory and research audiences. Partners must promote
-              OVIPeps accurately — emphasizing research-use-only classification
+              OVIpeps accurately — emphasizing research-use-only classification
               and never making medical or therapeutic claims.
             </p>
           </div>

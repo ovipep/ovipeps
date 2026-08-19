@@ -14,7 +14,7 @@ import { SITE_NAME } from "@/lib/content";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Learn about OVIPeps — a Canadian research peptide brand built on transparency, batch documentation, and responsive support for qualified laboratories.",
+    "Learn about OVIpeps — a Canadian research peptide brand built on transparency, batch documentation, and responsive support for qualified laboratories.",
 };
 
 const values = [
@@ -69,7 +69,7 @@ export default function AboutPage() {
             </h2>
             <div className="prose-ovipeps mt-6">
               <p>
-                OVIPeps was founded with a straightforward mission: provide qualified
+                OVIpeps was founded with a straightforward mission: provide qualified
                 laboratories and research professionals in Canada with access to
                 research-grade peptides backed by clear documentation, honest product
                 communication, and responsive domestic support.
@@ -83,7 +83,7 @@ export default function AboutPage() {
               </p>
               <p>
                 From our fulfillment operations in Canada to our Interac e-Transfer
-                checkout designed for domestic buyers, every aspect of OVIPeps is
+                checkout designed for domestic buyers, every aspect of OVIpeps is
                 shaped by the needs of Canadian research institutions, independent
                 labs, and qualified procurement teams.
               </p>

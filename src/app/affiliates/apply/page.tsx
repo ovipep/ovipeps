@@ -8,7 +8,7 @@ import { auth } from "@/lib/auth";
 export const metadata: Metadata = {
   title: "Apply — Partner Program",
   description:
-    "Apply to join the OVIPeps Partner Program and earn commission on referred research orders.",
+    "Apply to join the OVIpeps Partner Program and earn commission on referred research orders.",
 };
 
 export default async function AffiliateApplyPage() {

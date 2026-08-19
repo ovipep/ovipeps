@@ -1,5 +1,5 @@
 /**
- * Analytics event tracking architecture for OVIPeps.
+ * Analytics event tracking architecture for OVIpeps.
  * Events are dispatched to window.dataLayer for GTM/GA4 integration.
  * No PII is included in event payloads.
  */

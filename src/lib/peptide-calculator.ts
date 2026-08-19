@@ -100,11 +100,11 @@ export function buildCalculatorSummary(
   result: PeptideCalculatorResult
 ): string {
   if (!result.isValid) {
-    return "OVIPeps Reconstitution Calculator — incomplete inputs";
+    return "OVIpeps Reconstitution Calculator — incomplete inputs";
   }
 
   const lines = [
-    "OVIPeps Reconstitution Calculator",
+    "OVIpeps Reconstitution Calculator",
     "For laboratory research use only — not medical advice.",
     "",
     `Vial quantity: ${input.vialQuantityMg} mg`,

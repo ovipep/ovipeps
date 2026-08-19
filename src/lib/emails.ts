@@ -1,5 +1,5 @@
 /**
- * Transactional email templates for OVIPeps.
+ * Transactional email templates for OVIpeps.
  * Integrate with Resend or similar provider in production.
  * Templates return { subject, html, text } for each email type.
  */
@@ -7,15 +7,15 @@
 const brandColor = "#0c4a6e";
 const footer = `
   <p style="color:#64748b;font-size:12px;margin-top:32px;border-top:1px solid #e2e8f0;padding-top:16px;">
-    OVIPeps — Research compounds for laboratory use only.<br>
-    Not for human consumption. &copy; ${new Date().getFullYear()} OVIPeps.
+    OVIpeps — Research compounds for laboratory use only.<br>
+    Not for human consumption. &copy; ${new Date().getFullYear()} OVIpeps.
   </p>
 `;
 
 function wrap(content: string) {
   return `<!DOCTYPE html><html><body style="font-family:Inter,system-ui,sans-serif;color:#0f172a;max-width:600px;margin:0 auto;padding:24px;">
     <div style="border-bottom:2px solid ${brandColor};padding-bottom:16px;margin-bottom:24px;">
-      <strong style="font-size:20px;color:${brandColor};">OVIPeps</strong>
+      <strong style="font-size:20px;color:${brandColor};">OVIpeps</strong>
     </div>
     ${content}
     ${footer}
@@ -77,11 +77,11 @@ export const emailTemplates = {
   }),
 
   affiliateApproved: (data: { name: string; code: string; commissionRate: number }) => ({
-    subject: "Welcome to the OVIPeps Partner Program",
+    subject: "Welcome to the OVIpeps Partner Program",
     html: wrap(`
       <h2 style="color:${brandColor};">Application Approved</h2>
       <p>Hi ${data.name},</p>
-      <p>Your OVIPeps Partner Program application has been approved.</p>
+      <p>Your OVIpeps Partner Program application has been approved.</p>
       <p>Your referral code: <strong>${data.code}</strong></p>
       <p>Commission rate: <strong>${data.commissionRate}%</strong></p>
     `),

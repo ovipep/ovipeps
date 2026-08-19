@@ -22,7 +22,7 @@ const STEPS = [
   {
     number: "02",
     icon: FlaskConical,
-    title: "Build your research order",
+    title: "Build your order",
     description:
       "Choose the exact variant and quantity with totals shown clearly in CAD.",
   },

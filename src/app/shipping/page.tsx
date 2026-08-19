@@ -8,7 +8,7 @@ import { getSiteSetting } from "@/lib/products";
 export const metadata: Metadata = {
   title: "Shipping Policy",
   description:
-    "OVIPeps shipping policy for Canadian research peptide orders — processing times, carriers, tracking, and delivery information.",
+    "OVIpeps shipping policy for Canadian research peptide orders — processing times, carriers, tracking, and delivery information.",
 };
 
 export default async function ShippingPage() {
@@ -49,7 +49,7 @@ export default async function ShippingPage() {
               content: (
                 <>
                   <p>
-                    OVIPeps fulfills research orders from within Canada. Domestic
+                    OVIpeps fulfills research orders from within Canada. Domestic
                     fulfillment helps reduce cross-border delays and provides
                     researchers with local support for order inquiries, documentation
                     requests, and shipment tracking.
@@ -113,7 +113,7 @@ export default async function ShippingPage() {
                 <>
                   <p>
                     Please ensure your shipping address is complete and accurate at
-                    checkout. OVIPeps is not responsible for delays caused by incorrect
+                    checkout. OVIpeps is not responsible for delays caused by incorrect
                     addresses provided by the customer.
                   </p>
                   <p>

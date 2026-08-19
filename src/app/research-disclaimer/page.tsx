@@ -8,7 +8,7 @@ import { getSiteSetting } from "@/lib/products";
 export const metadata: Metadata = {
   title: "Research Disclaimer",
   description:
-    "Important research-use-only disclaimer for OVIPeps products — not for human consumption, medical treatment, or diagnostic use.",
+    "Important research-use-only disclaimer for OVIpeps products — not for human consumption, medical treatment, or diagnostic use.",
 };
 
 export default async function ResearchDisclaimerPage() {
@@ -50,7 +50,7 @@ export default async function ResearchDisclaimerPage() {
               content: (
                 <>
                   <p>
-                    OVIPeps supplies research-grade peptides and laboratory materials
+                    OVIpeps supplies research-grade peptides and laboratory materials
                     intended exclusively for in-vitro and laboratory research conducted by
                     qualified professionals in appropriate institutional or commercial
                     research settings.
@@ -68,7 +68,7 @@ export default async function ResearchDisclaimerPage() {
               title: "Prohibited uses",
               content: (
                 <>
-                  <p>OVIPeps products must not be used for:</p>
+                  <p>OVIpeps products must not be used for:</p>
                   <ul>
                     <li>Human consumption or self-administration</li>
                     <li>Medical, therapeutic, or diagnostic treatment</li>
@@ -119,13 +119,13 @@ export default async function ResearchDisclaimerPage() {
               content: (
                 <>
                   <p>
-                    By purchasing from OVIPeps, you acknowledge that you understand the
+                    By purchasing from OVIpeps, you acknowledge that you understand the
                     research-use-only nature of our products and accept full
                     responsibility for their handling, storage, and use in accordance
                     with applicable laws and laboratory safety standards.
                   </p>
                   <p>
-                    OVIPeps is not liable for misuse, improper handling, or application
+                    OVIpeps is not liable for misuse, improper handling, or application
                     of products contrary to this disclaimer.
                   </p>
                 </>

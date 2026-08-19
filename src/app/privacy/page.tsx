@@ -8,7 +8,7 @@ import { SITE_NAME } from "@/lib/content";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How OVIPeps collects, uses, and protects your personal information when you browse, order, or contact us.",
+    "How OVIpeps collects, uses, and protects your personal information when you browse, order, or contact us.",
 };
 
 export default function PrivacyPage() {
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
               content: (
                 <>
                   <p>
-                    This Privacy Policy describes how OVIPeps (&quot;we,&quot;
+                    This Privacy Policy describes how OVIpeps (&quot;we,&quot;
                     &quot;us,&quot; or &quot;our&quot;) collects, uses, discloses, and
                     safeguards personal information when you visit ovipeps.ca, create an
                     account, place an order, or communicate with us.

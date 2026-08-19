@@ -12,7 +12,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Order History",
-  description: "View your OVIPeps order history and track shipments.",
+  description: "View your OVIpeps order history and track shipments.",
 };
 
 function getStatusVariant(

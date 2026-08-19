@@ -10,7 +10,6 @@ const MARQUEE_ITEMS = [
   "Restocking Soon",
   "Interac e-Transfer",
   "Research Use Only",
-  "Batch Documentation",
   "Fast Support",
   "Clear Checkout",
   "Lab-Grade Compounds",

@@ -23,7 +23,7 @@ const applySchema = z.object({
   primaryPlatform: z.string().min(1, "Please select your primary platform"),
   promotionPlan: z
     .string()
-    .min(20, "Please describe how you plan to promote OVIPeps"),
+    .min(20, "Please describe how you plan to promote OVIpeps"),
 });
 
 type ApplyFormData = z.infer<typeof applySchema>;
@@ -116,7 +116,7 @@ export function AffiliateApplyForm({
           Application received
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Thank you for applying to the OVIPeps Partner Program. Our team reviews
+          Thank you for applying to the OVIpeps Partner Program. Our team reviews
           applications within 3–5 business days and will contact you by email with
           next steps.
         </p>
@@ -204,7 +204,7 @@ export function AffiliateApplyForm({
 
       <Textarea
         label="Promotion plan"
-        placeholder="Describe your audience, content style, and how you plan to introduce OVIPeps to qualified researchers..."
+        placeholder="Describe your audience, content style, and how you plan to introduce OVIpeps to qualified researchers..."
         rows={6}
         error={errors.promotionPlan?.message}
         {...register("promotionPlan")}
@@ -222,7 +222,7 @@ export function AffiliateApplyForm({
           <a href="/affiliates/terms" className="text-accent hover:text-navy">
             Affiliate Program Terms
           </a>
-          . OVIPeps reviews all applications and reserves the right to approve or
+          . OVIpeps reviews all applications and reserves the right to approve or
           decline partners at our discretion.
         </p>
       </div>

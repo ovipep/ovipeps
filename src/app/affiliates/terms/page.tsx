@@ -8,7 +8,7 @@ import { SITE_NAME } from "@/lib/content";
 export const metadata: Metadata = {
   title: "Affiliate Program Terms",
   description:
-    "Terms and conditions governing participation in the OVIPeps Partner Program.",
+    "Terms and conditions governing participation in the OVIpeps Partner Program.",
 };
 
 export default function AffiliateTermsPage() {
@@ -41,7 +41,7 @@ export default function AffiliateTermsPage() {
               title: "Program overview",
               content: (
                 <p>
-                  The OVIPeps Partner Program allows approved affiliates to earn
+                  The OVIpeps Partner Program allows approved affiliates to earn
                   commission on qualifying orders placed through their unique
                   referral links. By applying to or participating in the program,
                   you agree to these Affiliate Program Terms in addition to our{" "}
@@ -56,7 +56,7 @@ export default function AffiliateTermsPage() {
               content: (
                 <>
                   <p>
-                    Partners must be at least 18 years of age. OVIPeps reviews all
+                    Partners must be at least 18 years of age. OVIpeps reviews all
                     applications and may approve or decline applicants at its sole
                     discretion. We reserve the right to suspend or terminate any
                     affiliate account that violates these terms or misrepresents our
@@ -76,13 +76,13 @@ export default function AffiliateTermsPage() {
               content: (
                 <>
                   <p>
-                    Affiliates may promote OVIPeps through owned channels including
+                    Affiliates may promote OVIpeps through owned channels including
                     websites, social media, newsletters, and podcasts. All promotional
                     content must:
                   </p>
                   <ul>
                     <li>
-                      Clearly state that OVIPeps products are for research use only
+                      Clearly state that OVIpeps products are for research use only
                     </li>
                     <li>
                       Avoid medical, therapeutic, or human consumption claims
@@ -94,7 +94,7 @@ export default function AffiliateTermsPage() {
                   </ul>
                   <p>
                     Prohibited activities include spam, misleading advertising,
-                    coupon abuse, self-referral, paid search bidding on OVIPeps
+                    coupon abuse, self-referral, paid search bidding on OVIpeps
                     trademarks without written permission, and promotion on sites
                     containing illegal or harmful content.
                   </p>
@@ -108,7 +108,7 @@ export default function AffiliateTermsPage() {
                 <p>
                   Referrals are tracked via unique affiliate codes and cookies with
                   a 30-day attribution window. The last valid referral source at the
-                  time of order placement receives credit. OVIPeps is not responsible
+                  time of order placement receives credit. OVIpeps is not responsible
                   for tracking failures caused by cookie blockers, browser settings,
                   or technical issues outside our control.
                 </p>
@@ -146,7 +146,7 @@ export default function AffiliateTermsPage() {
                   </ul>
                   <p>
                     Commissions on refunded or cancelled orders may be reversed.
-                    OVIPeps reserves the right to adjust commissions for pricing
+                    OVIpeps reserves the right to adjust commissions for pricing
                     errors, coupon abuse, or policy violations.
                   </p>
                 </>
@@ -157,7 +157,7 @@ export default function AffiliateTermsPage() {
               title: "Review and compliance",
               content: (
                 <p>
-                  OVIPeps may flag transactions or accounts for internal review when
+                  OVIpeps may flag transactions or accounts for internal review when
                   unusual patterns are detected. Flagged items are reviewed by our
                   team and are not automatically treated as fraudulent. Partners will
                   be contacted if additional information is needed. We never
@@ -173,7 +173,7 @@ export default function AffiliateTermsPage() {
                 <p>
                   Approved commissions are processed monthly, subject to a minimum
                   payout threshold communicated in your partner dashboard. Payout
-                  methods and timing are determined by OVIPeps and may require
+                  methods and timing are determined by OVIpeps and may require
                   completed tax documentation where applicable.
                 </p>
               ),
@@ -186,7 +186,7 @@ export default function AffiliateTermsPage() {
                   Either party may terminate participation at any time. Upon
                   termination, pending commissions for qualifying orders placed
                   before termination may still be paid according to these terms.
-                  OVIPeps may withhold commissions associated with violations of
+                  OVIpeps may withhold commissions associated with violations of
                   these terms.
                 </p>
               ),
@@ -196,7 +196,7 @@ export default function AffiliateTermsPage() {
               title: "Changes to terms",
               content: (
                 <p>
-                  OVIPeps may update these Affiliate Program Terms from time to time.
+                  OVIpeps may update these Affiliate Program Terms from time to time.
                   Material changes will be communicated to active partners. Continued
                   participation after changes take effect constitutes acceptance of
                   the updated terms.

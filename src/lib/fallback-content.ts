@@ -28,7 +28,7 @@ export const FALLBACK_ARTICLES: ContentArticle[] = [
     excerpt:
       "Understand research peptides, their laboratory classification, and the documentation practices that support responsible procurement.",
     category: "PEPTIDES_101",
-    author: "OVIPeps Research Team",
+    author: "OVIpeps Research Team",
     readingTime: 5,
     publishedAt,
     updatedAt: publishedAt,
@@ -41,7 +41,7 @@ Research peptides are short chains of amino acids synthesized for controlled lab
 
 ## Research-Use-Only Classification
 
-Products sold through OVIPeps are intended exclusively for in-vitro research and laboratory use. They are not approved for human consumption, medical treatment, diagnosis, or veterinary use.
+Products sold through OVIpeps are intended exclusively for in-vitro research and laboratory use. They are not approved for human consumption, medical treatment, diagnosis, or veterinary use.
 
 ## What to Review Before Ordering
 
@@ -54,7 +54,7 @@ A responsible procurement review should include:
 
 ## Documentation Is Batch-Specific
 
-Analytical documentation applies to the batch identified on the report. A result from one batch should not be assumed to represent another. OVIPeps identifies published documentation in the [COA Library](/lab-results) so researchers can inspect what is actually available.
+Analytical documentation applies to the batch identified on the report. A result from one batch should not be assumed to represent another. OVIpeps identifies published documentation in the [COA Library](/lab-results) so researchers can inspect what is actually available.
 
 ## Responsible Laboratory Practice
 
@@ -71,7 +71,7 @@ Read [Understanding Certificates of Analysis](/research/understanding-coas) and 
     excerpt:
       "Learn how to read batch identifiers, methods, dates, and reported results on research-product Certificates of Analysis.",
     category: "COA_EDUCATION",
-    author: "OVIPeps Research Team",
+    author: "OVIpeps Research Team",
     readingTime: 6,
     publishedAt,
     updatedAt: publishedAt,
@@ -104,9 +104,9 @@ Different methods answer different questions. High-performance liquid chromatogr
 - A published report supports procurement review but does not establish clinical suitability
 - Research documentation must not be interpreted as medical guidance
 
-## How OVIPeps Presents COAs
+## How OVIpeps Presents COAs
 
-When documentation is published, OVIPeps associates it with the relevant product and lists available batch details in the [COA Library](/lab-results). If no report is listed, the site does not imply that one exists.
+When documentation is published, OVIpeps associates it with the relevant product and lists available batch details in the [COA Library](/lab-results). If no report is listed, the site does not imply that one exists.
 
 ## A Practical Review Checklist
 
@@ -119,7 +119,7 @@ Confirm the product, batch, testing provider, date, methods, reported values, an
     excerpt:
       "A practical laboratory guide to receiving, labeling, storing, and preparing lyophilized research peptides.",
     category: "STORAGE_HANDLING",
-    author: "OVIPeps Research Team",
+    author: "OVIpeps Research Team",
     readingTime: 6,
     publishedAt,
     updatedAt: publishedAt,
@@ -176,7 +176,7 @@ export interface FallbackFaq {
 
 export const FALLBACK_FAQS: FallbackFaq[] = [
   {
-    question: "Are OVIPeps products intended for human use?",
+    question: "Are OVIpeps products intended for human use?",
     answer:
       "No. Products are sold strictly for laboratory research use and are not intended for human consumption, treatment, diagnosis, or veterinary use.",
     category: "RESEARCH",
@@ -206,7 +206,7 @@ export const FALLBACK_FAQS: FallbackFaq[] = [
     category: "PRODUCTS",
   },
   {
-    question: "Where does OVIPeps fulfill orders?",
+    question: "Where does OVIpeps fulfill orders?",
     answer:
       "Orders are fulfilled from within Canada. Shipping details and available updates are shown during the ordering process.",
     category: "GENERAL",

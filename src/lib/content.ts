@@ -5,7 +5,7 @@ import {
   FaqCategory as FaqCategoryEnum,
 } from "@/generated/prisma/enums";
 
-export const SITE_NAME = "OVIPeps";
+export const SITE_NAME = "OVIpeps";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ovipeps.ca";
 
 export const ARTICLE_CATEGORY_LABELS: Record<ArticleCategory, string> = {

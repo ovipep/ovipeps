@@ -11,7 +11,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "My Account",
-  description: "Manage your OVIPeps account, orders, and settings.",
+  description: "Manage your OVIpeps account, orders, and settings.",
 };
 
 export default async function AccountPage() {

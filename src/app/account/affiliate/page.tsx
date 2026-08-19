@@ -9,7 +9,7 @@ import { getAffiliateDashboardData } from "@/lib/affiliate-dashboard";
 
 export const metadata: Metadata = {
   title: "Affiliate Dashboard",
-  description: "Track clicks, orders, commissions, and payouts from your OVIPeps partner dashboard.",
+  description: "Track clicks, orders, commissions, and payouts from your OVIpeps partner dashboard.",
 };
 
 export default async function AccountAffiliatePage() {

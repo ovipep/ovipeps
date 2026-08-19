@@ -4,7 +4,7 @@ import type { ProductCardData } from "@/types/product";
 export const FALLBACK_PRODUCTS: ProductCardData[] = [
   {
     id: "fb-glp3",
-    name: "GLP-3",
+    name: "GLP-3 / Retatrutide",
     slug: "glp-3",
     imageUrl: "/images/products/glp-3.png",
     researchCategory: "Metabolic Research",
@@ -70,7 +70,7 @@ export const FALLBACK_PRODUCTS: ProductCardData[] = [
   },
   {
     id: "fb-wolv",
-    name: "BPC-157 / TB-500",
+    name: "BPC-157 / TB-500 (Wolverine Stack)",
     slug: "bpc157-tb500",
     imageUrl: "/images/products/bpc157-tb500.png",
     researchCategory: "Recovery Research",
@@ -80,7 +80,7 @@ export const FALLBACK_PRODUCTS: ProductCardData[] = [
 ];
 
 export const FALLBACK_SETTINGS: Record<string, string> = {
-  research_disclaimer: "All products are sold for research purposes only. Not for human consumption.",
+  research_disclaimer: "All products are sold for research purposes only. Not intended for human consumption.",
   shipping_threshold: "300",
   free_shipping_message: "Free shipping on orders over $300 CAD",
   etransfer_email: "orders@ovipeps.ca",
@@ -88,8 +88,6 @@ export const FALLBACK_SETTINGS: Record<string, string> = {
     "Send your Interac e-Transfer after placing an order and include the unique order number in the message field.",
   trust_1_title: "Canadian Fulfillment",
   trust_1_desc: "Orders fulfilled from within Canada",
-  trust_2_title: "Batch Documentation",
-  trust_2_desc: "COA library for qualified research orders",
   trust_3_title: "Secure Order Process",
   trust_3_desc: "Clear e-Transfer steps and order references",
   trust_4_title: "Research Use Only",

@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Account Settings",
-  description: "Update your OVIPeps account profile and contact information.",
+  description: "Update your OVIpeps account profile and contact information.",
 };
 
 export default async function SettingsPage() {

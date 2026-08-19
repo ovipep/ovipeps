@@ -77,7 +77,7 @@ export function ContactForm() {
       <div className="rounded-xl border border-success/20 bg-success/5 p-8 text-center">
         <h3 className="text-lg font-semibold text-navy-deep">Message sent</h3>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Thank you for contacting OVIPeps. Our support team typically responds within
+          Thank you for contacting OVIpeps. Our support team typically responds within
           one business day.
         </p>
         <Button
@@ -142,7 +142,7 @@ export function ContactForm() {
 
       <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
         <p>
-          For research-use-only products. OVIPeps does not provide medical advice.
+          For research-use-only products. OVIpeps does not provide medical advice.
           Include your order number if your inquiry relates to an existing purchase.
         </p>
       </div>

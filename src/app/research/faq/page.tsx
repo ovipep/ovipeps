@@ -9,7 +9,7 @@ import type { FaqCategory } from "@/generated/prisma/enums";
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
-    "Answers to common questions about OVIPeps research peptides, shipping, payments, COAs, and the affiliate program.",
+    "Answers to common questions about OVIpeps research peptides, shipping, payments, COAs, and the affiliate program.",
 };
 
 export default async function FaqPage() {

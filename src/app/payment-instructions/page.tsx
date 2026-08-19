@@ -8,7 +8,7 @@ import { getSiteSetting } from "@/lib/products";
 export const metadata: Metadata = {
   title: "Payment Instructions",
   description:
-    "How to pay for your OVIPeps order using Interac e-Transfer — step-by-step instructions for Canadian research customers.",
+    "How to pay for your OVIpeps order using Interac e-Transfer — step-by-step instructions for Canadian research customers.",
 };
 
 export default async function PaymentInstructionsPage() {
@@ -27,7 +27,7 @@ export default async function PaymentInstructionsPage() {
       <PageHero
         eyebrow="Checkout"
         title="Payment Instructions"
-        description="OVIPeps accepts Interac e-Transfer for Canadian orders. Follow these steps after placing your order."
+        description="OVIpeps accepts Interac e-Transfer for Canadian orders. Follow these steps after placing your order."
       />
 
       <div className="mx-auto max-w-3xl px-4 py-10 lg:px-6 lg:py-14">
@@ -108,7 +108,7 @@ export default async function PaymentInstructionsPage() {
                 <>
                   <p>
                     Never send payment to an email address other than the one shown on
-                    this page or in your official OVIPeps order confirmation. If you
+                    this page or in your official OVIpeps order confirmation. If you
                     receive suspicious payment instructions, contact{" "}
                     <a href="mailto:support@ovipeps.ca">support@ovipeps.ca</a> before
                     sending funds.

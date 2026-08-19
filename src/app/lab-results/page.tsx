@@ -4,11 +4,11 @@ import { CoaSearch } from "@/components/coa/coa-search";
 import { getPublishedCoaDocuments } from "@/lib/coa";
 
 export const metadata: Metadata = {
-  title: "COA Library | OVIPeps",
+  title: "COA Library | OVIpeps",
   description:
-    "Browse certificates of analysis for OVIPeps research peptides. Search by product, batch number, or lot number for third-party purity documentation.",
+    "Browse certificates of analysis for OVIpeps research peptides. Search by product, batch number, or lot number for third-party purity documentation.",
   openGraph: {
-    title: "COA Library | OVIPeps",
+    title: "COA Library | OVIpeps",
     description:
       "Browse available certificates of analysis for published product batches.",
   },
@@ -61,7 +61,7 @@ export default async function LabResultsPage({
             <p className="text-sm leading-relaxed text-muted-foreground">
               COA documents are provided for laboratory research verification
               purposes. Results reflect specific tested batches and lots.
-              OVIPeps products are not intended for human or veterinary use.
+              OVIpeps products are not intended for human or veterinary use.
             </p>
           </div>
         </section>

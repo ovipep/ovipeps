@@ -20,7 +20,7 @@ export async function generateMetadata({
 }: ConfirmationPageProps): Promise<Metadata> {
   const { orderNumber } = await params;
   return {
-    title: `Order ${orderNumber} | OVIPeps`,
+    title: `Order ${orderNumber} | OVIpeps`,
     description: "Order confirmation and payment instructions",
   };
 }

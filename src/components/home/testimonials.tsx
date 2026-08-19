@@ -8,28 +8,28 @@ const TESTIMONIALS = [
     name: "Mattie H.",
     initials: "MH",
     quote:
-      "Really impressed with the whole experience. Everything was straightforward, the packaging looked professional, and my order arrived exactly as expected. OVI Peps definitely feels like they care about quality.",
+      "Really impressed with the whole experience. Everything was straightforward, the packaging looked professional, and my order arrived exactly as expected. OVIpeps definitely feels like they care about quality.",
     gradient: "from-sky to-cyan",
   },
   {
     name: "Naomi Z.",
     initials: "NZ",
     quote:
-      "First time ordering from OVI Peps and the process was super easy. Communication was clear, everything came well packaged, and I appreciated how simple the website was to navigate.",
+      "First time ordering from OVIpeps and the process was super easy. Communication was clear, everything came well packaged, and I appreciated how simple the website was to navigate.",
     gradient: "from-cyan to-teal-light",
   },
   {
     name: "Gary N.",
     initials: "GN",
     quote:
-      "I’ve checked out a few different peptide suppliers and OVI Peps stood out to me for how professional everything felt. Clean packaging, smooth ordering process, and great customer service.",
+      "I’ve checked out a few different peptide suppliers and OVIpeps stood out to me for how professional everything felt. Clean packaging, smooth ordering process, and great customer service.",
     gradient: "from-electric to-sky",
   },
   {
     name: "Dean G.",
     initials: "DG",
     quote:
-      "Great experience from start to finish. Ordering was quick, shipping updates were helpful, and everything arrived securely packaged. I’ll definitely be keeping OVI Peps in mind for future research orders.",
+      "Great experience from start to finish. Ordering was quick, shipping updates were helpful, and everything arrived securely packaged. I’ll definitely be keeping OVIpeps in mind for future research orders.",
     gradient: "from-teal-light to-teal",
   },
 ];
@@ -146,7 +146,7 @@ export function Testimonials() {
                     {testimonial.name}
                   </cite>
                   <p className="text-xs text-muted-foreground">
-                    OVIPeps customer
+                    OVIpeps customer
                   </p>
                 </div>
               </footer>
