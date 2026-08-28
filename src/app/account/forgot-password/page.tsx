@@ -49,7 +49,9 @@ export default function ForgotPasswordPage() {
                 autoComplete="email"
               />
               {error ? <p className="text-sm text-error">{error}</p> : null}
-              <Button className="w-full">Send reset link</Button>
+              <Button type="submit" className="w-full">
+                Send reset link
+              </Button>
             </form>
           )}
         </CardContent>
