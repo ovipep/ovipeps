@@ -1,24 +1,28 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
-});
+const connectionString =
+  process.env.POSTGRES_URL_NON_POOLING ??
+  process.env.POSTGRES_URL ??
+  process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("Supabase Postgres connection is not configured");
+}
+
+const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const adminSeedPassword = process.env.SEED_ADMIN_PASSWORD;
   const demoSeedPassword = process.env.SEED_DEMO_PASSWORD;
-
-  if (!adminSeedPassword || !demoSeedPassword) {
-    throw new Error(
-      "Set SEED_ADMIN_PASSWORD and SEED_DEMO_PASSWORD before running the seed script."
-    );
-  }
-
-  const adminPassword = await bcrypt.hash(adminSeedPassword, 12);
+  const adminPassword = await bcrypt.hash(
+    adminSeedPassword ?? randomBytes(32).toString("base64url"),
+    12
+  );
 
   const admin = await prisma.user.upsert({
     where: { email: "ovipeps@gmail.com" },
@@ -32,18 +36,20 @@ async function main() {
     },
   });
 
-  const customerPassword = await bcrypt.hash(demoSeedPassword, 12);
-  await prisma.user.upsert({
-    where: { email: "demo@ovipeps.ca" },
-    update: {},
-    create: {
-      email: "demo@ovipeps.ca",
-      passwordHash: customerPassword,
-      firstName: "Demo",
-      lastName: "Researcher",
-      role: "CUSTOMER",
-    },
-  });
+  if (demoSeedPassword) {
+    const customerPassword = await bcrypt.hash(demoSeedPassword, 12);
+    await prisma.user.upsert({
+      where: { email: "demo@ovipeps.ca" },
+      update: {},
+      create: {
+        email: "demo@ovipeps.ca",
+        passwordHash: customerPassword,
+        firstName: "Demo",
+        lastName: "Researcher",
+        role: "CUSTOMER",
+      },
+    });
+  }
 
   const products = [
     {

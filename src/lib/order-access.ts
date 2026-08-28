@@ -4,8 +4,7 @@ function getSigningSecret() {
   const secret =
     process.env.ORDER_ACCESS_SECRET ??
     process.env.AUTH_SECRET ??
-    process.env.NEXTAUTH_SECRET ??
-    process.env.TURSO_AUTH_TOKEN;
+    process.env.NEXTAUTH_SECRET;
   if (!secret) {
     throw new Error("Order access signing secret is not configured");
   }

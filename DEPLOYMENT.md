@@ -1,24 +1,19 @@
 # OVIPeps — Deployment Guide
 
-## Vercel + Turso (Recommended)
+## Vercel + Supabase
 
-OVIPeps uses **Turso** (libSQL) for production — a serverless SQLite-compatible database that works on Vercel.
+OVIPeps uses **Supabase Postgres** for production. The Supabase Vercel Marketplace
+integration securely synchronizes the database credentials with the Vercel project.
 
-### 1. Create Turso Database
+### 1. Create and connect Supabase
 
-```bash
-# Install Turso CLI: https://docs.turso.tech/cli
-turso auth login
-turso db create ovipeps --region yyz
-turso db show ovipeps --url
-turso db tokens create ovipeps
-```
+In Vercel, open the OVIPeps project, select **Storage**, create a Supabase
+database, and connect it to Production and Preview.
 
-### 2. Push Schema to Turso
+### 2. Apply the schema
 
 ```bash
-export TURSO_DATABASE_URL="libsql://..."
-export TURSO_AUTH_TOKEN="..."
+export POSTGRES_URL_NON_POOLING="postgres://..."
 npx prisma db push
 npm run db:seed
 ```
@@ -29,8 +24,9 @@ Set these in Vercel Dashboard → Project → Settings → Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `TURSO_DATABASE_URL` | Turso database URL |
-| `TURSO_AUTH_TOKEN` | Turso auth token |
+| `POSTGRES_PRISMA_URL` | Pooled Supabase Postgres URL used by the deployed app |
+| `POSTGRES_URL` | Supabase Postgres connection URL |
+| `POSTGRES_URL_NON_POOLING` | Direct/session Supabase URL used for schema changes |
 | `AUTH_SECRET` | Random 32+ char string for NextAuth |
 | `NEXTAUTH_URL` | Your production URL (e.g. https://ovipeps.vercel.app) |
 
@@ -42,11 +38,11 @@ vercel --prod
 
 ## Local Development
 
-Uses SQLite at `prisma/dev.db`:
+Local development uses a separate Supabase development project or Postgres database:
 
 ```bash
 npm install
-npx prisma migrate dev
+npx prisma db push
 npm run db:seed
 npm run dev
 ```

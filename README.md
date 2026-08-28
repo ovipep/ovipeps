@@ -54,7 +54,7 @@ Seed account passwords must be supplied through the `SEED_ADMIN_PASSWORD` and
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router, Turbopack)
-- **Database:** SQLite via Prisma 7 + better-sqlite3 adapter
+- **Database:** Supabase Postgres via Prisma 7
 - **Auth:** NextAuth.js v5 (credentials)
 - **Styling:** Tailwind CSS v4
 - **State:** Zustand (cart)
@@ -79,7 +79,7 @@ Seed account passwords must be supplied through the `SEED_ADMIN_PASSWORD` and
 
 ## Production Deployment
 
-1. Switch `DATABASE_URL` to PostgreSQL
+1. Connect the Supabase Vercel Marketplace integration
 2. Set `AUTH_SECRET` to a secure random string
 3. Configure Resend for transactional emails (`src/lib/emails.ts`)
 4. Add GTM/GA4 and connect `src/lib/analytics.ts` events

@@ -4,25 +4,20 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run db:ensure-affiliates && prisma generate && next build",
+    "build": "prisma db push --accept-data-loss && npm run db:seed && prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "db:ensure-affiliates": "node scripts/ensure-affiliate-schema.mjs"
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
-    "@libsql/client": "^0.17.4",
-    "@prisma/adapter-better-sqlite3": "^7.9.1",
-    "@prisma/adapter-libsql": "^7.9.1",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^13.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
