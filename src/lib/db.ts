@@ -1,6 +1,12 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+function withSupabaseTls(connectionString: string) {
+  const url = new URL(connectionString);
+  url.searchParams.set("uselibpqcompat", "true");
+  return url.toString();
+}
+
 function createPrismaClient(): PrismaClient {
   const connectionString =
     process.env.POSTGRES_PRISMA_URL ??
@@ -12,7 +18,9 @@ function createPrismaClient(): PrismaClient {
   }
 
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString }),
+    adapter: new PrismaPg({
+      connectionString: withSupabaseTls(connectionString),
+    }),
   });
 }
 

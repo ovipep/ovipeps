@@ -13,7 +13,9 @@ if (!connectionString) {
   throw new Error("Supabase Postgres connection is not configured");
 }
 
-const adapter = new PrismaPg({ connectionString });
+const connectionUrl = new URL(connectionString);
+connectionUrl.searchParams.set("uselibpqcompat", "true");
+const adapter = new PrismaPg({ connectionString: connectionUrl.toString() });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
@@ -403,5 +405,8 @@ Our [Peptide Calculator](/calculator) helps researchers calculate concentrations
 }
 
 main()
-  .catch(console.error)
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
   .finally(() => prisma.$disconnect());
