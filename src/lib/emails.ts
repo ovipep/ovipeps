@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { Resend, type Attachment } from "resend";
 import { db } from "@/lib/db";
 
 const brandColor = "#075985";
@@ -238,7 +238,16 @@ export function getEmailTemplateSampleVariables(
   };
 }
 
-export async function sendEmail(to: string, template: EmailTemplate) {
+interface SendEmailOptions {
+  attachments?: Attachment[];
+  idempotencyKey?: string;
+}
+
+export async function sendEmail(
+  to: string,
+  template: EmailTemplate,
+  options: SendEmailOptions = {}
+) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
   if (!apiKey || !from) {
@@ -248,14 +257,18 @@ export async function sendEmail(to: string, template: EmailTemplate) {
       error: "RESEND_API_KEY and RESEND_FROM_EMAIL must be configured",
     };
   }
-  const { data, error } = await new Resend(apiKey).emails.send({
-    from,
-    replyTo: process.env.RESEND_REPLY_TO ?? "ovipeps@gmail.com",
-    to,
-    subject: template.subject,
-    html: template.html,
-    text: template.text,
-  });
+  const { data, error } = await new Resend(apiKey).emails.send(
+    {
+      from,
+      replyTo: process.env.RESEND_REPLY_TO ?? "ovipeps@gmail.com",
+      to,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+      attachments: options.attachments,
+    },
+    { idempotencyKey: options.idempotencyKey }
+  );
   if (error) {
     console.error("Resend email failed", error);
     return { success: false, error: error.message };

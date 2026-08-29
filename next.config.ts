@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingIncludes: {
+    "/api/orders": ["./src/assets/email-attachments/**/*.pdf"],
+  },
 };
 
 export default nextConfig;

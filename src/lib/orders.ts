@@ -17,6 +17,10 @@ import {
 } from "@/lib/catalog-status";
 import { generateOrderNumber } from "@/lib/utils";
 import { buildEmailTemplate, sendEmail } from "@/lib/emails";
+import {
+  getOrderConfirmationAttachments,
+  isRetatrutideProduct,
+} from "@/lib/order-email-attachments";
 
 export interface ShippingAddress {
   firstName: string;
@@ -123,6 +127,11 @@ export async function createOrder(input: CreateOrderInput) {
 
   const variantsById = new Map(variants.map((variant) => [variant.id, variant]));
   const variantsBySku = new Map(variants.map((variant) => [variant.sku, variant]));
+  const retatrutideProductIds = new Set(
+    variants
+      .filter((variant) => isRetatrutideProduct(variant.product))
+      .map((variant) => variant.productId)
+  );
 
   let subtotal = 0;
   const orderItems = input.items.map((item) => {
@@ -166,6 +175,9 @@ export async function createOrder(input: CreateOrderInput) {
       totalPrice,
     };
   });
+  const includesRetatrutide = orderItems.some((item) =>
+    retatrutideProductIds.has(item.productId)
+  );
 
   const submittedAffiliateCode =
     input.affiliateCode?.trim().toUpperCase() ||
@@ -279,6 +291,9 @@ export async function createOrder(input: CreateOrderInput) {
     const eTransferSetting = await db.siteSetting.findUnique({
       where: { key: "etransfer_email" },
     });
+    const attachments = await getOrderConfirmationAttachments(
+      includesRetatrutide
+    );
     await sendEmail(
       order.email,
       await buildEmailTemplate("order_confirmation", {
@@ -293,7 +308,11 @@ export async function createOrder(input: CreateOrderInput) {
               `${item.productName} — ${item.variantName} × ${item.quantity}: $${item.totalPrice.toFixed(2)} CAD`
           )
           .join("\n"),
-      })
+      }),
+      {
+        attachments,
+        idempotencyKey: `order-confirmation-${order.id}`,
+      }
     );
   } catch (error) {
     // The order is valid even when the email provider is temporarily unavailable.
