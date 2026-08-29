@@ -103,7 +103,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         <div className="grid gap-8 lg:grid-cols-4">
           <aside className="lg:col-span-1">
             <div className="rounded-xl border border-border bg-card p-4">
-              <AccountNav />
+              <AccountNav isAdmin={(session.user as { role?: string }).role === "ADMIN"} />
             </div>
           </aside>
 

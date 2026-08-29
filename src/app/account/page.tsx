@@ -58,7 +58,7 @@ export default async function AccountPage() {
               <p className="mb-4 truncate text-sm font-medium text-foreground">
                 {displayName}
               </p>
-              <AccountNav />
+              <AccountNav isAdmin={(session.user as { role?: string }).role === "ADMIN"} />
             </div>
           </aside>
 

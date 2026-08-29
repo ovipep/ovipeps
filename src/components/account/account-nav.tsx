@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, Settings, LogOut, ShieldCheck } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
@@ -12,11 +12,21 @@ const NAV_ITEMS = [
   { label: "Settings", href: "/account/settings", icon: Settings },
 ];
 
-export function AccountNav() {
+export function AccountNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
   return (
     <nav className="space-y-1">
+      {isAdmin ? (
+        <Link
+          href="/admin"
+          className="mb-3 flex items-center gap-3 rounded-lg bg-navy px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-deep"
+        >
+          <ShieldCheck className="h-4 w-4 shrink-0" />
+          Open Admin Back Office
+        </Link>
+      ) : null}
+
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         const isActive = item.exact
