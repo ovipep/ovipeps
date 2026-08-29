@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { emailTemplates, sendEmail } from "@/lib/emails";
+import { buildEmailTemplate, sendEmail } from "@/lib/emails";
 import {
   evaluateAffiliateMonth,
   reconcileAllAffiliateMinimums,
@@ -147,8 +147,9 @@ export async function approveAffiliateApplication(
   try {
     await sendEmail(
       application.email,
-      emailTemplates.affiliateApproved({
+      await buildEmailTemplate("affiliate_approved", {
         name: application.name,
+        affiliateUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ovipeps.ca"}/account/affiliate`,
       })
     );
   } catch (error) {

@@ -12,12 +12,14 @@ import {
   Settings,
   ClipboardList,
   Banknote,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/emails", label: "Email Center", icon: Mail },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/affiliates", label: "Affiliates", icon: Users },
   { href: "/admin/affiliates/applications", label: "Applications", icon: ClipboardList },

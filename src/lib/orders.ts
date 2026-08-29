@@ -16,7 +16,7 @@ import {
   getCatalogProductName,
 } from "@/lib/catalog-status";
 import { generateOrderNumber } from "@/lib/utils";
-import { emailTemplates, sendEmail } from "@/lib/emails";
+import { buildEmailTemplate, sendEmail } from "@/lib/emails";
 
 export interface ShippingAddress {
   firstName: string;
@@ -281,18 +281,18 @@ export async function createOrder(input: CreateOrderInput) {
     });
     await sendEmail(
       order.email,
-      emailTemplates.orderConfirmation({
+      await buildEmailTemplate("order_confirmation", {
         orderNumber: order.orderNumber,
         total: `$${order.total.toFixed(2)} CAD`,
         name: input.shippingAddress.firstName,
         etransferEmail: eTransferSetting?.value ?? "ovipeps@gmail.com",
         autodepositName: "IN Z",
-        items: order.items.map((item) => ({
-          name: item.productName,
-          variant: item.variantName,
-          quantity: item.quantity,
-          total: `$${item.totalPrice.toFixed(2)} CAD`,
-        })),
+        items: order.items
+          .map(
+            (item) =>
+              `${item.productName} — ${item.variantName} × ${item.quantity}: $${item.totalPrice.toFixed(2)} CAD`
+          )
+          .join("\n"),
       })
     );
   } catch (error) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { createPasswordResetToken } from "@/lib/password-reset";
-import { emailTemplates, sendEmail } from "@/lib/emails";
+import { buildEmailTemplate, sendEmail } from "@/lib/emails";
 import { getOrMigrateOwnerAdmin, OWNER_EMAIL } from "@/lib/owner-account";
 
 export async function POST(request: Request) {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
     const result = await sendEmail(
       email,
-      emailTemplates.passwordReset({
+      await buildEmailTemplate("password_reset", {
         name: user.firstName ?? "there",
         resetUrl: `${baseUrl}/account/reset-password?token=${encodeURIComponent(token)}`,
       })
