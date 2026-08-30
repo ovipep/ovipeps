@@ -123,6 +123,10 @@ function sortProducts(
 ): ProductCardData[] {
   const sorted = [...products];
 
+  if (sort === "featured") {
+    sorted.sort((a, b) => Number(b.slug === "glp-3") - Number(a.slug === "glp-3"));
+  }
+
   switch (sort) {
     case "price-asc":
       sorted.sort(
