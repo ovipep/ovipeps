@@ -294,7 +294,7 @@ export async function createOrder(input: CreateOrderInput) {
     const attachments = await getOrderConfirmationAttachments(
       includesRetatrutide
     );
-    await sendEmail(
+    const emailResult = await sendEmail(
       order.email,
       await buildEmailTemplate("order_confirmation", {
         orderNumber: order.orderNumber,
@@ -314,6 +314,15 @@ export async function createOrder(input: CreateOrderInput) {
         idempotencyKey: `order-confirmation-${order.id}`,
       }
     );
+    if (!emailResult.success) {
+      throw new Error(emailResult.error);
+    }
+    console.info("Order confirmation email sent", {
+      orderNumber: order.orderNumber,
+      emailId: emailResult.id,
+      attachmentCount: attachments?.length ?? 0,
+      includesRetatrutide,
+    });
   } catch (error) {
     // The order is valid even when the email provider is temporarily unavailable.
     console.error("Order confirmation email failed", error);

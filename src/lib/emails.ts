@@ -248,13 +248,18 @@ export async function sendEmail(
   template: EmailTemplate,
   options: SendEmailOptions = {}
 ) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-  if (!apiKey || !from) {
-    console.warn(`[Email not sent: Resend sender is not fully configured] To: ${to} | Subject: ${template.subject}`);
+  const apiKey =
+    process.env.RESEND_API_KEY ?? process.env.RESEND_ADMIN_API_KEY;
+  const from =
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    "OVIpeps <orders@ovipeps.ca>";
+  if (!apiKey) {
+    console.warn(
+      `[Email not sent: Resend API key is not configured] To: ${to} | Subject: ${template.subject}`
+    );
     return {
       success: false,
-      error: "RESEND_API_KEY and RESEND_FROM_EMAIL must be configured",
+      error: "RESEND_API_KEY or RESEND_ADMIN_API_KEY must be configured",
     };
   }
   const { data, error } = await new Resend(apiKey).emails.send(
