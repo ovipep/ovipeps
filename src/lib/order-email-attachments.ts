@@ -25,6 +25,16 @@ export function isRetatrutideProduct(product: {
   );
 }
 
+export function isRetatrutideOrderItem(item: {
+  productName: string;
+  sku: string;
+}) {
+  return (
+    item.productName.toLowerCase().includes("retatrutide") ||
+    /^GLP3(?:-|$)/i.test(item.sku.trim())
+  );
+}
+
 async function getRetatrutideGuideContent() {
   retatrutideGuideContent ??= readFile(RETATRUTIDE_GUIDE_PATH).catch((error) => {
     retatrutideGuideContent = undefined;

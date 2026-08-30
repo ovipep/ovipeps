@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ConfirmPaymentButton } from "@/components/admin/confirm-payment-button";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
+import { ResendConfirmationButton } from "@/components/admin/resend-confirmation-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -89,6 +90,9 @@ export default async function AdminOrderDetailPage({
                 Discount: {order.discountCode}
               </p>
             )}
+            <div className="pt-3">
+              <ResendConfirmationButton orderId={order.id} />
+            </div>
           </CardContent>
         </Card>
 

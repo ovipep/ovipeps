@@ -19,7 +19,7 @@ import { generateOrderNumber } from "@/lib/utils";
 import { buildEmailTemplate, sendEmail } from "@/lib/emails";
 import {
   getOrderConfirmationAttachments,
-  isRetatrutideProduct,
+  isRetatrutideOrderItem,
 } from "@/lib/order-email-attachments";
 
 export interface ShippingAddress {
@@ -52,6 +52,82 @@ export interface CreateOrderInput {
 }
 
 const FLAT_SHIPPING_RATE = 25;
+
+type OrderForConfirmation = Prisma.OrderGetPayload<{
+  include: { items: true };
+}>;
+
+function getOrderCustomerFirstName(order: OrderForConfirmation) {
+  const address = order.shippingAddress;
+  if (
+    address &&
+    typeof address === "object" &&
+    !Array.isArray(address) &&
+    typeof address.firstName === "string" &&
+    address.firstName.trim()
+  ) {
+    return address.firstName.trim();
+  }
+  return "Research Customer";
+}
+
+async function sendOrderConfirmationEmail(
+  order: OrderForConfirmation,
+  options: { resend?: boolean; customerName?: string } = {}
+) {
+  const includesRetatrutide = order.items.some(isRetatrutideOrderItem);
+  const eTransferSetting = await db.siteSetting.findUnique({
+    where: { key: "etransfer_email" },
+  });
+  const attachments = await getOrderConfirmationAttachments(
+    includesRetatrutide
+  );
+  const resendWindow = Math.floor(Date.now() / (5 * 60 * 1000));
+  const idempotencyKey = options.resend
+    ? `order-confirmation-resend-${order.id}-${resendWindow}`
+    : `order-confirmation-${order.id}`;
+  const result = await sendEmail(
+    order.email,
+    await buildEmailTemplate("order_confirmation", {
+      orderNumber: order.orderNumber,
+      total: `$${order.total.toFixed(2)} CAD`,
+      name: options.customerName ?? getOrderCustomerFirstName(order),
+      etransferEmail: eTransferSetting?.value ?? "ovipeps@gmail.com",
+      autodepositName: "IN Z",
+      items: order.items
+        .map(
+          (item) =>
+            `${item.productName} — ${item.variantName} × ${item.quantity}: $${item.totalPrice.toFixed(2)} CAD`
+        )
+        .join("\n"),
+    }),
+    { attachments, idempotencyKey }
+  );
+  if (!result.success) {
+    throw new Error(result.error);
+  }
+  console.info("Order confirmation email sent", {
+    orderNumber: order.orderNumber,
+    emailId: result.id,
+    attachmentCount: attachments?.length ?? 0,
+    includesRetatrutide,
+    resend: options.resend ?? false,
+  });
+  return {
+    id: result.id,
+    attachmentCount: attachments?.length ?? 0,
+    includesRetatrutide,
+  };
+}
+
+export async function resendOrderConfirmation(orderId: string) {
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  });
+  if (!order) throw new Error("Order not found");
+  return sendOrderConfirmationEmail(order, { resend: true });
+}
 
 async function calculateDiscount(
   code: string | null | undefined,
@@ -127,11 +203,6 @@ export async function createOrder(input: CreateOrderInput) {
 
   const variantsById = new Map(variants.map((variant) => [variant.id, variant]));
   const variantsBySku = new Map(variants.map((variant) => [variant.sku, variant]));
-  const retatrutideProductIds = new Set(
-    variants
-      .filter((variant) => isRetatrutideProduct(variant.product))
-      .map((variant) => variant.productId)
-  );
 
   let subtotal = 0;
   const orderItems = input.items.map((item) => {
@@ -175,10 +246,6 @@ export async function createOrder(input: CreateOrderInput) {
       totalPrice,
     };
   });
-  const includesRetatrutide = orderItems.some((item) =>
-    retatrutideProductIds.has(item.productId)
-  );
-
   const submittedAffiliateCode =
     input.affiliateCode?.trim().toUpperCase() ||
     input.referralCode?.trim().toUpperCase() ||
@@ -288,40 +355,8 @@ export async function createOrder(input: CreateOrderInput) {
   }
 
   try {
-    const eTransferSetting = await db.siteSetting.findUnique({
-      where: { key: "etransfer_email" },
-    });
-    const attachments = await getOrderConfirmationAttachments(
-      includesRetatrutide
-    );
-    const emailResult = await sendEmail(
-      order.email,
-      await buildEmailTemplate("order_confirmation", {
-        orderNumber: order.orderNumber,
-        total: `$${order.total.toFixed(2)} CAD`,
-        name: input.shippingAddress.firstName,
-        etransferEmail: eTransferSetting?.value ?? "ovipeps@gmail.com",
-        autodepositName: "IN Z",
-        items: order.items
-          .map(
-            (item) =>
-              `${item.productName} — ${item.variantName} × ${item.quantity}: $${item.totalPrice.toFixed(2)} CAD`
-          )
-          .join("\n"),
-      }),
-      {
-        attachments,
-        idempotencyKey: `order-confirmation-${order.id}`,
-      }
-    );
-    if (!emailResult.success) {
-      throw new Error(emailResult.error);
-    }
-    console.info("Order confirmation email sent", {
-      orderNumber: order.orderNumber,
-      emailId: emailResult.id,
-      attachmentCount: attachments?.length ?? 0,
-      includesRetatrutide,
+    await sendOrderConfirmationEmail(order, {
+      customerName: input.shippingAddress.firstName,
     });
   } catch (error) {
     // The order is valid even when the email provider is temporarily unavailable.
