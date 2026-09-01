@@ -16,6 +16,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/layout/brand-mark";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -40,7 +41,7 @@ export function AdminSidebar() {
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Admin
         </p>
-        <p className="text-sm font-semibold text-navy-deep">OVIpeps</p>
+        <BrandMark size="sm" className="mt-2" />
       </div>
       <nav className="flex flex-col gap-0.5 p-3">
         {navItems.map((item) => {
