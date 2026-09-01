@@ -150,6 +150,11 @@ model BulkOrderRequest {
   adminDecision          String?
   discountedPricing      String?
   eta                    String?
+  decisionToken          String?  @unique
+  quoteIssuedAt          DateTime?
+  quoteExpiresAt         DateTime?
+  purchaseOrderNumber    String?  @unique
+  purchaseIntentAt       DateTime?
   paymentConfirmed       Boolean  @default(false)
   paymentConfirmedAt     DateTime?
   customerDecisionSentAt DateTime?

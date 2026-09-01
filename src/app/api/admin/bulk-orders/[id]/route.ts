@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { randomBytes } from "node:crypto";
 import { requireAdmin } from "@/lib/auth";
 import { ensureBulkOrderSchema, isBulkOrderStatus, parseBulkOrderItems } from "@/lib/bulk-orders";
 import { db } from "@/lib/db";
@@ -33,6 +34,13 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   if (!existing) return Response.json({ error: "Request not found." }, { status: 404 });
 
   const status = parsed.data.status ?? existing.status;
+  const quoteIssuedAt = parsed.data.sendCustomerUpdate ? new Date() : existing.quoteIssuedAt;
+  const quoteExpiresAt = parsed.data.sendCustomerUpdate
+    ? new Date(quoteIssuedAt!.getTime() + 72 * 60 * 60 * 1000)
+    : existing.quoteExpiresAt;
+  const decisionToken = parsed.data.sendCustomerUpdate
+    ? randomBytes(32).toString("hex")
+    : existing.decisionToken;
   let updated = await db.bulkOrderRequest.update({
     where: { id },
     data: {
@@ -42,6 +50,9 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
       status,
       paymentConfirmed: status === "PURCHASED" ? true : false,
       paymentConfirmedAt: status === "PURCHASED" ? new Date() : null,
+      decisionToken,
+      quoteIssuedAt,
+      quoteExpiresAt,
     },
   });
 
@@ -55,8 +66,10 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
         eta: updated.eta!,
         adminDecision: updated.adminDecision,
         items: parseBulkOrderItems(updated.items),
+        decisionUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ovipeps.ca"}/bulk-order-response/${updated.decisionToken}`,
+        quoteExpiresAt: updated.quoteExpiresAt!,
       }),
-      { idempotencyKey: `bulk-decision-${updated.id}-${updated.updatedAt.getTime()}` }
+      { idempotencyKey: `bulk-decision-${updated.id}-${updated.decisionToken}` }
     );
     if (!delivery.success) {
       return Response.json({ error: "The decision was saved, but the customer email could not be sent.", saved: true }, { status: 502 });

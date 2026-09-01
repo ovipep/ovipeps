@@ -344,6 +344,8 @@ export function buildBulkOrderDecisionEmail(input: {
   eta: string;
   adminDecision?: string | null;
   items: BulkEmailItem[];
+  decisionUrl: string;
+  quoteExpiresAt: Date;
 }): EmailTemplate {
   const subject = "Your OVIpeps bulk order request update";
   const body = `Hi ${input.firstName},
@@ -359,8 +361,75 @@ ${input.discountedPricing}
 Estimated time of arrival (ETA):
 ${input.eta}
 ${input.adminDecision?.trim() ? `\nDecision details:\n${input.adminDecision.trim()}\n` : ""}
+This quoted price is valid for 72 hours, until ${input.quoteExpiresAt.toLocaleString("en-CA", { timeZone: "America/Toronto", dateStyle: "medium", timeStyle: "short" })} Eastern Time.
+
+Purchase now: ${input.decisionUrl}?action=purchase
+Opt out: ${input.decisionUrl}?action=opt-out
+
 Request reference: ${input.requestId}
 
 Reply to this email if you would like to proceed or have any questions.`;
+  const purchaseUrl = `${input.decisionUrl}?action=purchase`;
+  const optOutUrl = `${input.decisionUrl}?action=opt-out`;
+  const buttons = `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:24px 0;"><tr><td style="padding-right:12px;"><a href="${escapeHtml(purchaseUrl)}" style="display:inline-block;border-radius:10px;background:${brandColor};padding:13px 22px;color:#fff;text-decoration:none;font-weight:800;">Purchase Now</a></td><td><a href="${escapeHtml(optOutUrl)}" style="display:inline-block;border-radius:10px;border:1px solid #cbd5e1;padding:12px 22px;color:#475569;text-decoration:none;font-weight:700;">Opt Out</a></td></tr></table>`;
+  const expiry = `<p style="margin:18px 0;padding:14px 16px;border-radius:10px;background:#fff7ed;color:#9a3412;font-size:14px;font-weight:700;">This quoted price is valid for 72 hours, until ${escapeHtml(input.quoteExpiresAt.toLocaleString("en-CA", { timeZone: "America/Toronto", dateStyle: "medium", timeStyle: "short" }))} Eastern Time.</p>`;
+  return { subject, text: body, html: wrap(`${textToHtml(body.split("This quoted price")[0])}${expiry}${buttons}<p style="font-size:12px;color:#64748b;">Request reference: ${escapeHtml(input.requestId)}</p>`, subject) };
+}
+
+export function buildBulkPurchaseInstructionsEmail(input: {
+  firstName: string;
+  purchaseOrderNumber: string;
+  discountedPricing: string;
+  eta: string;
+  eTransferEmail: string;
+  eTransferInstructions: string;
+  quoteExpiresAt: Date;
+}): EmailTemplate {
+  const subject = `E-transfer instructions — ${input.purchaseOrderNumber}`;
+  const expiry = input.quoteExpiresAt.toLocaleString("en-CA", { timeZone: "America/Toronto", dateStyle: "medium", timeStyle: "short" });
+  const body = `Hi ${input.firstName},
+
+Thank you for choosing to proceed with your OVIpeps bulk order.
+
+Purchase order number: ${input.purchaseOrderNumber}
+
+Discounted pricing:
+${input.discountedPricing}
+
+ETA:
+${input.eta}
+
+E-TRANSFER INSTRUCTIONS
+Send your Interac e-Transfer to ${input.eTransferEmail}.
+Enter ONLY ${input.purchaseOrderNumber} in the e-transfer message or notes field so we can match your payment.
+Confirm AutoDeposit displays IN Z.
+
+${input.eTransferInstructions}
+
+This price is valid for 72 hours from the time your quote was issued and expires ${expiry} Eastern Time. Payment must be received before that deadline.
+
+Your order will be marked Purchased only after payment has been received and confirmed.`;
+  return { subject, text: body, html: wrap(textToHtml(body), subject) };
+}
+
+export function buildBulkPurchaseIntentAdminEmail(input: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  purchaseOrderNumber: string;
+  discountedPricing: string;
+  requestId: string;
+}): EmailTemplate {
+  const subject = `Bulk purchase selected — ${input.purchaseOrderNumber}`;
+  const body = `${input.firstName} ${input.lastName} has selected Purchase Now for their bulk order quote.
+
+Customer email: ${input.email}
+Purchase order number: ${input.purchaseOrderNumber}
+Discounted pricing:
+${input.discountedPricing}
+
+The request is now green and marked Awaiting E-Transfer in the back office.
+Review: ${siteUrl}/admin/bulk-orders
+Request reference: ${input.requestId}`;
   return { subject, text: body, html: wrap(textToHtml(body), subject) };
 }

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 
 export const BULK_ORDER_STATUSES = [
   "PENDING_DECISION",
+  "AWAITING_PAYMENT",
   "PURCHASED",
   "OPTED_OUT",
 ] as const;
@@ -38,6 +39,11 @@ export function ensureBulkOrderSchema() {
           "adminDecision" TEXT,
           "discountedPricing" TEXT,
           "eta" TEXT,
+          "decisionToken" TEXT,
+          "quoteIssuedAt" TIMESTAMP(3),
+          "quoteExpiresAt" TIMESTAMP(3),
+          "purchaseOrderNumber" TEXT,
+          "purchaseIntentAt" TIMESTAMP(3),
           "paymentConfirmed" BOOLEAN NOT NULL DEFAULT FALSE,
           "paymentConfirmedAt" TIMESTAMP(3),
           "customerDecisionSentAt" TIMESTAMP(3),
@@ -45,11 +51,22 @@ export function ensureBulkOrderSchema() {
           "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "decisionToken" TEXT`);
+      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "quoteIssuedAt" TIMESTAMP(3)`);
+      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "quoteExpiresAt" TIMESTAMP(3)`);
+      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "purchaseOrderNumber" TEXT`);
+      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "purchaseIntentAt" TIMESTAMP(3)`);
       await db.$executeRawUnsafe(
         `CREATE INDEX IF NOT EXISTS "BulkOrderRequest_status_createdAt_idx" ON "BulkOrderRequest"("status", "createdAt")`
       );
       await db.$executeRawUnsafe(
         `CREATE INDEX IF NOT EXISTS "BulkOrderRequest_email_idx" ON "BulkOrderRequest"("email")`
+      );
+      await db.$executeRawUnsafe(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "BulkOrderRequest_decisionToken_key" ON "BulkOrderRequest"("decisionToken")`
+      );
+      await db.$executeRawUnsafe(
+        `CREATE UNIQUE INDEX IF NOT EXISTS "BulkOrderRequest_purchaseOrderNumber_key" ON "BulkOrderRequest"("purchaseOrderNumber")`
       );
     })().catch((error) => {
       schemaPromise = null;
@@ -80,6 +97,7 @@ export function parseBulkOrderItems(value: unknown): BulkOrderItem[] {
 }
 
 export function formatBulkOrderStatus(status: string) {
+  if (status === "AWAITING_PAYMENT") return "Awaiting E-Transfer";
   if (status === "PURCHASED") return "Purchased";
   if (status === "OPTED_OUT") return "Opted Out";
   return "Pending Decision";
