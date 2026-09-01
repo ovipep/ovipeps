@@ -165,17 +165,12 @@ export function ProductCard({
               {formatCurrency(lowestPrice)}
               </>}
             </p>
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase",
-                inStock ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
-              )}
-            >
-              <span className={cn("h-1.5 w-1.5 rounded-full", inStock ? "bg-success animate-pulse" : "bg-muted-foreground")} />
-              {inStock
-                ? `${availableVariant?.stockQuantity ?? "Limited"} Vials Left`
-                : "Restocking"}
-            </span>
+            {inStock && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-1 text-[10px] font-bold uppercase text-success">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+                {`${availableVariant?.stockQuantity ?? "Limited"} Vials Left`}
+              </span>
+            )}
           </div>
         </div>
       </Link>
