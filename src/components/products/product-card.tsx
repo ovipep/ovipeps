@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Eye, FlaskConical, ShoppingBag, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { Eye, FlaskConical, ShoppingBag, ShieldCheck, Zap } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
 import {
@@ -109,18 +109,6 @@ export function ProductCard({
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
                 <Zap className="h-3 w-3" />
                 Available Now
-              </span>
-            )}
-            {product.isNew && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-sky to-cyan px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
-                <Sparkles className="h-3 w-3" />
-                New
-              </span>
-            )}
-            {product.featured && !product.isNew && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-electric to-sky px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
-                <Zap className="h-3 w-3" />
-                Featured
               </span>
             )}
             {showCoa && (
