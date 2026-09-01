@@ -20,6 +20,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  icons: {
+    icon: "/images/brand/icon-blue.png",
+    shortcut: "/images/brand/icon-blue.png",
+    apple: "/images/brand/icon-blue.png",
+  },
   title: {
     default: `${SITE_NAME} — Research-Grade Peptides`,
     template: `%s | ${SITE_NAME}`,
