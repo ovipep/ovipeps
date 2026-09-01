@@ -55,8 +55,17 @@ export const metadata: Metadata = {
       "Premium research peptides and laboratory supplies with published batch documentation where available, fulfilled from within Canada.",
   },
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      "max-snippet": 0,
+      "max-image-preview": "none",
+      "max-video-preview": 0,
+    },
   },
 };
 
