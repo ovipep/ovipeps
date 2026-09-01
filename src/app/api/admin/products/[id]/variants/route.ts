@@ -18,15 +18,21 @@ export async function POST(
   if (!size || !sku || !Number.isFinite(price) || price < 0 || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
     return NextResponse.json({ error: "Enter a vial size, unique SKU, valid price, and whole-number inventory" }, { status: 400 });
   }
+  let variant;
   try {
-    const variant = await db.productVariant.create({
+    variant = await db.productVariant.create({
       data: { productId, name: size, size, concentration: size, sku, price, stockQuantity, inStock: stockQuantity > 0 },
     });
-    await sendInventoryAlertsForVariants([variant.id]);
-    revalidatePath("/admin/products");
-    revalidatePath("/shop");
-    return NextResponse.json(variant);
   } catch {
     return NextResponse.json({ error: "That SKU already exists or the vial size could not be added" }, { status: 400 });
   }
+
+  try {
+    await sendInventoryAlertsForVariants([variant.id]);
+  } catch (error) {
+    console.error("New vial size saved, but inventory alert email failed", error);
+  }
+  revalidatePath("/admin/products");
+  revalidatePath("/shop");
+  return NextResponse.json(variant);
 }
