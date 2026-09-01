@@ -4,6 +4,10 @@ let syncPromise: Promise<void> | null = null;
 
 async function syncCatalog() {
   await Promise.all([
+    db.product.updateMany({
+      where: { slug: "bac-water" },
+      data: { imageUrl: "/images/products/bac-water.jpg" },
+    }),
     db.siteSetting.upsert({
       where: { key: "etransfer_email" },
       update: { value: "ovipeps@gmail.com" },

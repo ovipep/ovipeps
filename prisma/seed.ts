@@ -165,7 +165,7 @@ async function main() {
       shortDescription: "Peptide reconstitution solution",
       researchCategory: "Supplies",
       category: "SUPPLY" as const,
-      imageUrl: "/images/products/kpv.png",
+      imageUrl: "/images/products/bac-water.jpg",
       variants: [
         { name: "30ml", sku: "BAC-30ML", price: 19.99, size: "30ml", stockQuantity: 0 },
       ],
