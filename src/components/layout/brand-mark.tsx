@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface BrandMarkProps {
@@ -33,11 +34,12 @@ export function BrandMark({
 
   return (
     <span className={cn("inline-flex items-center gap-3", className)}>
-      <span
-        className={cn(
-          "shrink-0 bg-[url('/images/brand/icon-blue.png')] bg-[length:640%_320%] bg-center bg-no-repeat",
-          styles.icon
-        )}
+      <Image
+        src="/images/brand/icon-blue-mark.svg"
+        alt=""
+        width={36}
+        height={36}
+        className={cn("shrink-0 object-contain", styles.icon)}
         aria-hidden
       />
 
