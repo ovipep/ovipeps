@@ -157,14 +157,14 @@ export function ProductCard({
             {product.name}
           </h3>
           <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-            <p className="text-xl font-bold text-navy-deep">
-              {!inStock ? "Restocking" : <>
-              {hasMultipleVariants && (
-                <span className="mr-1 text-xs font-normal text-muted-foreground">from</span>
-              )}
-              {formatCurrency(lowestPrice)}
-              </>}
-            </p>
+            {inStock && (
+              <p className="text-xl font-bold text-navy-deep">
+                {hasMultipleVariants && (
+                  <span className="mr-1 text-xs font-normal text-muted-foreground">from</span>
+                )}
+                {formatCurrency(lowestPrice)}
+              </p>
+            )}
             {inStock && (
               <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-1 text-[10px] font-bold uppercase text-success">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
