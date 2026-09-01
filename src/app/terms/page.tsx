@@ -111,7 +111,7 @@ export default function TermsPage() {
                     All prices are listed in Canadian dollars (CAD) unless otherwise
                     stated. We reserve the right to refuse or cancel orders at our
                     discretion, including orders with incorrect pricing, products marked
-                    out of stock, or suspected fraudulent activity.
+                    unavailable while restocking, or suspected fraudulent activity.
                   </p>
                   <p>
                     Payment is accepted via Interac e-Transfer as described in our{" "}

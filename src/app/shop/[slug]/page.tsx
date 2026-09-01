@@ -7,7 +7,6 @@ import {
   FileCheck2,
   MapPin,
   ShieldCheck,
-  Sparkles,
   Truck,
 } from "lucide-react";
 import {
@@ -155,12 +154,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {product.isNew && (
-                <Badge className="gap-1 bg-navy text-primary-foreground">
-                  <Sparkles className="h-3 w-3" />
-                  New
-                </Badge>
-              )}
               {hasCoa && (
                 <Badge variant="coa" className="gap-1">
                   <ShieldCheck className="h-3 w-3" />

@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     ];
     const isSafe =
       safeMessages.some((safeMessage) => message.startsWith(safeMessage)) ||
-      message.endsWith(" is out of stock") ||
+      message.endsWith(" is restocking") ||
       message.startsWith("Minimum order amount");
 
     return NextResponse.json(

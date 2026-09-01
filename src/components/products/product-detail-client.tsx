@@ -62,7 +62,7 @@ export function ProductDetailClient({
       {selectedVariant && (
         <div>
           <p className="text-3xl font-semibold tracking-tight text-navy-deep">
-            {inStock ? formatCurrency(selectedVariant.price) : "Coming Soon"}
+            {inStock ? formatCurrency(selectedVariant.price) : "Restocking"}
           </p>
           {hasMultipleVariants && (
             <p className="mt-1 text-sm text-muted-foreground">
@@ -92,7 +92,7 @@ export function ProductDetailClient({
                 )}
               >
                 {variant.name}
-                {!variant.inStock ? " · OOS" : ""}
+                {!variant.inStock ? " · Restocking" : ""}
               </button>
             ))}
           </div>
@@ -150,7 +150,7 @@ export function ProductDetailClient({
           />
           {inStock
             ? `Available now — only ${stockQuantity} vials in stock`
-            : "Coming Soon"}
+            : "Restocking"}
         </span>
       </div>
 
@@ -161,7 +161,7 @@ export function ProductDetailClient({
         disabled={!inStock || !selectedVariant}
       >
         <ShoppingBag className="h-4 w-4" />
-        {inStock ? "Add to Cart" : "Coming Soon"}
+        {inStock ? "Add to Cart" : "Restocking"}
       </Button>
 
       {!inStock && (

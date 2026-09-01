@@ -392,7 +392,7 @@ function VariantSpecRows({
           Price (CAD)
         </th>
         <td className="px-4 py-3 text-muted-foreground">
-          {variant.inStock ? `$${variant.price.toFixed(2)}` : "Coming Soon"}
+          {variant.inStock ? `$${variant.price.toFixed(2)}` : "Restocking"}
         </td>
       </tr>
     </>

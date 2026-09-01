@@ -43,12 +43,12 @@ export async function sendInventoryAlertsForVariants(variantIds: string[]) {
       where: { key: "support_email" },
     });
     const recipient = supportSetting?.value?.trim() || "ovipeps@gmail.com";
-    const soldOut = state === "OUT";
-    const subject = soldOut
-      ? `SOLD OUT: ${variant.product.name} — ${variant.name}`
+    const restocking = state === "OUT";
+    const subject = restocking
+      ? `RESTOCKING: ${variant.product.name} — ${variant.name}`
       : `LOW STOCK: ${variant.product.name} — ${variant.name}`;
-    const text = soldOut
-      ? `${variant.product.name} — ${variant.name} (${variant.sku}) is now sold out. Available inventory: 0 vials.`
+    const text = restocking
+      ? `${variant.product.name} — ${variant.name} (${variant.sku}) is now restocking. Available inventory: 0 vials.`
       : `${variant.product.name} — ${variant.name} (${variant.sku}) has reached the low-stock level. Available inventory: ${variant.stockQuantity} vials.`;
 
     const result = await sendEmail(

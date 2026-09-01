@@ -29,7 +29,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 const AVAILABILITY_OPTIONS: { value: AvailabilityFilter; label: string }[] = [
   { value: "all", label: "All Products" },
   { value: "in-stock", label: "In Stock" },
-  { value: "out-of-stock", label: "Out of Stock" },
+  { value: "out-of-stock", label: "Restocking" },
 ];
 
 export function ProductFilters({

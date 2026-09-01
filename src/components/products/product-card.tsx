@@ -144,7 +144,7 @@ export function ProductCard({
             >
               <ShoppingBag className="h-3.5 w-3.5" />
               {!inStock
-                ? "Coming Soon"
+                ? "Restocking"
                 : hasMultipleVariants
                   ? "Choose Options"
                   : "Add to Cart"}
@@ -158,7 +158,7 @@ export function ProductCard({
           </h3>
           <div className="mt-auto flex items-end justify-between gap-2 pt-2">
             <p className="text-xl font-bold text-navy-deep">
-              {!inStock ? "Coming Soon" : <>
+              {!inStock ? "Restocking" : <>
               {hasMultipleVariants && (
                 <span className="mr-1 text-xs font-normal text-muted-foreground">from</span>
               )}
@@ -174,7 +174,7 @@ export function ProductCard({
               <span className={cn("h-1.5 w-1.5 rounded-full", inStock ? "bg-success animate-pulse" : "bg-muted-foreground")} />
               {inStock
                 ? `${availableVariant?.stockQuantity ?? "Limited"} Vials Left`
-                : "Coming Soon"}
+                : "Restocking"}
             </span>
           </div>
         </div>

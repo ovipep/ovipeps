@@ -224,7 +224,7 @@ export async function createOrder(input: CreateOrderInput) {
       variant.stockQuantity
     );
     if (!catalogVariant.inStock || catalogVariant.stockQuantity < item.quantity) {
-      throw new Error(`${variant.product.name} — ${variant.name} is out of stock`);
+      throw new Error(`${variant.product.name} — ${variant.name} is restocking`);
     }
 
     const unitPrice = catalogVariant.price;
@@ -288,7 +288,7 @@ export async function createOrder(input: CreateOrderInput) {
       });
 
       if (reserved.count !== 1) {
-        throw new Error(`${item.productName} — ${item.variantName} is out of stock`);
+        throw new Error(`${item.productName} — ${item.variantName} is restocking`);
       }
     }
 

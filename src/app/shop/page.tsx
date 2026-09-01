@@ -52,7 +52,7 @@ async function ShopContent({ searchParams }: { searchParams: Record<string, stri
         <p className="mt-1.5 text-sm leading-relaxed text-emerald-950/80">
           Retatrutide 5 mg ($80, 4 vials), CJC/Ipamorelin 10 mg ($80, 4 vials),
           GHK-Cu 50 mg ($50, 8 vials), and MOTS-C 10 mg ($45, 10 vials) are
-          available. Every other product is marked Restocking / Coming Soon.
+          available. Every product with zero inventory is marked Restocking.
         </p>
       </div>
       <ShopCatalog

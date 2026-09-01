@@ -123,10 +123,6 @@ function sortProducts(
 ): ProductCardData[] {
   const sorted = [...products];
 
-  if (sort === "featured") {
-    sorted.sort((a, b) => Number(b.slug === "glp-3") - Number(a.slug === "glp-3"));
-  }
-
   switch (sort) {
     case "price-asc":
       sorted.sort(
@@ -151,9 +147,11 @@ function sortProducts(
       break;
   }
 
-  return sorted.sort(
-    (a, b) => Number(isProductInStock(b.variants)) - Number(isProductInStock(a.variants))
-  );
+  return sorted.sort((a, b) => {
+    const retaFirst = Number(b.slug === "glp-3") - Number(a.slug === "glp-3");
+    if (retaFirst !== 0) return retaFirst;
+    return Number(isProductInStock(b.variants)) - Number(isProductInStock(a.variants));
+  });
 }
 
 function mapFallbackProduct(product: ProductCardData): ProductCardData {
