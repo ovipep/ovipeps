@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface BrandMarkProps {
@@ -10,15 +9,15 @@ interface BrandMarkProps {
 
 const sizeStyles = {
   sm: {
-    icon: 32,
+    icon: "h-6 w-6",
     text: "text-xl",
   },
   md: {
-    icon: 40,
+    icon: "h-7 w-7",
     text: "text-2xl",
   },
   lg: {
-    icon: 48,
+    icon: "h-9 w-9",
     text: "text-3xl",
   },
 } as const;
@@ -34,12 +33,11 @@ export function BrandMark({
 
   return (
     <span className={cn("inline-flex items-center gap-3", className)}>
-      <Image
-        src="/images/brand/icon-blue.png"
-        alt=""
-        width={styles.icon}
-        height={styles.icon}
-        className="shrink-0 object-contain"
+      <span
+        className={cn(
+          "shrink-0 bg-[url('/images/brand/icon-blue.png')] bg-[length:640%_320%] bg-center bg-no-repeat",
+          styles.icon
+        )}
         aria-hidden
       />
 
