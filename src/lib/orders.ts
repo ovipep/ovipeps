@@ -12,7 +12,6 @@ import {
 } from "@/lib/affiliate-program";
 import {
   applyCatalogVariantPolicy,
-  getAvailableVariant,
   getCatalogProductName,
 } from "@/lib/catalog-status";
 import { generateOrderNumber } from "@/lib/utils";
@@ -280,21 +279,6 @@ export async function createOrder(input: CreateOrderInput) {
 
   const order = await db.$transaction(async (tx) => {
     for (const item of orderItems) {
-      const availableVariant = getAvailableVariant(item.sku);
-      if (!availableVariant) {
-        throw new Error(`${item.productName} — ${item.variantName} is out of stock`);
-      }
-
-      // Bring older database values down to the announced stock cap before
-      // reserving inventory, then decrement atomically inside this transaction.
-      await tx.productVariant.updateMany({
-        where: {
-          id: item.variantId,
-          stockQuantity: { gt: availableVariant.stockQuantity },
-        },
-        data: { stockQuantity: availableVariant.stockQuantity, inStock: true },
-      });
-
       const reserved = await tx.productVariant.updateMany({
         where: {
           id: item.variantId,
@@ -343,6 +327,13 @@ export async function createOrder(input: CreateOrderInput) {
 
     return created;
   });
+
+  try {
+    const { sendInventoryAlertsForVariants } = await import("@/lib/inventory");
+    await sendInventoryAlertsForVariants(orderItems.map((item) => item.variantId));
+  } catch (error) {
+    console.error("Inventory alert email failed", error);
+  }
 
   try {
     if (affiliate) {

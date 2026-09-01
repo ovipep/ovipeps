@@ -2,7 +2,6 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { getAvailableVariant } from "@/lib/catalog-status";
 
 export interface CartItem {
   productId: string;
@@ -106,21 +105,10 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: "ovipeps-cart",
-      version: 3,
+      version: 4,
       migrate: (persistedState) => {
         const state = persistedState as Partial<CartStore>;
-        const items = (state.items ?? []).flatMap((item) => {
-          const availableVariant = getAvailableVariant(item.sku);
-          if (!availableVariant) return [];
-          return [{
-            ...item,
-            price: availableVariant.price,
-            quantity: Math.min(item.quantity, availableVariant.stockQuantity),
-            stockQuantity: availableVariant.stockQuantity,
-          }];
-        });
-
-        return { ...state, items } as CartStore;
+        return { ...state, items: state.items ?? [] } as CartStore;
       },
     }
   )
