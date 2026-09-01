@@ -12,6 +12,7 @@ import {
   Settings,
   ClipboardList,
   Banknote,
+  PackagePlus,
   Mail,
   BarChart3,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import { BrandMark } from "@/components/layout/brand-mark";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/bulk-orders", label: "Bulk Order Requests", icon: PackagePlus },
   { href: "/admin/emails", label: "Email Center", icon: Mail },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/reports", label: "Sales Reports", icon: BarChart3 },

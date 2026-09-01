@@ -137,6 +137,29 @@ model ProductBatch {
   @@unique([productId, batchNumber])
 }
 
+// ─── Bulk order requests ───────────────────────────────────────────────────────
+
+model BulkOrderRequest {
+  id                     String   @id @default(cuid())
+  firstName              String
+  lastName               String
+  email                  String
+  items                  Json
+  additionalContext      String?
+  status                 String   @default("PENDING_DECISION")
+  adminDecision          String?
+  discountedPricing      String?
+  eta                    String?
+  paymentConfirmed       Boolean  @default(false)
+  paymentConfirmedAt     DateTime?
+  customerDecisionSentAt DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
 // ─── COA Documents ────────────────────────────────────────────────────────────
 
 model CoaDocument {

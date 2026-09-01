@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   FileCheck2,
   MapPin,
+  PackagePlus,
   ShieldCheck,
   Truck,
 } from "lucide-react";
@@ -197,6 +198,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 variants={variants}
               />
             </div>
+
+            <Link href={`/bulk-order-requests?product=${encodeURIComponent(product.slug)}`} className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl border-2 border-sky/30 bg-white px-5 text-sm font-semibold text-navy-deep transition hover:border-sky/50 hover:bg-sky/5">
+              <PackagePlus className="h-4 w-4 text-sky" /> Bulk Order Requests
+            </Link>
 
             <div className="mt-6 grid grid-cols-3 gap-2">
               {[

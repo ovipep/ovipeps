@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { PackagePlus } from "lucide-react";
 import { Suspense } from "react";
 import { PageHero } from "@/components/content/page-hero";
 import { ShopCatalog } from "@/components/products/shop-catalog";
@@ -53,6 +55,15 @@ async function ShopContent({ searchParams }: { searchParams: Record<string, stri
           Live prices and vial counts are shown on every product below. Products
           with zero inventory are marked Restocking.
         </p>
+      </div>
+      <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-sky/20 bg-gradient-to-r from-sky/10 via-cyan/10 to-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold text-navy-deep">Ordering 10 or more units?</p>
+          <p className="mt-1 text-sm text-muted-foreground">Request discounted kit pricing and an ETA for one or more products.</p>
+        </div>
+        <Link href="/bulk-order-requests" className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky to-cyan px-5 text-sm font-semibold text-white shadow-md shadow-sky/25 transition hover:scale-[1.02]">
+          <PackagePlus className="h-4 w-4" /> Bulk Order Requests
+        </Link>
       </div>
       <ShopCatalog
         products={products}

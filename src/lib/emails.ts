@@ -280,3 +280,87 @@ export async function sendEmail(
   }
   return { success: true, id: data?.id };
 }
+
+interface BulkEmailItem {
+  productName: string;
+  kits: number;
+  units: number;
+}
+
+function bulkItemsText(items: BulkEmailItem[]) {
+  return items
+    .map((item) => `${item.productName} — ${item.kits} kit${item.kits === 1 ? "" : "s"} (${item.units} units)`)
+    .join("\n");
+}
+
+export function buildBulkOrderReceivedEmail(input: {
+  firstName: string;
+  requestId: string;
+  items: BulkEmailItem[];
+}): EmailTemplate {
+  const subject = "Bulk order request received";
+  const body = `Hi ${input.firstName},
+
+We have received your bulk order request.
+
+Requested products:
+${bulkItemsText(input.items)}
+
+We will respond within 24 hours with the discounted prices for your submitted request and the estimated time of arrival (ETA).
+
+Request reference: ${input.requestId}`;
+  return { subject, text: body, html: wrap(textToHtml(body), subject) };
+}
+
+export function buildBulkOrderAdminEmail(input: {
+  requestId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  items: BulkEmailItem[];
+  additionalContext?: string | null;
+}): EmailTemplate {
+  const subject = `New bulk order request — ${input.firstName} ${input.lastName}`;
+  const body = `A new bulk order request is awaiting a decision.
+
+Customer: ${input.firstName} ${input.lastName}
+Email: ${input.email}
+
+Requested products:
+${bulkItemsText(input.items)}
+
+Additional context:
+${input.additionalContext?.trim() || "None provided"}
+
+Review request: ${siteUrl}/admin/bulk-orders
+Request reference: ${input.requestId}`;
+  return { subject, text: body, html: wrap(textToHtml(body), subject) };
+}
+
+export function buildBulkOrderDecisionEmail(input: {
+  firstName: string;
+  requestId: string;
+  discountedPricing: string;
+  eta: string;
+  adminDecision?: string | null;
+  items: BulkEmailItem[];
+}): EmailTemplate {
+  const subject = "Your OVIpeps bulk order request update";
+  const body = `Hi ${input.firstName},
+
+We have reviewed your bulk order request.
+
+Requested products:
+${bulkItemsText(input.items)}
+
+Discounted pricing:
+${input.discountedPricing}
+
+Estimated time of arrival (ETA):
+${input.eta}
+${input.adminDecision?.trim() ? `\nDecision details:\n${input.adminDecision.trim()}\n` : ""}
+Request reference: ${input.requestId}
+
+Reply to this email if you would like to proceed or have any questions.`;
+  return { subject, text: body, html: wrap(textToHtml(body), subject) };
+}
