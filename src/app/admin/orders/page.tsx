@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { expireUnpaidOrders } from "@/lib/orders";
 
 const STATUS_FILTERS = [
   { value: "all", label: "All" },
@@ -22,6 +23,7 @@ export default async function AdminOrdersPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const { status } = await searchParams;
+  await expireUnpaidOrders();
   const statusFilter = status && status !== "all" ? status : undefined;
 
   const orders = await db.order.findMany({

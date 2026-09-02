@@ -51,6 +51,72 @@ export interface CreateOrderInput {
 }
 
 const FLAT_SHIPPING_RATE = 25;
+export const UNPAID_ORDER_EXPIRY_HOURS = 72;
+
+function unpaidOrderCutoff(now = new Date()) {
+  return new Date(
+    now.getTime() - UNPAID_ORDER_EXPIRY_HOURS * 60 * 60 * 1000
+  );
+}
+
+async function cancelExpiredOrder(orderId: string, now = new Date()) {
+  return db.$transaction(async (tx) => {
+    const order = await tx.order.findFirst({
+      where: {
+        id: orderId,
+        status: "AWAITING_PAYMENT",
+        createdAt: { lte: unpaidOrderCutoff(now) },
+      },
+      include: { items: true },
+    });
+
+    if (!order) return false;
+
+    const cancelled = await tx.order.updateMany({
+      where: {
+        id: order.id,
+        status: "AWAITING_PAYMENT",
+        createdAt: { lte: unpaidOrderCutoff(now) },
+      },
+      data: { status: "CANCELLED", cancelledAt: now },
+    });
+
+    if (cancelled.count !== 1) return false;
+
+    for (const item of order.items) {
+      await tx.productVariant.update({
+        where: { id: item.variantId },
+        data: { stockQuantity: { increment: item.quantity } },
+      });
+    }
+
+    if (order.discountCode) {
+      await tx.discountCode.updateMany({
+        where: { code: order.discountCode, usedCount: { gt: 0 } },
+        data: { usedCount: { decrement: 1 } },
+      });
+    }
+
+    return true;
+  });
+}
+
+export async function expireUnpaidOrders(now = new Date()) {
+  const expired = await db.order.findMany({
+    where: {
+      status: "AWAITING_PAYMENT",
+      createdAt: { lte: unpaidOrderCutoff(now) },
+    },
+    select: { id: true },
+  });
+
+  let cancelledCount = 0;
+  for (const order of expired) {
+    if (await cancelExpiredOrder(order.id, now)) cancelledCount += 1;
+  }
+
+  return cancelledCount;
+}
 
 type OrderForConfirmation = Prisma.OrderGetPayload<{
   include: { items: true };
@@ -358,6 +424,18 @@ export async function createOrder(input: CreateOrderInput) {
 }
 
 export async function getOrderByNumber(orderNumber: string) {
+  const existing = await db.order.findUnique({
+    where: { orderNumber },
+    select: { id: true, status: true, createdAt: true },
+  });
+
+  if (
+    existing?.status === "AWAITING_PAYMENT" &&
+    existing.createdAt <= unpaidOrderCutoff()
+  ) {
+    await cancelExpiredOrder(existing.id);
+  }
+
   return db.order.findUnique({
     where: { orderNumber },
     include: {
@@ -408,6 +486,11 @@ export async function confirmPayment(
     throw new Error("Order is not awaiting payment");
   }
 
+  if (order.createdAt <= unpaidOrderCutoff()) {
+    await cancelExpiredOrder(order.id);
+    throw new Error("Order was automatically cancelled because payment was not received within 72 hours");
+  }
+
   const pendingPayment = order.payments.find(
     (payment) => payment.status === "PENDING"
   );
@@ -438,18 +521,23 @@ export async function confirmPayment(
       });
     }
 
-    return tx.order.update({
-      where: { id: orderId },
+    const confirmed = await tx.order.updateMany({
+      where: { id: orderId, status: "AWAITING_PAYMENT" },
       data: {
         status: "PAYMENT_RECEIVED",
         paidAt: now,
         paymentReference:
           options.paymentReference ?? order.paymentReference ?? undefined,
       },
-      include: {
-        items: true,
-        payments: true,
-      },
+    });
+
+    if (confirmed.count !== 1) {
+      throw new Error("Order is no longer awaiting payment");
+    }
+
+    return tx.order.findUniqueOrThrow({
+      where: { id: orderId },
+      include: { items: true, payments: true },
     });
   });
 
