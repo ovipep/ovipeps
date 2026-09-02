@@ -20,6 +20,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "BPC-157 Guide",
     url: "/documents/bpc-157-guide.png",
   },
+  "tb-500": {
+    label: "TB-500 Guide",
+    url: "/documents/tb-500-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
