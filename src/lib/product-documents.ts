@@ -12,6 +12,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "SS-31 Guide",
     url: "/documents/ss-31-guide.png",
   },
+  "nad-plus": {
+    label: "NAD+ Guide",
+    url: "/documents/nad-plus-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
