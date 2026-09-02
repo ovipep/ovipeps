@@ -40,6 +40,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "KPV Guide",
     url: "/documents/kpv-guide.png",
   },
+  "glp-3": {
+    label: "Retatrutide Guide",
+    url: "/documents/retatrutide-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
