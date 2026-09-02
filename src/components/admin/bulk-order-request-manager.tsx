@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Clock3, CreditCard, Mail, Save, XCircle } from "lucide-react";
+import { Banknote, Clock3, Mail, Save, Truck, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Item { productName: string; kits: number; units: number }
@@ -15,6 +15,8 @@ interface RequestRecord {
 
 function label(status: string) {
   if (status === "AWAITING_PAYMENT") return "Awaiting E-Transfer";
+  if (status === "PENDING_SHIPMENT") return "Pending Shipment";
+  if (status === "COMPLETE") return "Complete";
   if (status === "PURCHASED") return "Purchased";
   if (status === "OPTED_OUT") return "Opted Out";
   return "Pending Decision";
@@ -30,7 +32,6 @@ function formatEasternDate(value: string) {
 
 export function BulkOrderRequestManager({ initialRequests }: { initialRequests: RequestRecord[] }) {
   const [requests, setRequests] = useState(initialRequests);
-  const [confirming, setConfirming] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<Record<string, string>>({});
 
@@ -42,7 +43,6 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
       if (!response.ok) throw new Error(result.error || "Unable to save changes.");
       setRequests((current) => current.map((entry) => entry.id === id ? { ...entry, ...result.request, createdAt: new Date(result.request.createdAt).toISOString(), customerDecisionSentAt: result.request.customerDecisionSentAt ? new Date(result.request.customerDecisionSentAt).toISOString() : null } : entry));
       setMessage((current) => ({ ...current, [id]: payload.sendCustomerUpdate ? "Saved and emailed to the customer." : "Changes saved." }));
-      setConfirming(null);
     } catch (error) {
       setMessage((current) => ({ ...current, [id]: error instanceof Error ? error.message : "Unable to save changes." }));
     } finally { setBusy(null); }
@@ -54,10 +54,10 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
 
   if (!requests.length) return <div className="rounded-2xl border border-dashed border-sky/20 p-12 text-center text-sm text-muted-foreground">No bulk order requests have been submitted yet.</div>;
 
-  return <div className="space-y-6">{requests.map((entry) => <article key={entry.id} className={`rounded-2xl border bg-white p-5 shadow-sm sm:p-6 ${entry.status === "AWAITING_PAYMENT" ? "border-emerald-500 ring-2 ring-emerald-200" : "border-sky/15"}`}>
+  return <div className="space-y-6">{requests.map((entry) => <article key={entry.id} className={`rounded-2xl border bg-white p-5 shadow-sm sm:p-6 ${entry.status === "AWAITING_PAYMENT" ? "border-emerald-500 ring-2 ring-emerald-200" : entry.status === "PENDING_SHIPMENT" ? "border-blue-500 ring-2 ring-blue-200" : entry.status === "COMPLETE" ? "border-red-500 ring-2 ring-red-200" : "border-sky/15"}`}>
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div><h2 className="text-lg font-semibold text-navy-deep">{entry.firstName} {entry.lastName}</h2><a href={`mailto:${entry.email}`} className="mt-1 inline-flex items-center gap-1.5 text-sm text-sky hover:underline"><Mail className="h-3.5 w-3.5" />{entry.email}</a><p className="mt-1 text-xs text-muted-foreground">Submitted {formatEasternDate(entry.createdAt)} ET · {entry.id}</p></div>
-      <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${entry.status === "PURCHASED" || entry.status === "AWAITING_PAYMENT" ? "bg-emerald-100 text-emerald-800" : entry.status === "OPTED_OUT" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}><Clock3 className="h-3.5 w-3.5" />{label(entry.status)}</span>
+      <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${entry.status === "AWAITING_PAYMENT" ? "bg-emerald-100 text-emerald-800" : entry.status === "PENDING_SHIPMENT" || entry.status === "PURCHASED" ? "bg-blue-100 text-blue-800" : entry.status === "COMPLETE" ? "bg-red-100 text-red-800" : entry.status === "OPTED_OUT" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}><Clock3 className="h-3.5 w-3.5" />{label(entry.status)}</span>
     </div>
     {entry.purchaseOrderNumber && <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Purchase order number</p><p className="mt-1 text-lg font-bold text-emerald-950">{entry.purchaseOrderNumber}</p><p className="mt-1 text-xs text-emerald-800">Customer selected Purchase Now{entry.purchaseIntentAt ? ` on ${formatEasternDate(entry.purchaseIntentAt)} ET` : ""}. Watch for the matching e-transfer.</p></div>}
     <div className="mt-5 grid gap-3 sm:grid-cols-2">{entry.items.map((item, index) => <div key={`${item.productName}-${index}`} className="rounded-xl border border-sky/10 bg-sky/5 p-3"><p className="text-sm font-semibold text-navy-deep">{item.productName}</p><p className="mt-1 text-xs text-muted-foreground">{item.kits} kit{item.kits === 1 ? "" : "s"} · {item.units} units</p></div>)}</div>
@@ -69,10 +69,10 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
     </div>
     <div className="mt-5 flex flex-wrap gap-2">
       <Button disabled={busy === entry.id} onClick={() => update(entry.id, { adminDecision: entry.adminDecision ?? "", discountedPricing: entry.discountedPricing ?? "", eta: entry.eta ?? "", sendCustomerUpdate: Boolean(entry.discountedPricing?.trim() && entry.eta?.trim()) })}><Save className="h-4 w-4" /> {entry.discountedPricing?.trim() && entry.eta?.trim() ? "Save & Email Customer" : "Save Draft"}</Button>
-      <Button variant="outline" disabled={busy === entry.id} onClick={() => update(entry.id, { status: "OPTED_OUT" })}><XCircle className="h-4 w-4" /> Opted Out</Button>
-      {confirming === entry.id ? <Button disabled={busy === entry.id} onClick={() => update(entry.id, { status: "PURCHASED", confirmPaymentReceived: true })}><CheckCircle2 className="h-4 w-4" /> Confirm Payment Received</Button> : <Button variant="outline" disabled={busy === entry.id || entry.status === "PURCHASED"} onClick={() => setConfirming(entry.id)}><CreditCard className="h-4 w-4" /> Purchased</Button>}
+      <Button variant="outline" disabled={busy === entry.id || ["PENDING_SHIPMENT", "COMPLETE", "PURCHASED"].includes(entry.status)} onClick={() => update(entry.id, { status: "OPTED_OUT" })}><XCircle className="h-4 w-4" /> Opted Out</Button>
+      <Button variant="outline" disabled={busy === entry.id || (entry.status !== "AWAITING_PAYMENT" && entry.status !== "PURCHASED")} onClick={() => update(entry.id, { status: "PENDING_SHIPMENT", confirmPaymentReceived: true })}><Banknote className="h-4 w-4" /> Payment Received</Button>
+      <Button variant="outline" disabled={busy === entry.id || entry.status !== "PENDING_SHIPMENT"} onClick={() => update(entry.id, { status: "COMPLETE" })}><Truck className="h-4 w-4" /> Shipped</Button>
     </div>
-    {confirming === entry.id && <p className="mt-3 text-sm font-medium text-amber-700">Purchased will only be recorded after you select Confirm Payment Received.</p>}
     {message[entry.id] && <p className="mt-3 text-sm text-muted-foreground">{message[entry.id]}</p>}
   </article>)}</div>;
 }

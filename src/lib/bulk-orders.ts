@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 export const BULK_ORDER_STATUSES = [
   "PENDING_DECISION",
   "AWAITING_PAYMENT",
+  "PENDING_SHIPMENT",
+  "COMPLETE",
   "PURCHASED",
   "OPTED_OUT",
 ] as const;
@@ -98,6 +100,8 @@ export function parseBulkOrderItems(value: unknown): BulkOrderItem[] {
 
 export function formatBulkOrderStatus(status: string) {
   if (status === "AWAITING_PAYMENT") return "Awaiting E-Transfer";
+  if (status === "PENDING_SHIPMENT") return "Pending Shipment";
+  if (status === "COMPLETE") return "Complete";
   if (status === "PURCHASED") return "Purchased";
   if (status === "OPTED_OUT") return "Opted Out";
   return "Pending Decision";

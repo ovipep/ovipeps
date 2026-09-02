@@ -22,8 +22,11 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   if (parsed.data.status && !isBulkOrderStatus(parsed.data.status)) {
     return Response.json({ error: "Invalid status." }, { status: 400 });
   }
-  if (parsed.data.status === "PURCHASED" && parsed.data.confirmPaymentReceived !== true) {
-    return Response.json({ error: "Payment must be explicitly confirmed before marking this request Purchased." }, { status: 400 });
+  if (
+    (parsed.data.status === "PURCHASED" || parsed.data.status === "PENDING_SHIPMENT") &&
+    parsed.data.confirmPaymentReceived !== true
+  ) {
+    return Response.json({ error: "Payment must be explicitly confirmed before moving this request to Pending Shipment." }, { status: 400 });
   }
   if (parsed.data.sendCustomerUpdate && (!parsed.data.discountedPricing || !parsed.data.eta)) {
     return Response.json({ error: "Discounted pricing and ETA are required before emailing the customer." }, { status: 400 });
@@ -33,6 +36,23 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   const existing = await db.bulkOrderRequest.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "Request not found." }, { status: 404 });
 
+  if (
+    parsed.data.status === "PENDING_SHIPMENT" &&
+    existing.status !== "AWAITING_PAYMENT" &&
+    existing.status !== "PURCHASED"
+  ) {
+    return Response.json({ error: "Payment Received can only be selected for a request that is awaiting e-transfer." }, { status: 409 });
+  }
+  if (parsed.data.status === "COMPLETE" && existing.status !== "PENDING_SHIPMENT") {
+    return Response.json({ error: "Shipped can only be selected after payment has been received." }, { status: 409 });
+  }
+  if (
+    parsed.data.status === "OPTED_OUT" &&
+    ["PENDING_SHIPMENT", "COMPLETE", "PURCHASED"].includes(existing.status)
+  ) {
+    return Response.json({ error: "A paid or completed request cannot be opted out." }, { status: 409 });
+  }
+
   const status = parsed.data.status ?? existing.status;
   const quoteIssuedAt = parsed.data.sendCustomerUpdate ? new Date() : existing.quoteIssuedAt;
   const quoteExpiresAt = parsed.data.sendCustomerUpdate
@@ -41,6 +61,7 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   const decisionToken = parsed.data.sendCustomerUpdate
     ? randomBytes(32).toString("hex")
     : existing.decisionToken;
+  const paymentIsConfirmed = ["PENDING_SHIPMENT", "COMPLETE", "PURCHASED"].includes(status);
   let updated = await db.bulkOrderRequest.update({
     where: { id },
     data: {
@@ -48,8 +69,10 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
       discountedPricing: parsed.data.discountedPricing ?? existing.discountedPricing,
       eta: parsed.data.eta ?? existing.eta,
       status,
-      paymentConfirmed: status === "PURCHASED" ? true : false,
-      paymentConfirmedAt: status === "PURCHASED" ? new Date() : null,
+      paymentConfirmed: paymentIsConfirmed,
+      paymentConfirmedAt: paymentIsConfirmed
+        ? existing.paymentConfirmedAt ?? new Date()
+        : null,
       decisionToken,
       quoteIssuedAt,
       quoteExpiresAt,
