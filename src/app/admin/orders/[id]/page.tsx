@@ -79,7 +79,10 @@ export default async function AdminOrderDetailPage({
           <CardHeader><CardTitle>Pending Shipping</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">Select Shipped after this order has been shipped. The order status will then change to Complete.</p>
-            <ShipOrderButton orderId={order.id} />
+            <ShipOrderButton
+              orderId={order.id}
+              initialTrackingNumber={order.trackingNumber ?? ""}
+            />
           </CardContent>
         </Card>
       )}
@@ -127,6 +130,14 @@ export default async function AdminOrderDetailPage({
               </address>
             ) : (
               <p className="text-muted-foreground">No address on file.</p>
+            )}
+            {order.trackingNumber && (
+              <div className="mt-5 border-t border-border pt-4">
+                <p className="text-sm text-muted-foreground">Tracking Number</p>
+                <p className="mt-1 break-all font-semibold text-navy-deep">
+                  {order.trackingNumber}
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
