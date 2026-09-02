@@ -32,10 +32,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return <div className="space-y-6 print:space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold tracking-tight text-navy-deep">Sales Reports</h1><p className="mt-1 text-sm text-muted-foreground">Product sales by dollars and top-selling products for any date range.</p></div><div className="print:hidden"><PrintReportButton /></div></div>
-    <form className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-[1fr_1fr_auto] print:hidden">
+    <form action="/admin/reports" method="get" className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-[1fr_1fr_auto] print:hidden">
       <label className="text-sm font-medium">From<Input name="from" type="date" defaultValue={fromText} className="mt-1" /></label>
       <label className="text-sm font-medium">To<Input name="to" type="date" defaultValue={toText} className="mt-1" /></label>
-      <Button className="self-end">Run report</Button>
+      <Button type="submit" className="self-end">Run report</Button>
     </form>
     <div className="text-sm"><strong>Reporting period:</strong> {fromText} to {toText}</div>
     <div className="grid gap-3 sm:grid-cols-3">
