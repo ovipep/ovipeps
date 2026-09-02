@@ -5,7 +5,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, FlaskConical, ShoppingBag, ShieldCheck, Zap } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import { hasCjcIpamorelinGuide } from "@/lib/product-documents";
 import { useCartStore } from "@/store/cart";
+import { ProductDocumentPill } from "@/components/products/product-document-pill";
 import {
   getDefaultVariant,
   getLowestPrice,
@@ -156,6 +158,11 @@ export function ProductCard({
           <h3 className="text-base font-bold leading-snug text-foreground transition-colors group-hover:text-sky">
             {product.name}
           </h3>
+          {hasCjcIpamorelinGuide(product.slug) && (
+            <div className="flex flex-wrap pt-1">
+              <ProductDocumentPill insideProductLink />
+            </div>
+          )}
           <div className="mt-auto flex items-end justify-between gap-2 pt-2">
             {inStock && (
               <p className="text-xl font-bold text-navy-deep">

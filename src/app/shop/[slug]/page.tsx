@@ -24,6 +24,8 @@ import { ProductGrid } from "@/components/products/product-grid";
 import { Badge } from "@/components/ui/badge";
 import { getLowestPrice, type ProductVariant } from "@/types/product";
 import { formatCurrency } from "@/lib/utils";
+import { hasCjcIpamorelinGuide } from "@/lib/product-documents";
+import { ProductDocumentPill } from "@/components/products/product-document-pill";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -160,6 +162,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   <ShieldCheck className="h-3 w-3" />
                   COA Available
                 </Badge>
+              )}
+              {hasCjcIpamorelinGuide(product.slug) && (
+                <ProductDocumentPill />
               )}
               {product.researchCategory && (
                 <Badge variant="research">{product.researchCategory}</Badge>
