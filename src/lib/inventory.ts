@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/emails";
+import { deliverRestockEvent } from "@/lib/restock-notifications";
 
 export const LOW_STOCK_THRESHOLD = 4;
 
@@ -9,6 +10,95 @@ export function getInventoryState(quantity: number): InventoryState {
   if (quantity <= 0) return "OUT";
   if (quantity <= LOW_STOCK_THRESHOLD) return "LOW";
   return "NORMAL";
+}
+
+async function deliverCreatedEvent(eventId: string | null) {
+  if (!eventId) return;
+  try {
+    await deliverRestockEvent(eventId);
+  } catch (error) {
+    // Inventory must still save if the email provider is temporarily unavailable.
+    // The event and pending/failed delivery remain recorded for safe retry.
+    console.error("Restock notification delivery failed", error);
+  }
+}
+
+export async function updateVariantInventory(input: {
+  variantId: string;
+  name: string;
+  price: number;
+  stockQuantity: number;
+}) {
+  const result = await db.$transaction(async (tx) => {
+    const existing = await tx.productVariant.findUnique({
+      where: { id: input.variantId },
+      select: { productId: true },
+    });
+    if (!existing) throw new Error("Product vial size not found");
+
+    // Serialize inventory edits for every vial size belonging to this product.
+    await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${existing.productId} FOR UPDATE`;
+    const before = await tx.productVariant.aggregate({
+      where: { productId: existing.productId },
+      _sum: { stockQuantity: true },
+    });
+    const variant = await tx.productVariant.update({
+      where: { id: input.variantId },
+      data: {
+        name: input.name,
+        size: input.name,
+        concentration: input.name,
+        price: input.price,
+        stockQuantity: input.stockQuantity,
+        inStock: input.stockQuantity > 0,
+      },
+      include: { product: { select: { slug: true } } },
+    });
+    const after = await tx.productVariant.aggregate({
+      where: { productId: existing.productId },
+      _sum: { stockQuantity: true },
+    });
+    const wasOut = (before._sum.stockQuantity ?? 0) <= 0;
+    const isAvailable = (after._sum.stockQuantity ?? 0) > 0;
+    const event = wasOut && isAvailable
+      ? await tx.restockEvent.create({ data: { productId: existing.productId } })
+      : null;
+    return { variant, eventId: event?.id ?? null };
+  });
+  await deliverCreatedEvent(result.eventId);
+  return result.variant;
+}
+
+export async function createVariantInventory(input: {
+  productId: string;
+  name: string;
+  sku: string;
+  price: number;
+  stockQuantity: number;
+}) {
+  const result = await db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${input.productId} FOR UPDATE`;
+    const before = await tx.productVariant.aggregate({ where: { productId: input.productId }, _sum: { stockQuantity: true } });
+    const variant = await tx.productVariant.create({
+      data: {
+        productId: input.productId,
+        name: input.name,
+        size: input.name,
+        concentration: input.name,
+        sku: input.sku,
+        price: input.price,
+        stockQuantity: input.stockQuantity,
+        inStock: input.stockQuantity > 0,
+      },
+    });
+    const after = (before._sum.stockQuantity ?? 0) + input.stockQuantity;
+    const event = (before._sum.stockQuantity ?? 0) <= 0 && after > 0
+      ? await tx.restockEvent.create({ data: { productId: input.productId } })
+      : null;
+    return { variant, eventId: event?.id ?? null };
+  });
+  await deliverCreatedEvent(result.eventId);
+  return result.variant;
 }
 
 function alertSettingKey(variantId: string) {

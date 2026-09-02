@@ -20,6 +20,7 @@ import {
   getOrderConfirmationAttachments,
   isRetatrutideOrderItem,
 } from "@/lib/order-email-attachments";
+import { deliverRestockEvent } from "@/lib/restock-notifications";
 
 export interface ShippingAddress {
   firstName: string;
@@ -60,7 +61,7 @@ function unpaidOrderCutoff(now = new Date()) {
 }
 
 async function cancelExpiredOrder(orderId: string, now = new Date()) {
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     const order = await tx.order.findFirst({
       where: {
         id: orderId,
@@ -70,7 +71,21 @@ async function cancelExpiredOrder(orderId: string, now = new Date()) {
       include: { items: true },
     });
 
-    if (!order) return false;
+    if (!order) return { cancelled: false, eventIds: [] as string[] };
+
+    const variants = await tx.productVariant.findMany({
+      where: { id: { in: order.items.map((item) => item.variantId) } },
+      select: { id: true, productId: true },
+    });
+    const productIds = [...new Set(variants.map((variant) => variant.productId))].sort();
+    for (const productId of productIds) {
+      await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${productId} FOR UPDATE`;
+    }
+    const before = new Map<string, number>();
+    for (const productId of productIds) {
+      const total = await tx.productVariant.aggregate({ where: { productId }, _sum: { stockQuantity: true } });
+      before.set(productId, total._sum.stockQuantity ?? 0);
+    }
 
     const cancelled = await tx.order.updateMany({
       where: {
@@ -81,7 +96,7 @@ async function cancelExpiredOrder(orderId: string, now = new Date()) {
       data: { status: "CANCELLED", cancelledAt: now },
     });
 
-    if (cancelled.count !== 1) return false;
+    if (cancelled.count !== 1) return { cancelled: false, eventIds: [] as string[] };
 
     for (const item of order.items) {
       await tx.productVariant.update({
@@ -97,8 +112,25 @@ async function cancelExpiredOrder(orderId: string, now = new Date()) {
       });
     }
 
-    return true;
+    const eventIds: string[] = [];
+    for (const productId of productIds) {
+      const total = await tx.productVariant.aggregate({ where: { productId }, _sum: { stockQuantity: true } });
+      if ((before.get(productId) ?? 0) <= 0 && (total._sum.stockQuantity ?? 0) > 0) {
+        const event = await tx.restockEvent.create({ data: { productId, occurredAt: now } });
+        eventIds.push(event.id);
+      }
+    }
+
+    return { cancelled: true, eventIds };
   });
+  for (const eventId of result.eventIds) {
+    try {
+      await deliverRestockEvent(eventId);
+    } catch (error) {
+      console.error("Restock notification delivery failed after inventory release", error);
+    }
+  }
+  return result.cancelled;
 }
 
 export async function expireUnpaidOrders(now = new Date()) {

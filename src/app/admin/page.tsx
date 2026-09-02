@@ -23,6 +23,7 @@ export default async function AdminDashboardPage() {
       label: "Outstanding Commission",
       value: formatCurrency(metrics.outstandingCommission),
     },
+    { label: "Active Restock Subscribers", value: metrics.activeRestockSubscribers.toString() },
   ];
 
   return (

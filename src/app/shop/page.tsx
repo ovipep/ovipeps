@@ -4,9 +4,11 @@ import { PackagePlus } from "lucide-react";
 import { Suspense } from "react";
 import { PageHero } from "@/components/content/page-hero";
 import { ShopCatalog } from "@/components/products/shop-catalog";
+import { RestockSignup } from "@/components/products/restock-signup";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getProducts, getProductPriceRange, getResearchCategories, getSiteSetting } from "@/lib/products";
 import { parseShopSearchParams } from "@/lib/shop-params";
+import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Shop Research Peptides",
@@ -38,11 +40,12 @@ function getPageDescription(filter?: string, category?: string) {
 
 async function ShopContent({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   const { filters, query, filter, category } = parseShopSearchParams(searchParams);
-  const [products, categories, priceRange, disclaimer] = await Promise.all([
+  const [products, categories, priceRange, disclaimer, restockProducts] = await Promise.all([
     getProducts({ ...filters, q: query, filter, category }),
     getResearchCategories(),
     getProductPriceRange(),
     getSiteSetting("research_disclaimer"),
+    db.product.findMany({ where: { published: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
   ]);
 
   return (
@@ -65,6 +68,7 @@ async function ShopContent({ searchParams }: { searchParams: Record<string, stri
           <PackagePlus className="h-4 w-4" /> Bulk Order Requests
         </Link>
       </div>
+      <RestockSignup products={restockProducts} />
       <ShopCatalog
         products={products}
         categories={categories}

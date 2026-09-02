@@ -281,6 +281,22 @@ export async function sendEmail(
   return { success: true, id: data?.id };
 }
 
+export function buildRestockEmail(input: {
+  productName: string;
+  productUrl: string;
+  manageUrl?: string;
+}): EmailTemplate {
+  const subject = `${input.productName} is back in stock`;
+  const safeName = escapeHtml(input.productName);
+  const safeProductUrl = escapeHtml(input.productUrl);
+  const manage = input.manageUrl
+    ? `<p style="margin:26px 0 0;font-size:13px;line-height:1.6;color:#64748b;">No longer want restock notifications? <a href="${escapeHtml(input.manageUrl)}" style="color:${brandColor};font-weight:700;">Manage or unsubscribe from your restock notifications here.</a></p>`
+    : "";
+  const content = `<p style="margin:0 0 10px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:${accentColor};">It’s Back in Stock!</p><h1 style="margin:0 0 14px;font-size:28px;line-height:1.2;color:#0f172a;">${safeName}</h1><p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:#334155;">The product you asked us to watch is available again. Inventory may be limited.</p><table role="presentation" cellspacing="0" cellpadding="0"><tr><td><a href="${safeProductUrl}" style="display:inline-block;border-radius:10px;background:${brandColor};padding:14px 24px;color:#fff;text-decoration:none;font-weight:800;">View Product</a></td></tr></table>${manage}`;
+  const text = `It’s Back in Stock!\n\n${input.productName} is available again.\n\nView Product: ${input.productUrl}${input.manageUrl ? `\n\nManage or unsubscribe from restock notifications: ${input.manageUrl}` : ""}`;
+  return { subject, text, html: wrap(content, `${input.productName} is back in stock`) };
+}
+
 interface BulkEmailItem {
   productName: string;
   kits: number;

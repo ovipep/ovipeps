@@ -29,6 +29,7 @@ export async function getDashboardMetrics() {
     topProducts,
     affiliateOrderAgg,
     outstandingCommissionAgg,
+    activeRestockSubscribers,
   ] = await Promise.all([
     db.order.aggregate({
       where: paidOrdersWhere,
@@ -51,6 +52,7 @@ export async function getDashboardMetrics() {
       where: { status: { in: ["PENDING", "APPROVED", "LOCKED"] } },
       _sum: { commissionAmount: true },
     }),
+    db.restockSubscription.count({ where: { status: "ACTIVE" } }),
   ]);
 
   const revenue = revenueAgg._sum.total ?? 0;
@@ -72,6 +74,7 @@ export async function getDashboardMetrics() {
     })),
     affiliateRevenue,
     outstandingCommission,
+    activeRestockSubscribers,
   };
 }
 

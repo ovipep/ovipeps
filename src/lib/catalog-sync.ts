@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { FALLBACK_PRODUCTS } from "@/lib/fallback-data";
 
 let syncPromise: Promise<void> | null = null;
 
@@ -62,6 +63,42 @@ const RESTOCKING_PRODUCTS = [
 ] as const;
 
 async function syncCatalog() {
+  for (const [index, product] of FALLBACK_PRODUCTS.entries()) {
+    const stored = await db.product.upsert({
+      where: { slug: product.slug },
+      update: {},
+      create: {
+        name: product.name,
+        slug: product.slug,
+        shortDescription: product.shortDescription,
+        researchCategory: product.researchCategory,
+        featured: product.featured,
+        isNew: product.isNew,
+        published: true,
+        imageUrl: product.imageUrl,
+        sortOrder: product.slug === "glp-3" ? -100 : index,
+      },
+    });
+    for (const [variantIndex, variant] of product.variants.entries()) {
+      await db.productVariant.upsert({
+        where: { sku: variant.sku },
+        update: {},
+        create: {
+          productId: stored.id,
+          name: variant.name,
+          sku: variant.sku,
+          price: variant.price,
+          concentration: variant.name,
+          size: variant.name,
+          stockQuantity: variant.stockQuantity ?? 0,
+          inStock: variant.inStock,
+          isDefault: variant.isDefault ?? false,
+          sortOrder: variantIndex,
+        },
+      });
+    }
+  }
+
   await Promise.all([
     db.product.updateMany({
       where: { slug: "glp-3" },

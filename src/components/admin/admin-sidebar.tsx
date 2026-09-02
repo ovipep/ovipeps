@@ -15,6 +15,7 @@ import {
   PackagePlus,
   Mail,
   BarChart3,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/admin/bulk-orders", label: "Bulk Order Requests", icon: PackagePlus },
   { href: "/admin/emails", label: "Email Center", icon: Mail },
   { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/restock-subscriptions", label: "Restock Subscribers", icon: Bell },
   { href: "/admin/reports", label: "Sales Reports", icon: BarChart3 },
   { href: "/admin/affiliates", label: "Affiliates", icon: Users },
   { href: "/admin/affiliates/applications", label: "Applications", icon: ClipboardList },

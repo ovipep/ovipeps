@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { sendInventoryAlertsForVariants } from "@/lib/inventory";
+import { createVariantInventory, sendInventoryAlertsForVariants } from "@/lib/inventory";
 
 export async function POST(
   request: Request,
@@ -20,9 +19,7 @@ export async function POST(
   }
   let variant;
   try {
-    variant = await db.productVariant.create({
-      data: { productId, name: size, size, concentration: size, sku, price, stockQuantity, inStock: stockQuantity > 0 },
-    });
+    variant = await createVariantInventory({ productId, name: size, sku, price, stockQuantity });
   } catch {
     return NextResponse.json({ error: "That SKU already exists or the vial size could not be added" }, { status: 400 });
   }
