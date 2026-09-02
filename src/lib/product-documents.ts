@@ -60,6 +60,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "GHK-Cu Guide",
     url: "/documents/ghk-cu-guide.png",
   },
+  "tesamorelin": {
+    label: "Tesamorelin Guide",
+    url: "/documents/tesamorelin-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
