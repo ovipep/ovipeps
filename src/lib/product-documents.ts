@@ -44,6 +44,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "Retatrutide Guide",
     url: "/documents/retatrutide-guide.png",
   },
+  "epithalon": {
+    label: "Epithalon Guide",
+    url: "/documents/epithalon-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
