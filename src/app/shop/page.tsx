@@ -25,7 +25,7 @@ function getPageHeading(filter?: string, category?: string, query?: string) {
   if (category === "research-peptides") return "Research Peptides";
   if (category === "supplies") return "Lab Supplies";
   if (category === "bundles") return "Bundles";
-  return "Research Catalog";
+  return "Product Catalog";
 }
 
 function getPageDescription(filter?: string, category?: string) {
