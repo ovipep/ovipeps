@@ -68,6 +68,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "GLOW Guide",
     url: "/documents/glow-guide.png",
   },
+  "5-amino-1mq": {
+    label: "5 AMINO 1-Q Guide",
+    url: "/documents/5-amino-1q-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
