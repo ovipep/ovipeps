@@ -101,7 +101,10 @@ async function cancelExpiredOrder(orderId: string, now = new Date()) {
     for (const item of order.items) {
       await tx.productVariant.update({
         where: { id: item.variantId },
-        data: { stockQuantity: { increment: item.quantity } },
+        data: {
+          stockQuantity: { increment: item.quantity },
+          inStock: true,
+        },
       });
     }
 
@@ -388,6 +391,21 @@ export async function createOrder(input: CreateOrderInput) {
       if (reserved.count !== 1) {
         throw new Error(`${item.productName} — ${item.variantName} is restocking`);
       }
+    }
+
+    // Keep the stored availability flag synchronized with the quantity that
+    // powers both the admin inventory screen and the public shop. This runs in
+    // the same transaction as the order, so a failed order cannot consume stock.
+    const affectedVariantIds = [...new Set(orderItems.map((item) => item.variantId))];
+    const affectedVariants = await tx.productVariant.findMany({
+      where: { id: { in: affectedVariantIds } },
+      select: { id: true, stockQuantity: true },
+    });
+    for (const variant of affectedVariants) {
+      await tx.productVariant.update({
+        where: { id: variant.id },
+        data: { inStock: variant.stockQuantity > 0 },
+      });
     }
 
     const created = await tx.order.create({
