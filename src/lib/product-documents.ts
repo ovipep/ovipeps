@@ -1,9 +1,19 @@
-export const CJC_IPAMORELIN_GUIDE = {
-  productSlug: "cjc-ipamorelin",
-  label: "CJC/Ipamorelin Guide",
-  url: "/documents/cjc-1295-ipamorelin-guide.png",
-} as const;
+export interface ProductDocument {
+  label: string;
+  url: string;
+}
 
-export function hasCjcIpamorelinGuide(productSlug: string) {
-  return productSlug === CJC_IPAMORELIN_GUIDE.productSlug;
+export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
+  "cjc-ipamorelin": {
+    label: "CJC/Ipamorelin Guide",
+    url: "/documents/cjc-1295-ipamorelin-guide.png",
+  },
+  "ss-31": {
+    label: "SS-31 Guide",
+    url: "/documents/ss-31-guide.png",
+  },
+};
+
+export function getProductDocument(productSlug: string) {
+  return PRODUCT_DOCUMENTS[productSlug];
 }
