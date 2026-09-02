@@ -12,7 +12,10 @@ async function main() {
     process.env.DATABASE_URL;
   if (!connectionString) throw new Error("Production database connection is not configured");
 
-  const client = new pg.Client({ connectionString, ssl: { rejectUnauthorized: false } });
+  const connectionUrl = new URL(connectionString);
+  connectionUrl.searchParams.delete("sslmode");
+  connectionUrl.searchParams.delete("uselibpqcompat");
+  const client = new pg.Client({ connectionString: connectionUrl.toString(), ssl: { rejectUnauthorized: false } });
   await client.connect();
   try {
     await client.query("SELECT pg_advisory_lock($1)", [817_202_609]);
