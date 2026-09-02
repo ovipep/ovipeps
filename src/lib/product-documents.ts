@@ -32,6 +32,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "Wolverine Stack Guide",
     url: "/documents/wolverine-stack-guide.png",
   },
+  "klow": {
+    label: "KLOW Guide",
+    url: "/documents/klow-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
