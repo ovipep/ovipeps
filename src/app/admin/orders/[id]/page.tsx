@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ConfirmPaymentButton } from "@/components/admin/confirm-payment-button";
+import { ShipOrderButton } from "@/components/admin/ship-order-button";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { ResendConfirmationButton } from "@/components/admin/resend-confirmation-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +70,16 @@ export default async function AdminOrderDetailPage({
               </p>
             )}
             <ConfirmPaymentButton orderId={order.id} />
+          </CardContent>
+        </Card>
+      )}
+
+      {(order.status === "PROCESSING" || order.status === "PAYMENT_RECEIVED") && (
+        <Card className="border-primary/40 bg-primary/5">
+          <CardHeader><CardTitle>Pending Shipping</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">Select Shipped after this order has been shipped. The order status will then change to Complete.</p>
+            <ShipOrderButton orderId={order.id} />
           </CardContent>
         </Card>
       )}

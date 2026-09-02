@@ -35,7 +35,7 @@ export function ConfirmPaymentButton({ orderId }: { orderId: string }) {
   return (
     <div className="space-y-2">
       <Button onClick={handleConfirm} disabled={loading} variant="primary">
-        {loading ? "Confirming…" : "Confirm Payment"}
+        {loading ? "Updating…" : "Payment Received"}
       </Button>
       {error && <p className="text-sm text-error">{error}</p>}
     </div>

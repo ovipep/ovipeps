@@ -10,11 +10,11 @@ const statusConfig: Record<
     className: "border-warning/30 bg-warning/15 text-warning",
   },
   PAYMENT_RECEIVED: {
-    label: "Payment Received",
-    className: "border-success/30 bg-success/10 text-success",
+    label: "Pending Shipping",
+    className: "border-primary/30 bg-primary/10 text-primary",
   },
   PROCESSING: {
-    label: "Processing",
+    label: "Pending Shipping",
     className: "border-primary/30 bg-primary/10 text-primary",
   },
   SHIPPED: {
@@ -22,7 +22,7 @@ const statusConfig: Record<
     className: "border-teal/30 bg-teal/10 text-teal",
   },
   COMPLETED: {
-    label: "Completed",
+    label: "Complete",
     className: "border-success/30 bg-success/10 text-success",
   },
   CANCELLED: {
