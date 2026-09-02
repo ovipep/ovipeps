@@ -52,6 +52,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "Selank Guide",
     url: "/documents/selank-guide.png",
   },
+  "semax": {
+    label: "Semax Guide",
+    url: "/documents/semax-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
