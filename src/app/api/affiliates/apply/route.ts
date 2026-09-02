@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  buildAffiliateApplicationAdminEmail,
+  sendEmail,
+} from "@/lib/emails";
 
 const AGREEMENT_VERSION = "2026-08-27-tiered-commission";
 
@@ -92,6 +96,28 @@ export async function POST(request: Request) {
         agreementVersion: AGREEMENT_VERSION,
       },
     });
+
+    const adminDelivery = await sendEmail(
+      "ovipeps@gmail.com",
+      buildAffiliateApplicationAdminEmail({
+        applicationId: application.id,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email.toLowerCase(),
+        phone: data.phone,
+        city: data.city,
+        province: data.province,
+        socialProfiles: data.socialProfiles,
+        whyAffiliate: data.whyAffiliate,
+      }),
+      { idempotencyKey: `affiliate-application-admin-${application.id}` }
+    );
+    if (!adminDelivery.success) {
+      console.error("Affiliate application saved, but admin notification failed", {
+        applicationId: application.id,
+        error: adminDelivery.error,
+      });
+    }
 
     return NextResponse.json({ success: true, id: application.id });
   } catch (error) {

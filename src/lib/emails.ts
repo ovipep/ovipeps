@@ -337,6 +337,48 @@ Request reference: ${input.requestId}`;
   return { subject, text: body, html: wrap(textToHtml(body), subject) };
 }
 
+export function buildAffiliateApplicationAdminEmail(input: {
+  applicationId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  city: string;
+  province: string;
+  socialProfiles: Array<{
+    platform: string;
+    handle: string;
+    followers: number;
+  }>;
+  whyAffiliate: string;
+}): EmailTemplate {
+  const applicantName = `${input.firstName} ${input.lastName}`.trim();
+  const socialProfiles = input.socialProfiles
+    .map(
+      (profile) =>
+        `${profile.platform}: ${profile.handle} (${profile.followers.toLocaleString("en-CA")} followers)`
+    )
+    .join("\n");
+  const subject = `New affiliate application — ${applicantName}`;
+  const body = `A new affiliate application is awaiting review.
+
+Applicant: ${applicantName}
+Email: ${input.email}
+Phone: ${input.phone}
+Location: ${input.city}, ${input.province}, Canada
+
+Social profiles:
+${socialProfiles}
+
+Why they want to become an affiliate:
+${input.whyAffiliate}
+
+Review application: ${siteUrl}/admin/affiliates/applications
+Application reference: ${input.applicationId}`;
+
+  return { subject, text: body, html: wrap(textToHtml(body), subject) };
+}
+
 export function buildBulkOrderDecisionEmail(input: {
   firstName: string;
   requestId: string;
