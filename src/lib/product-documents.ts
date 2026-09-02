@@ -64,6 +64,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "Tesamorelin Guide",
     url: "/documents/tesamorelin-guide.png",
   },
+  "glow": {
+    label: "GLOW Guide",
+    url: "/documents/glow-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
