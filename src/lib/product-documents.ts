@@ -48,6 +48,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "Epithalon Guide",
     url: "/documents/epithalon-guide.png",
   },
+  "selank": {
+    label: "Selank Guide",
+    url: "/documents/selank-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
