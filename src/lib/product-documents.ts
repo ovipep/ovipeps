@@ -16,6 +16,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
     label: "NAD+ Guide",
     url: "/documents/nad-plus-guide.png",
   },
+  "bpc-157": {
+    label: "BPC-157 Guide",
+    url: "/documents/bpc-157-guide.png",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
