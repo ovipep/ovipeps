@@ -23,6 +23,15 @@ interface ShopCatalogProps {
   initialQuery: string;
 }
 
+const RESEARCH_SEARCH_EXAMPLES = [
+  "Inflammation",
+  "Tissue repair",
+  "Mitochondrial",
+  "Metabolism",
+  "Recovery",
+  "Anxiety",
+] as const;
+
 function filtersToSearchParams(
   filters: ProductFilterState,
   query: string,
@@ -84,17 +93,56 @@ export function ShopCatalog({
   return (
     <>
       <ScrollReveal delay={0.1}>
-        <form onSubmit={handleSearch} className="mb-8">
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sky" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search compounds, categories, descriptions..."
-              className="w-full rounded-2xl border-2 border-border/60 bg-card py-4 pl-12 pr-4 text-sm shadow-sm transition-all focus:border-sky/50 focus:outline-none focus:ring-4 focus:ring-sky/10"
-            />
+        <form
+          onSubmit={handleSearch}
+          className="mb-8 rounded-2xl border border-sky/20 bg-gradient-to-br from-sky/5 via-card to-cyan/5 p-5 shadow-sm sm:p-6"
+        >
+          <label htmlFor="research-search" className="block text-base font-bold text-foreground">
+            Search by research interest
+          </label>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            Enter a topic such as inflammation, metabolism, recovery, or mitochondrial function
+            to find compounds investigated in that area.
+          </p>
+          <div className="mt-4 flex max-w-3xl flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sky" />
+              <input
+                id="research-search"
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="What research area are you interested in?"
+                className="w-full rounded-xl border-2 border-border/60 bg-card py-3.5 pl-12 pr-4 text-sm shadow-sm transition-all focus:border-sky/50 focus:outline-none focus:ring-4 focus:ring-sky/10"
+              />
+            </div>
+            <button
+              type="submit"
+              className="rounded-xl bg-gradient-to-r from-sky to-cyan px-6 py-3.5 text-sm font-bold text-white shadow-md transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-sky/20"
+            >
+              Search research
+            </button>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground">Popular searches:</span>
+            {RESEARCH_SEARCH_EXAMPLES.map((example) => (
+              <button
+                key={example}
+                type="button"
+                onClick={() => {
+                  setQuery(example);
+                  pushFilters(filters, example);
+                }}
+                className="rounded-full border border-sky/25 bg-card px-3 py-1.5 text-xs font-semibold text-sky transition-colors hover:border-sky/50 hover:bg-sky/10"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Search results reflect areas investigated in research and are provided for educational
+            purposes only. They are not medical advice or treatment claims.
+          </p>
         </form>
       </ScrollReveal>
 
