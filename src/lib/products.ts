@@ -55,6 +55,106 @@ const CATEGORY_SLUG_MAP: Record<string, ProductCategory> = {
   bundles: "BUNDLE",
 };
 
+/**
+ * Curated research-topic index for the shop search. These terms describe areas
+ * investigated in research; they are not treatment or health claims.
+ */
+const RESEARCH_TOPIC_INDEX = [
+  {
+    products: ["Retatrutide", "GLP-3", "Reta"],
+    topics: ["metabolism", "metabolic", "energy expenditure", "appetite", "satiety", "body weight", "weight loss", "body fat", "glucose", "insulin sensitivity", "waist circumference", "lipid metabolism", "cardiovascular", "inflammation", "systemic inflammation"],
+  },
+  {
+    products: ["CJC-1295 + Ipamorelin", "CJC/Ipamorelin", "CJC-1295", "Ipamorelin"],
+    topics: ["growth hormone", "gh", "igf-1", "body composition", "lean tissue", "recovery", "tissue repair", "sleep", "fat metabolism", "protein synthesis"],
+  },
+  {
+    products: ["BPC-157"],
+    topics: ["tissue repair", "healing", "tendon", "ligament", "muscle injury", "gastrointestinal", "gut protection", "angiogenesis", "inflammation", "inflammatory signalling", "wound healing"],
+  },
+  {
+    products: ["TB-500"],
+    topics: ["tissue repair", "regeneration", "wound healing", "angiogenesis", "cell migration", "muscle recovery", "tendon recovery", "inflammation", "extracellular matrix", "remodelling"],
+  },
+  {
+    products: ["Wolverine Stack", "BPC-157 / TB-500", "BPC-157 + TB-500"],
+    topics: ["tissue repair", "tendon", "ligament", "muscle recovery", "wound healing", "angiogenesis", "inflammation", "cell migration", "remodelling"],
+  },
+  {
+    products: ["MOTS-C", "MOTS-c"],
+    topics: ["mitochondrial", "mitochondria", "cellular energy", "metabolism", "glucose utilization", "glucose utilisation", "insulin sensitivity", "metabolic flexibility", "exercise", "ampk", "aging metabolism", "age-related metabolic dysfunction"],
+  },
+  {
+    products: ["SS-31", "Elamipretide"],
+    topics: ["mitochondrial", "mitochondria", "cardiolipin", "cellular energy", "oxidative stress", "muscle function", "cardiovascular", "aging", "age-related decline"],
+  },
+  {
+    products: ["NAD+"],
+    topics: ["cellular energy", "mitochondrial", "mitochondria", "redox", "dna repair", "sirtuin", "cellular stress", "metabolism", "aging"],
+  },
+  {
+    products: ["GHK-Cu", "GHK-CU"],
+    topics: ["skin", "connective tissue", "regeneration", "collagen", "elastin", "wound healing", "angiogenesis", "remodelling", "inflammation", "inflammatory signalling", "hair", "follicle"],
+  },
+  {
+    products: ["KPV"],
+    topics: ["inflammation", "inflammatory signalling", "gut inflammation", "intestinal inflammation", "immune modulation", "skin inflammation", "epithelial barrier", "antimicrobial", "gut"],
+  },
+  {
+    products: ["GLOW"],
+    topics: ["skin", "tissue regeneration", "collagen", "connective tissue", "wound healing", "tissue repair", "inflammation", "inflammatory signalling", "skin quality", "recovery"],
+  },
+  {
+    products: ["Tesamorelin"],
+    topics: ["visceral fat", "body composition", "growth hormone", "igf-1", "lipid metabolism", "liver fat", "metabolism", "body fat", "fat distribution"],
+  },
+  {
+    products: ["Selank"],
+    topics: ["anxiety", "stress", "neurobiology", "gaba", "gabaergic", "cognition", "memory", "learning", "neuroplasticity", "immune signalling", "neuroimmune"],
+  },
+  {
+    products: ["Semax"],
+    topics: ["neuroprotection", "neuroplasticity", "cognition", "memory", "learning", "bdnf", "neurotrophic", "cerebral ischemia", "oxidative stress", "neurological recovery"],
+  },
+  {
+    products: ["Epithalon", "Epitalon"],
+    topics: ["aging", "longevity", "telomere", "telomerase", "circadian", "melatonin", "oxidative stress", "cellular aging", "mitochondrial", "mitochondria"],
+  },
+  {
+    products: ["5-Amino-1MQ", "5 Amino 1-Q", "5 Amino 1MQ"],
+    topics: ["metabolism", "metabolic", "nnmt", "cellular energy", "adipose", "fat metabolism", "body composition", "nad+", "insulin signalling"],
+  },
+] as const;
+
+function normalizeResearchSearch(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getResearchProductTerms(query: string): string[] {
+  const normalizedQuery = normalizeResearchSearch(query);
+  if (!normalizedQuery) return [];
+
+  return [
+    ...new Set(
+      RESEARCH_TOPIC_INDEX.flatMap((entry) => {
+        const matchesTopic = entry.topics.some((topic) => {
+          const normalizedTopic = normalizeResearchSearch(topic);
+          return normalizedTopic.includes(normalizedQuery) || normalizedQuery.includes(normalizedTopic);
+        });
+        const matchesProduct = entry.products.some((product) =>
+          normalizeResearchSearch(product).includes(normalizedQuery)
+        );
+        return matchesTopic || matchesProduct ? [...entry.products] : [];
+      })
+    ),
+  ];
+}
+
+
 function mapVariant(variant: ProductWithVariants["variants"][number]): ProductVariant {
   const catalogVariant = applyCatalogVariantPolicy(
     variant.sku,
@@ -92,11 +192,15 @@ function buildWhereClause(filters: ProductQueryFilters): Prisma.ProductWhereInpu
 
   if (filters.q?.trim()) {
     const q = filters.q.trim();
+    const researchProductTerms = getResearchProductTerms(q);
     where.OR = [
       { name: { contains: q } },
       { shortDescription: { contains: q } },
       { researchCategory: { contains: q } },
       { description: { contains: q } },
+      ...researchProductTerms.map((productName) => ({
+        name: { contains: productName },
+      })),
     ];
   }
 
@@ -201,11 +305,16 @@ function filterFallbackProducts(filters: ProductQueryFilters): ProductCardData[]
   if (filters.filter === "new") result = result.filter((p) => p.isNew);
   if (filters.q?.trim()) {
     const q = filters.q.trim().toLowerCase();
+    const researchProductTerms = getResearchProductTerms(q).map(normalizeResearchSearch);
     result = result.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.researchCategory?.toLowerCase().includes(q) ||
-        p.shortDescription?.toLowerCase().includes(q)
+        p.shortDescription?.toLowerCase().includes(q) ||
+        researchProductTerms.some((productName) => {
+          const searchableProduct = normalizeResearchSearch(`${p.name} ${p.slug}`);
+          return searchableProduct.includes(productName) || productName.includes(searchableProduct);
+        })
     );
   }
   result = applyPostFilters(result, filters);
