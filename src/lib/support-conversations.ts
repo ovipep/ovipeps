@@ -27,6 +27,16 @@ export function createSupportReference() {
   return `CHAT-${randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
+export async function sendNewSupportAlert(input: { reference: string; name: string; email: string; message: string }) {
+  const adminUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ovipeps.ca"}/admin/support`;
+  const subject = `New customer message — ${input.reference}`;
+  return sendEmail(adminEmail, {
+    subject,
+    html: `<div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.65"><h2 style="color:#075985">New OVIpeps customer message</h2><p><strong>Reference:</strong> ${escapeHtml(input.reference)}</p><p><strong>Customer:</strong> ${escapeHtml(input.name)}</p><p><strong>Email:</strong> ${escapeHtml(input.email)}</p><p><strong>Message:</strong><br>${escapeHtml(input.message).replace(/\n/g, "<br>")}</p><p><a href="${adminUrl}" style="display:inline-block;border-radius:8px;background:#075985;padding:12px 18px;color:#fff;text-decoration:none;font-weight:700">Open Customer Messages</a></p><p style="font-size:12px;color:#64748b">If no response is recorded, a separate reminder will be sent after 20 hours.</p></div>`,
+    text: `New OVIpeps customer message\n\nReference: ${input.reference}\nCustomer: ${input.name}\nEmail: ${input.email}\nMessage: ${input.message}\n\nOpen Customer Messages: ${adminUrl}\n\nIf no response is recorded, a separate reminder will be sent after 20 hours.`,
+  }, { idempotencyKey: `support-alert-${input.reference}` });
+}
+
 export async function scheduleSupportReminder(input: { reference: string; name: string; email: string; message: string }) {
   const apiKey = process.env.RESEND_API_KEY ?? process.env.RESEND_ADMIN_API_KEY;
   if (!apiKey) return null;
