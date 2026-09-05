@@ -24,12 +24,14 @@ interface ShopCatalogProps {
 }
 
 const RESEARCH_SEARCH_EXAMPLES = [
-  "Inflammation",
-  "Tissue repair",
-  "Mitochondrial",
-  "Metabolism",
-  "Recovery",
-  "Anxiety",
+  "Joint pain",
+  "Fat loss",
+  "Increased energy",
+  "Gut health",
+  "Injury recovery",
+  "Skin repair",
+  "Better sleep",
+  "Memory and focus",
 ] as const;
 
 function filtersToSearchParams(
@@ -101,8 +103,8 @@ export function ShopCatalog({
             Search by research interest
           </label>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Enter a topic such as inflammation, metabolism, recovery, or mitochondrial function
-            to find compounds investigated in that area.
+            Enter an everyday goal or concern—such as joint pain, fat loss, increased energy,
+            gut health, or recovery—to find compounds investigated in related research.
           </p>
           <div className="mt-4 flex max-w-3xl flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
