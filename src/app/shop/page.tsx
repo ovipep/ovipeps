@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { PageHero } from "@/components/content/page-hero";
 import { ShopCatalog } from "@/components/products/shop-catalog";
 import { RestockSignup } from "@/components/products/restock-signup";
+import { SupportChat } from "@/components/products/support-chat";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getProducts, getProductPriceRange, getResearchCategories, getSiteSetting } from "@/lib/products";
 import { parseShopSearchParams } from "@/lib/shop-params";
@@ -110,6 +111,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       >
         <ShopContent searchParams={params} />
       </Suspense>
+      <SupportChat />
     </>
   );
 }
