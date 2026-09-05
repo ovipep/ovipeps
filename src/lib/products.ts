@@ -62,67 +62,67 @@ const CATEGORY_SLUG_MAP: Record<string, ProductCategory> = {
 const RESEARCH_TOPIC_INDEX = [
   {
     products: ["Retatrutide", "GLP-3", "Reta"],
-    topics: ["metabolism", "metabolic", "energy expenditure", "appetite", "satiety", "body weight", "weight loss", "body fat", "glucose", "insulin sensitivity", "waist circumference", "lipid metabolism", "cardiovascular", "inflammation", "systemic inflammation"],
+    topics: ["metabolism", "metabolic", "energy expenditure", "appetite", "satiety", "body weight", "weight loss", "body fat", "glucose", "insulin sensitivity", "waist circumference", "lipid metabolism", "cardiovascular", "inflammation", "systemic inflammation", "fat loss", "lose weight", "weight management", "reduced appetite", "appetite control", "blood sugar", "belly fat", "more energy", "increased energy", "heart health"],
   },
   {
     products: ["CJC-1295 + Ipamorelin", "CJC/Ipamorelin", "CJC-1295", "Ipamorelin"],
-    topics: ["growth hormone", "gh", "igf-1", "body composition", "lean tissue", "recovery", "tissue repair", "sleep", "fat metabolism", "protein synthesis"],
+    topics: ["growth hormone", "gh", "igf-1", "body composition", "lean tissue", "recovery", "tissue repair", "sleep", "fat metabolism", "protein synthesis", "fat loss", "muscle growth", "build muscle", "better sleep", "sleep quality", "injury recovery", "workout recovery", "more energy"],
   },
   {
     products: ["BPC-157"],
-    topics: ["tissue repair", "healing", "tendon", "ligament", "muscle injury", "gastrointestinal", "gut protection", "angiogenesis", "inflammation", "inflammatory signalling", "wound healing"],
+    topics: ["tissue repair", "healing", "tendon", "ligament", "muscle injury", "gastrointestinal", "gut protection", "angiogenesis", "inflammation", "inflammatory signalling", "wound healing", "joint pain", "sore joints", "joint recovery", "injury recovery", "sports injury", "tendon pain", "ligament injury", "gut health", "stomach health", "healing"],
   },
   {
     products: ["TB-500"],
-    topics: ["tissue repair", "regeneration", "wound healing", "angiogenesis", "cell migration", "muscle recovery", "tendon recovery", "inflammation", "extracellular matrix", "remodelling"],
+    topics: ["tissue repair", "regeneration", "wound healing", "angiogenesis", "cell migration", "muscle recovery", "tendon recovery", "inflammation", "extracellular matrix", "remodelling", "joint pain", "sore joints", "joint recovery", "injury recovery", "sports injury", "tendon pain", "muscle soreness", "faster recovery", "healing"],
   },
   {
     products: ["Wolverine Stack", "BPC-157 / TB-500", "BPC-157 + TB-500"],
-    topics: ["tissue repair", "tendon", "ligament", "muscle recovery", "wound healing", "angiogenesis", "inflammation", "cell migration", "remodelling"],
+    topics: ["tissue repair", "tendon", "ligament", "muscle recovery", "wound healing", "angiogenesis", "inflammation", "cell migration", "remodelling", "joint pain", "sore joints", "joint recovery", "injury recovery", "sports injury", "tendon pain", "ligament injury", "muscle soreness", "faster recovery", "healing"],
   },
   {
     products: ["MOTS-C", "MOTS-c"],
-    topics: ["mitochondrial", "mitochondria", "cellular energy", "metabolism", "glucose utilization", "glucose utilisation", "insulin sensitivity", "metabolic flexibility", "exercise", "ampk", "aging metabolism", "age-related metabolic dysfunction"],
+    topics: ["mitochondrial", "mitochondria", "cellular energy", "metabolism", "glucose utilization", "glucose utilisation", "insulin sensitivity", "metabolic flexibility", "exercise", "ampk", "aging metabolism", "age-related metabolic dysfunction", "more energy", "increased energy", "energy levels", "exercise performance", "workout energy", "stamina", "endurance", "blood sugar", "healthy aging"],
   },
   {
     products: ["SS-31", "Elamipretide"],
-    topics: ["mitochondrial", "mitochondria", "cardiolipin", "cellular energy", "oxidative stress", "muscle function", "cardiovascular", "aging", "age-related decline"],
+    topics: ["mitochondrial", "mitochondria", "cardiolipin", "cellular energy", "oxidative stress", "muscle function", "cardiovascular", "aging", "age-related decline", "more energy", "increased energy", "energy levels", "muscle weakness", "stamina", "endurance", "heart health", "healthy aging"],
   },
   {
     products: ["NAD+"],
-    topics: ["cellular energy", "mitochondrial", "mitochondria", "redox", "dna repair", "sirtuin", "cellular stress", "metabolism", "aging"],
+    topics: ["cellular energy", "mitochondrial", "mitochondria", "redox", "dna repair", "sirtuin", "cellular stress", "metabolism", "aging", "more energy", "increased energy", "energy levels", "brain fog", "healthy aging", "anti aging", "recovery"],
   },
   {
     products: ["GHK-Cu", "GHK-CU"],
-    topics: ["skin", "connective tissue", "regeneration", "collagen", "elastin", "wound healing", "angiogenesis", "remodelling", "inflammation", "inflammatory signalling", "hair", "follicle"],
+    topics: ["skin", "connective tissue", "regeneration", "collagen", "elastin", "wound healing", "angiogenesis", "remodelling", "inflammation", "inflammatory signalling", "hair", "follicle", "skin repair", "skin health", "better skin", "wrinkles", "fine lines", "hair growth", "thinning hair", "wound care", "healing"],
   },
   {
     products: ["KPV"],
-    topics: ["inflammation", "inflammatory signalling", "gut inflammation", "intestinal inflammation", "immune modulation", "skin inflammation", "epithelial barrier", "antimicrobial", "gut"],
+    topics: ["inflammation", "inflammatory signalling", "gut inflammation", "intestinal inflammation", "immune modulation", "skin inflammation", "epithelial barrier", "antimicrobial", "gut", "gut health", "stomach inflammation", "digestive health", "skin irritation", "skin redness", "immune health"],
   },
   {
     products: ["GLOW"],
-    topics: ["skin", "tissue regeneration", "collagen", "connective tissue", "wound healing", "tissue repair", "inflammation", "inflammatory signalling", "skin quality", "recovery"],
+    topics: ["skin", "tissue regeneration", "collagen", "connective tissue", "wound healing", "tissue repair", "inflammation", "inflammatory signalling", "skin quality", "recovery", "skin repair", "skin health", "better skin", "collagen support", "wound care", "healing", "inflammation"],
   },
   {
     products: ["Tesamorelin"],
-    topics: ["visceral fat", "body composition", "growth hormone", "igf-1", "lipid metabolism", "liver fat", "metabolism", "body fat", "fat distribution"],
+    topics: ["visceral fat", "body composition", "growth hormone", "igf-1", "lipid metabolism", "liver fat", "metabolism", "body fat", "fat distribution", "fat loss", "belly fat", "abdominal fat", "waist fat", "liver health", "body recomposition", "weight management"],
   },
   {
     products: ["Selank"],
-    topics: ["anxiety", "stress", "neurobiology", "gaba", "gabaergic", "cognition", "memory", "learning", "neuroplasticity", "immune signalling", "neuroimmune"],
+    topics: ["anxiety", "stress", "neurobiology", "gaba", "gabaergic", "cognition", "memory", "learning", "neuroplasticity", "immune signalling", "neuroimmune", "stress relief", "feeling anxious", "calm", "relaxation", "mental clarity", "focus", "better sleep"],
   },
   {
     products: ["Semax"],
-    topics: ["neuroprotection", "neuroplasticity", "cognition", "memory", "learning", "bdnf", "neurotrophic", "cerebral ischemia", "oxidative stress", "neurological recovery"],
+    topics: ["neuroprotection", "neuroplasticity", "cognition", "memory", "learning", "bdnf", "neurotrophic", "cerebral ischemia", "oxidative stress", "neurological recovery", "brain health", "brain fog", "mental clarity", "focus", "concentration", "memory support", "learning", "stroke recovery"],
   },
   {
     products: ["Epithalon", "Epitalon"],
-    topics: ["aging", "longevity", "telomere", "telomerase", "circadian", "melatonin", "oxidative stress", "cellular aging", "mitochondrial", "mitochondria"],
+    topics: ["aging", "longevity", "telomere", "telomerase", "circadian", "melatonin", "oxidative stress", "cellular aging", "mitochondrial", "mitochondria", "healthy aging", "anti aging", "sleep cycle", "better sleep", "longevity", "cellular health"],
   },
   {
     products: ["5-Amino-1MQ", "5 Amino 1-Q", "5 Amino 1MQ"],
-    topics: ["metabolism", "metabolic", "nnmt", "cellular energy", "adipose", "fat metabolism", "body composition", "nad+", "insulin signalling"],
+    topics: ["metabolism", "metabolic", "nnmt", "cellular energy", "adipose", "fat metabolism", "body composition", "nad+", "insulin signalling", "fat loss", "belly fat", "weight management", "body recomposition", "more energy", "increased energy", "blood sugar"],
   },
 ] as const;
 
