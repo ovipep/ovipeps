@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Calculator,
+  BookOpen,
   ChevronDown,
   FlaskConical,
   Menu,
@@ -22,6 +23,7 @@ import { MegaMenu } from "./mega-menu";
 import { CartDrawer } from "./cart-drawer";
 import { SearchModal } from "./search-modal";
 import { BrandMark } from "./brand-mark";
+import type { ClassroomNavDocument } from "@/lib/classroom";
 
 const shopSections = [
   {
@@ -73,7 +75,6 @@ const shopSections = [
 ];
 
 const mobileNavLinks = [
-  { label: "Peptide Calculator", href: "/calculator" },
   { label: "Research Hub", href: "/research" },
   { label: "Partner Program", href: "/affiliates" },
   { label: "Shop USA Affiliate", href: "https://www.revthreeusa.com/?ref=IVO" },
@@ -83,12 +84,18 @@ const mobileNavLinks = [
   { label: "Account", href: "/account" },
 ];
 
-export function Header() {
+export function Header({
+  classroomDocuments,
+}: {
+  classroomDocuments: ClassroomNavDocument[];
+}) {
   const [shopOpen, setShopOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileShopOpen, setMobileShopOpen] = useState(false);
+  const [classroomOpen, setClassroomOpen] = useState(false);
+  const [mobileClassroomOpen, setMobileClassroomOpen] = useState(false);
 
   const itemCount = useCartStore((s) => s.itemCount());
   const openCart = useCartStore((s) => s.openCart);
@@ -150,7 +157,10 @@ export function Header() {
 
           <nav
             className="hidden items-center gap-1 lg:flex"
-            onMouseLeave={() => setShopOpen(false)}
+            onMouseLeave={() => {
+              setShopOpen(false);
+              setClassroomOpen(false);
+            }}
           >
             <MegaMenu
               label="Shop"
@@ -211,6 +221,43 @@ export function Header() {
               <Calculator className="h-4 w-4" />
               Peptide Calculator
             </Link>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setClassroomOpen((open) => !open)}
+                aria-expanded={classroomOpen}
+                aria-haspopup="menu"
+                className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-secondary hover:text-navy"
+              >
+                Classroom
+                <ChevronDown
+                  className={cn("h-4 w-4 transition-transform", classroomOpen && "rotate-180")}
+                />
+              </button>
+              {classroomOpen ? (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
+                >
+                  <p className="border-b border-border px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Peptide Information
+                  </p>
+                  <div className="max-h-[70vh] overflow-y-auto p-2">
+                    {classroomDocuments.map((document) => (
+                      <Link
+                        key={document.id}
+                        href={`/classroom/${document.slug}`}
+                        role="menuitem"
+                        onClick={() => setClassroomOpen(false)}
+                        className="block rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-secondary hover:text-navy"
+                      >
+                        {document.displayName}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </nav>
 
           <div className="flex items-center gap-1 sm:gap-2">
@@ -310,6 +357,49 @@ export function Header() {
                 </div>
               )}
 
+              <Link
+                href="/calculator"
+                onClick={() => setMobileOpen(false)}
+                className="mt-3 block rounded-lg bg-gradient-to-r from-sky to-cyan px-3 py-2.5 text-sm font-bold text-white shadow-md shadow-sky/20"
+              >
+                <span className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4" />
+                  Peptide Calculator
+                </span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setMobileClassroomOpen((open) => !open)}
+                aria-expanded={mobileClassroomOpen}
+                className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-secondary"
+              >
+                <span className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Classroom
+                </span>
+                <ChevronDown
+                  className={cn("h-4 w-4 transition-transform", mobileClassroomOpen && "rotate-180")}
+                />
+              </button>
+              {mobileClassroomOpen ? (
+                <div className="ml-3 max-h-72 space-y-1 overflow-y-auto border-l border-border pl-3">
+                  <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Peptide Information
+                  </p>
+                  {classroomDocuments.map((document) => (
+                    <Link
+                      key={document.id}
+                      href={`/classroom/${document.slug}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    >
+                      {document.displayName}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+
               {mobileNavLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -322,7 +412,6 @@ export function Header() {
                   )}
                 >
                   <span className="flex items-center gap-2">
-                    {link.href === "/calculator" ? <Calculator className="h-4 w-4" /> : null}
                     {link.label}
                   </span>
                 </Link>

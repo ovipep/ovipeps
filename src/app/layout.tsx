@@ -9,6 +9,7 @@ import { ScrollProgress } from "@/components/motion/scroll-progress";
 import { Providers } from "@/components/providers";
 import { SITE_NAME, SITE_URL } from "@/lib/content";
 import { getAnnouncements } from "@/lib/safe-db";
+import { getVisibleClassroomDocuments } from "@/lib/classroom";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -92,7 +93,10 @@ const organizationSchema = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const announcements = await getAnnouncements();
+  const [announcements, classroomDocuments] = await Promise.all([
+    getAnnouncements(),
+    getVisibleClassroomDocuments(),
+  ]);
 
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
@@ -114,7 +118,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </a>
           <ScrollProgress />
           <AnnouncementBar announcements={announcements} />
-          <Header />
+          <Header classroomDocuments={classroomDocuments} />
           <main id="main-content" className="flex-1">
             {children}
           </main>

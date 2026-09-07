@@ -17,6 +17,7 @@ import {
   BarChart3,
   Bell,
   MessagesSquare,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
@@ -34,6 +35,7 @@ const navItems = [
   { href: "/admin/affiliates/applications", label: "Applications", icon: ClipboardList },
   { href: "/admin/affiliates/payouts", label: "Payouts", icon: Banknote },
   { href: "/admin/coas", label: "COAs", icon: FileCheck },
+  { href: "/admin/classroom", label: "Classroom", icon: BookOpen },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

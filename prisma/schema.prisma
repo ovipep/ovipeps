@@ -188,6 +188,24 @@ model CoaDocument {
   batch   ProductBatch? @relation(fields: [batchId], references: [id])
 }
 
+// ─── Classroom Documents ────────────────────────────────────────────────────
+
+model ClassroomDocument {
+  id          String   @id @default(cuid())
+  displayName String
+  slug        String   @unique
+  fileName    String
+  mimeType    String
+  staticUrl   String?
+  fileData    Bytes?
+  visible     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([visible, sortOrder])
+}
+
 // ─── Orders & Payments ────────────────────────────────────────────────────────
 
 model Order {

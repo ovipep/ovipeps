@@ -36,6 +36,24 @@ async function main() {
         throw error;
       }
     }
+
+    const classroom = await client.query(
+      `SELECT to_regclass('public."ClassroomDocument"') IS NOT NULL AS exists`
+    );
+    if (!classroom.rows[0]?.exists) {
+      const sql = await readFile(
+        new URL("../prisma/migrations/20260907010000_classroom_documents/migration.sql", import.meta.url),
+        "utf8"
+      );
+      await client.query("BEGIN");
+      try {
+        await client.query(sql);
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
+    }
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [817_202_609]).catch(() => undefined);
     await client.end();
