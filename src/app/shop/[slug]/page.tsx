@@ -26,6 +26,7 @@ import { getLowestPrice, type ProductVariant } from "@/types/product";
 import { formatCurrency } from "@/lib/utils";
 import { getProductDocument } from "@/lib/product-documents";
 import { ProductDocumentPill } from "@/components/products/product-document-pill";
+import { ProductCoaPill } from "@/components/products/product-coa-pill";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -166,6 +167,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {getProductDocument(product.slug) && (
                 <ProductDocumentPill productSlug={product.slug} />
               )}
+              <ProductCoaPill productSlug={product.slug} />
               {product.researchCategory && (
                 <Badge variant="research">{product.researchCategory}</Badge>
               )}
