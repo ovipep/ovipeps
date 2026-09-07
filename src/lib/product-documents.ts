@@ -3,6 +3,11 @@ export interface ProductDocument {
   url: string;
 }
 
+export interface ProductCoaDocument {
+  label: string;
+  url: string;
+}
+
 export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
   "cjc-ipamorelin": {
     label: "CJC/Ipamorelin Guide",
@@ -74,6 +79,17 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
   },
 };
 
+export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
+  "mots-c": {
+    label: "MOTS-C COA",
+    url: "/coas/mots-c-coa-2026-08-23.pdf",
+  },
+};
+
 export function getProductDocument(productSlug: string) {
   return PRODUCT_DOCUMENTS[productSlug];
+}
+
+export function getProductCoaDocument(productSlug: string) {
+  return PRODUCT_COA_DOCUMENTS[productSlug];
 }
