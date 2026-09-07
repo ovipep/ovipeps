@@ -8,6 +8,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { getProductDocument } from "@/lib/product-documents";
 import { useCartStore } from "@/store/cart";
 import { ProductDocumentPill } from "@/components/products/product-document-pill";
+import { ProductCoaPill } from "@/components/products/product-coa-pill";
 import {
   getDefaultVariant,
   getLowestPrice,
@@ -158,11 +159,12 @@ export function ProductCard({
           <h3 className="text-base font-bold leading-snug text-foreground transition-colors group-hover:text-sky">
             {product.name}
           </h3>
-          {getProductDocument(product.slug) && (
-            <div className="flex flex-wrap pt-1">
+          <div className="flex flex-wrap gap-2 pt-1">
+            {getProductDocument(product.slug) && (
               <ProductDocumentPill productSlug={product.slug} insideProductLink />
-            </div>
-          )}
+            )}
+            <ProductCoaPill productSlug={product.slug} insideProductLink />
+          </div>
           <div className="mt-auto flex items-end justify-between gap-2 pt-2">
             {inStock && (
               <p className="text-xl font-bold text-navy-deep">
