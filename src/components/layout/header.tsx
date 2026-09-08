@@ -247,6 +247,8 @@ export function Header({
                       <Link
                         key={document.id}
                         href={`/classroom/${document.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         role="menuitem"
                         onClick={() => setClassroomOpen(false)}
                         className="block rounded-lg px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-secondary hover:text-navy"
@@ -391,6 +393,8 @@ export function Header({
                     <Link
                       key={document.id}
                       href={`/classroom/${document.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => setMobileOpen(false)}
                       className="block rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
                     >
