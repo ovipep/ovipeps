@@ -153,6 +153,117 @@ export async function expireUnpaidOrders(now = new Date()) {
   return cancelledCount;
 }
 
+export async function deleteOrder(
+  orderId: string,
+  options: { deletedBy?: string } = {}
+) {
+  const result = await db.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, commission: true },
+    });
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    const eventIds: string[] = [];
+
+    // Checkout reserves inventory immediately. Only an order still awaiting
+    // payment has stock that must be released when it is permanently deleted.
+    if (order.status === "AWAITING_PAYMENT") {
+      const variants = await tx.productVariant.findMany({
+        where: { id: { in: order.items.map((item) => item.variantId) } },
+        select: { id: true, productId: true },
+      });
+      const productIds = [
+        ...new Set(variants.map((variant) => variant.productId)),
+      ].sort();
+
+      for (const productId of productIds) {
+        await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${productId} FOR UPDATE`;
+      }
+
+      const before = new Map<string, number>();
+      for (const productId of productIds) {
+        const total = await tx.productVariant.aggregate({
+          where: { productId },
+          _sum: { stockQuantity: true },
+        });
+        before.set(productId, total._sum.stockQuantity ?? 0);
+      }
+
+      for (const item of order.items) {
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: {
+            stockQuantity: { increment: item.quantity },
+            inStock: true,
+          },
+        });
+      }
+
+      if (order.discountCode) {
+        await tx.discountCode.updateMany({
+          where: { code: order.discountCode, usedCount: { gt: 0 } },
+          data: { usedCount: { decrement: 1 } },
+        });
+      }
+
+      for (const productId of productIds) {
+        const total = await tx.productVariant.aggregate({
+          where: { productId },
+          _sum: { stockQuantity: true },
+        });
+        if ((before.get(productId) ?? 0) <= 0 && (total._sum.stockQuantity ?? 0) > 0) {
+          const event = await tx.restockEvent.create({
+            data: { productId, occurredAt: new Date() },
+          });
+          eventIds.push(event.id);
+        }
+      }
+    }
+
+    if (order.commission) {
+      await tx.affiliatePayoutItem.updateMany({
+        where: { commissionId: order.commission.id },
+        data: { commissionId: null },
+      });
+      await tx.affiliateCommission.delete({
+        where: { id: order.commission.id },
+      });
+    }
+
+    await tx.order.delete({ where: { id: order.id } });
+    await tx.auditLog.create({
+      data: {
+        userId: options.deletedBy,
+        action: "DELETE_ORDER",
+        entity: "Order",
+        entityId: order.id,
+        details: JSON.stringify({
+          orderNumber: order.orderNumber,
+          email: order.email,
+          status: order.status,
+          total: order.total,
+        }),
+      },
+    });
+
+    return { orderNumber: order.orderNumber, eventIds };
+  });
+
+  for (const eventId of result.eventIds) {
+    try {
+      await deliverRestockEvent(eventId);
+    } catch (error) {
+      console.error("Restock notification delivery failed after order deletion", error);
+    }
+  }
+
+  return { orderNumber: result.orderNumber };
+}
+
 type OrderForConfirmation = Prisma.OrderGetPayload<{
   include: { items: true };
 }>;
