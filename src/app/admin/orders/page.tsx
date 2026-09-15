@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
+import { DeleteOrderButton } from "@/components/admin/delete-order-button";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -113,12 +114,18 @@ export default async function AdminOrdersPage({
                     {formatDate(order.createdAt)}
                   </td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      View
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      <Link
+                        href={`/admin/orders/${order.id}`}
+                        className="text-sm font-medium text-primary hover:underline"
+                      >
+                        View
+                      </Link>
+                      <DeleteOrderButton
+                        orderId={order.id}
+                        orderNumber={order.orderNumber}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))
