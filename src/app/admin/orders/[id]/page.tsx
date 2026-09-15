@@ -3,6 +3,7 @@ import { ConfirmPaymentButton } from "@/components/admin/confirm-payment-button"
 import { ShipOrderButton } from "@/components/admin/ship-order-button";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { ResendConfirmationButton } from "@/components/admin/resend-confirmation-button";
+import { DeleteOrderButton } from "@/components/admin/delete-order-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -51,7 +52,14 @@ export default async function AdminOrderDetailPage({
             Placed {formatDate(order.createdAt)}
           </p>
         </div>
-        <OrderStatusBadge status={order.status} />
+        <div className="flex items-center gap-3">
+          <OrderStatusBadge status={order.status} />
+          <DeleteOrderButton
+            orderId={order.id}
+            orderNumber={order.orderNumber}
+            redirectAfterDelete
+          />
+        </div>
       </div>
 
       {order.status === "AWAITING_PAYMENT" && (
