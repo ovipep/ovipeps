@@ -11,13 +11,38 @@ const schema = z.object({
   shippingAmount: z.coerce.number().min(0).default(0), paymentMethod: z.string().trim().max(80).optional(),
   reference: z.string().trim().max(100).optional(), notes: z.string().trim().max(500).optional(),
 });
+
+const updateSchema = schema.extend({ id: z.string().trim().min(1) });
+
+async function convertedValues(input: z.infer<typeof schema>) {
+  const conversion = await getCadExchangeRate(input.currency, input.transactionAt);
+  return {
+    amount: Math.round(input.amount * conversion.rate * 100) / 100,
+    foreignAmount: input.amount,
+    fxRate: conversion.rate,
+    fxRateDate: conversion.rateDate,
+    fxRateSource: conversion.source,
+  };
+}
+
 export async function addLedgerEntry(formData: FormData) {
   const session = await requireAdmin();
   if (!session?.user?.id) throw new Error("Unauthorized");
   const input = schema.parse(Object.fromEntries(formData));
-  const conversion = await getCadExchangeRate(input.currency, input.transactionAt);
-  const cadAmount = Math.round(input.amount * conversion.rate * 100) / 100;
-  await db.ledgerEntry.create({ data: { ...input, amount: cadAmount, foreignAmount: input.amount, fxRate: conversion.rate, fxRateDate: conversion.rateDate, fxRateSource: conversion.source, createdBy: session.user.id } });
+  const conversion = await convertedValues(input);
+  await db.ledgerEntry.create({ data: { ...input, ...conversion, createdBy: session.user.id } });
   await db.auditLog.create({ data: { userId: session.user.id, action: "CREATE_LEDGER_ENTRY", entity: "LedgerEntry", details: JSON.stringify(input) } });
+  revalidatePath("/admin/ledger");
+}
+
+export async function updateLedgerEntry(formData: FormData) {
+  const session = await requireAdmin();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  const { id, ...input } = updateSchema.parse(Object.fromEntries(formData));
+  const existing = await db.ledgerEntry.findUnique({ where: { id } });
+  if (!existing) throw new Error("Ledger entry not found");
+  const conversion = await convertedValues(input);
+  await db.ledgerEntry.update({ where: { id }, data: { ...input, ...conversion } });
+  await db.auditLog.create({ data: { userId: session.user.id, action: "UPDATE_LEDGER_ENTRY", entity: "LedgerEntry", entityId: id, details: JSON.stringify({ before: existing, after: input }) } });
   revalidatePath("/admin/ledger");
 }
