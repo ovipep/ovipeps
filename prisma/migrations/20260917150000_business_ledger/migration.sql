@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS "LedgerEntry" (
   "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "LedgerEntry_pkey" PRIMARY KEY ("id")
 );
+ALTER TABLE "LedgerEntry" ADD COLUMN IF NOT EXISTS "currency" TEXT NOT NULL DEFAULT 'CAD';
+ALTER TABLE "LedgerEntry" ADD COLUMN IF NOT EXISTS "foreignAmount" DOUBLE PRECISION;
+ALTER TABLE "LedgerEntry" ADD COLUMN IF NOT EXISTS "fxRate" DOUBLE PRECISION;
+ALTER TABLE "LedgerEntry" ADD COLUMN IF NOT EXISTS "fxRateDate" TIMESTAMP(3);
+ALTER TABLE "LedgerEntry" ADD COLUMN IF NOT EXISTS "fxRateSource" TEXT;
 CREATE INDEX IF NOT EXISTS "LedgerEntry_transactionAt_idx" ON "LedgerEntry"("transactionAt");
 CREATE INDEX IF NOT EXISTS "LedgerEntry_entryType_transactionAt_idx" ON "LedgerEntry"("entryType", "transactionAt");
 
