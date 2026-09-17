@@ -19,6 +19,7 @@ export async function getBusinessLedger(from: Date, to: Date) {
     tax: order.taxAmount, expense: 0, total: order.total, reference: order.orderNumber,
     paymentMethod: order.paymentMethod.replaceAll("_", " "), notes: order.notes ?? "",
     currency: "CAD", foreignAmount: order.total, fxRate: 1, fxRateDate: order.paidAt ?? order.createdAt,
+    manualId: null,
   }));
   const manualRows = manualEntries.map((entry) => ({
     id: `manual-${entry.id}`, date: entry.transactionAt, type: entry.entryType,
@@ -30,6 +31,7 @@ export async function getBusinessLedger(from: Date, to: Date) {
     reference: entry.reference ?? "", paymentMethod: entry.paymentMethod ?? "", notes: entry.notes ?? "",
     currency: entry.currency, foreignAmount: entry.foreignAmount ?? entry.amount,
     fxRate: entry.fxRate ?? 1, fxRateDate: entry.fxRateDate ?? entry.transactionAt,
+    manualId: entry.id,
   }));
   return { rows: [...orderRows, ...manualRows].sort((a, b) => b.date.getTime() - a.date.getTime()), variants };
 }
