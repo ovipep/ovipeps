@@ -756,20 +756,25 @@ model AuditLog {
 }
 
 model LedgerEntry {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   transactionAt  DateTime
   entryType      String
   category       String
   description    String
   amount         Float
-  taxAmount      Float    @default(0)
-  shippingAmount Float    @default(0)
+  currency       String    @default("CAD")
+  foreignAmount  Float?
+  fxRate         Float?
+  fxRateDate     DateTime?
+  fxRateSource   String?
+  taxAmount      Float     @default(0)
+  shippingAmount Float     @default(0)
   paymentMethod  String?
   reference      String?
   notes          String?
   createdBy      String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([transactionAt])
   @@index([entryType, transactionAt])
