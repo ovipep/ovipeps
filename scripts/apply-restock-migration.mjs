@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import pg from "pg";
 
 async function main() {
-  if (process.env.VERCEL !== "1") return;
+  // Preview builds must never mutate the production database. Vercel sets
+  // VERCEL_ENV=production only for the deployment promoted to the live site.
+  if (process.env.VERCEL !== "1" || process.env.VERCEL_ENV !== "production") return;
 
   const connectionString =
     process.env.POSTGRES_PRISMA_URL ??
