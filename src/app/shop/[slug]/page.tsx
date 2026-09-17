@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -27,6 +26,7 @@ import { formatCurrency } from "@/lib/utils";
 import { getProductDocument } from "@/lib/product-documents";
 import { ProductDocumentPill } from "@/components/products/product-document-pill";
 import { ProductCoaPill } from "@/components/products/product-coa-pill";
+import { ProductImageGallery } from "@/components/products/product-image-gallery";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -139,23 +139,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
           {/* Gallery */}
           <div className="space-y-4">
-            <div className="relative aspect-square overflow-hidden rounded-3xl border border-sky/15 bg-gradient-to-br from-sky/5 via-white to-cyan/5 shadow-xl shadow-sky/10">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(14,165,233,0.08),transparent_50%)]" />
-              {product.imageUrl ? (
-                <Image
-                  src={product.imageUrl}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-contain p-10 transition-transform duration-500 hover:scale-105"
-                  priority
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <div className="h-40 w-40 rounded-full border border-dashed border-sky/20" />
-                </div>
-              )}
-            </div>
+            <ProductImageGallery
+              productName={product.name}
+              images={[
+                ...(product.imageUrl ? [product.imageUrl] : []),
+                ...(product.slug === "bac-water"
+                  ? ["/images/products/bac-water-secondary.png"]
+                  : []),
+              ]}
+            />
 
             <div className="flex flex-wrap gap-2">
               {hasCoa && (
