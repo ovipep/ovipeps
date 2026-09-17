@@ -54,6 +54,23 @@ async function main() {
         throw error;
       }
     }
+    const ledger = await client.query(
+      `SELECT to_regclass('public."LedgerEntry"') IS NOT NULL AS exists`
+    );
+    if (!ledger.rows[0]?.exists) {
+      const sql = await readFile(
+        new URL("../prisma/migrations/20260917150000_business_ledger/migration.sql", import.meta.url),
+        "utf8"
+      );
+      await client.query("BEGIN");
+      try {
+        await client.query(sql);
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
+    }
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [817_202_609]).catch(() => undefined);
     await client.end();
