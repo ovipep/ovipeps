@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import pg from "pg";
 
 async function main() {
-  if (process.env.VERCEL !== "1") return;
+  // Preview builds must never mutate the production database. Vercel sets
+  // VERCEL_ENV=production only for the deployment promoted to the live site.
+  if (process.env.VERCEL !== "1" || process.env.VERCEL_ENV !== "production") return;
 
   const connectionString =
     process.env.POSTGRES_PRISMA_URL ??
@@ -53,6 +55,18 @@ async function main() {
         await client.query("ROLLBACK");
         throw error;
       }
+    }
+    const ledgerSql = await readFile(
+      new URL("../prisma/migrations/20260917150000_business_ledger/migration.sql", import.meta.url),
+      "utf8"
+    );
+    await client.query("BEGIN");
+    try {
+      await client.query(ledgerSql);
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
     }
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [817_202_609]).catch(() => undefined);

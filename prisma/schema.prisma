@@ -626,18 +626,18 @@ model SiteSetting {
 }
 
 model SupportConversation {
-  id              String   @id @default(cuid())
-  reference       String   @unique
+  id              String    @id @default(cuid())
+  reference       String    @unique
   name            String
   email           String
   message         String
-  status          String   @default("OPEN")
+  status          String    @default("OPEN")
   response        String?
   reminderEmailId String?
   reminderSentAt  DateTime?
   respondedAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([status, createdAt])
   @@index([email])
@@ -753,4 +753,29 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
+}
+
+model LedgerEntry {
+  id             String    @id @default(cuid())
+  transactionAt  DateTime
+  entryType      String
+  category       String
+  description    String
+  amount         Float
+  currency       String    @default("CAD")
+  foreignAmount  Float?
+  fxRate         Float?
+  fxRateDate     DateTime?
+  fxRateSource   String?
+  taxAmount      Float     @default(0)
+  shippingAmount Float     @default(0)
+  paymentMethod  String?
+  reference      String?
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([transactionAt])
+  @@index([entryType, transactionAt])
 }
