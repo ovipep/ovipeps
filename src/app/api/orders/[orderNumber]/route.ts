@@ -46,7 +46,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const body = (await request.json()) as { paymentReference?: string };
 
-    if (!body.paymentReference?.trim()) {
+    if (!body.paymentReference?.trim() || body.paymentReference.trim().length > 200) {
       return NextResponse.json(
         { error: "Payment reference is required" },
         { status: 400 }

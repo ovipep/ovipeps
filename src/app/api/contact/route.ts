@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const contactSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  subject: z.string().min(1),
-  message: z.string().min(10),
+  name: z.string().trim().min(2).max(100),
+  email: z.string().trim().email().max(254),
+  subject: z.string().trim().min(1).max(160),
+  message: z.string().trim().min(10).max(5000),
 });
 
 export async function POST(request: Request) {

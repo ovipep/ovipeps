@@ -2,6 +2,17 @@ import Link from "next/link";
 import { createElement, type ReactNode } from "react";
 import { slugify } from "@/lib/utils";
 
+function safeLink(href: string) {
+  const value = href.trim();
+  if (value.startsWith("/") && !value.startsWith("//")) return value;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "mailto:" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 export interface TocItem {
   id: string;
   text: string;
@@ -28,20 +39,26 @@ function parseInline(text: string): ReactNode[] {
       const linkMatch = token.match(/\[([^\]]+)\]\(([^)]+)\)/);
       if (linkMatch) {
         const [, label, href] = linkMatch;
-        const isExternal = href.startsWith("http");
+        const safeHref = safeLink(href);
+        if (!safeHref) {
+          nodes.push(label);
+          lastIndex = match.index + token.length;
+          continue;
+        }
+        const isExternal = safeHref.startsWith("https://");
         nodes.push(
           isExternal
             ? createElement(
                 "a",
                 {
                   key: match.index,
-                  href,
+                  href: safeHref,
                   target: "_blank",
                   rel: "noopener noreferrer",
                 },
                 label
               )
-            : createElement(Link, { key: match.index, href }, label)
+            : createElement(Link, { key: match.index, href: safeHref }, label)
         );
       }
     }

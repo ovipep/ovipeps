@@ -5,8 +5,8 @@ import { db } from "@/lib/db";
 import { verifyPasswordResetToken } from "@/lib/password-reset";
 
 export async function POST(request: Request) {
-  const parsed = z.object({ token: z.string().min(20), password: z.string().min(8) }).safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Use a password of at least 8 characters" }, { status: 400 });
+  const parsed = z.object({ token: z.string().min(20).max(2048), password: z.string().min(12).max(128) }).safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Use a password of at least 12 characters" }, { status: 400 });
   let email: string | undefined;
   try { email = JSON.parse(Buffer.from(parsed.data.token.split(".")[0], "base64url").toString()).email; } catch {}
   if (!email) return NextResponse.json({ error: "This reset link is invalid or expired" }, { status: 400 });

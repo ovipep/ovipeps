@@ -1,12 +1,26 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { db } from "./db";
 import {
   activateOwnerAdmin,
   getOrMigrateOwnerAdmin,
   OWNER_EMAIL,
 } from "./owner-account";
+
+const sessionMaxAge = 8 * 60 * 60;
+
+function authVersion(passwordHash: string) {
+  return createHash("sha256").update(passwordHash).digest("base64url");
+}
+
+function secureEqual(left: string | undefined, right: string) {
+  if (!left) return false;
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -43,6 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: authenticatedUser.email,
           name: `${authenticatedUser.firstName ?? ""} ${authenticatedUser.lastName ?? ""}`.trim(),
           role: authenticatedUser.role,
+          authVersion: authVersion(authenticatedUser.passwordHash!),
         };
       },
     }),
@@ -52,13 +67,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.role = (user as { role?: string }).role;
         token.id = user.id;
+        token.authVersion = (user as { authVersion?: string }).authVersion;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.id) {
+        const currentUser = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, passwordHash: true },
+        });
+        if (!currentUser?.passwordHash || !secureEqual(token.authVersion as string | undefined, authVersion(currentUser.passwordHash))) {
+          session.user = undefined as never;
+          return session;
+        }
         session.user.id = token.id as string;
-        (session.user as { role?: string }).role = token.role as string;
+        (session.user as { role?: string }).role = currentUser.role;
       }
       return session;
     },
@@ -66,7 +90,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/account/login",
   },
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: sessionMaxAge },
+  jwt: { maxAge: sessionMaxAge },
 });
 
 export async function requireAdmin() {

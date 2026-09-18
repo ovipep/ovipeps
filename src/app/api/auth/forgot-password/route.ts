@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       : await db.user.findUnique({ where: { email } });
   if (user?.passwordHash) {
     const token = createPasswordResetToken(email, user.passwordHash);
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ovipeps.ca";
     const result = await sendEmail(
       email,
       await buildEmailTemplate("password_reset", {

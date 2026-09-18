@@ -21,7 +21,10 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/account";
+  const requestedCallback = searchParams.get("callbackUrl");
+  const callbackUrl = requestedCallback?.startsWith("/") && !requestedCallback.startsWith("//")
+    ? requestedCallback
+    : "/account";
   const [error, setError] = useState("");
 
   const {

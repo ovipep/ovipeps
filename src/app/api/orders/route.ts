@@ -3,14 +3,35 @@ import { auth } from "@/lib/auth";
 import { createOrder } from "@/lib/orders";
 import type { CreateOrderInput } from "@/lib/orders";
 import { createOrderAccessToken } from "@/lib/order-access";
+import { z } from "zod";
+
+const text = (max: number) => z.string().trim().min(1).max(max);
+const orderSchema = z.object({
+  email: z.string().trim().email().max(254),
+  shippingAddress: z.object({
+    firstName: text(80), lastName: text(80), address1: text(160),
+    address2: z.string().trim().max(160).optional(), city: text(100),
+    province: text(80), postalCode: text(20), country: text(80),
+    phone: z.string().trim().max(40).optional(),
+  }),
+  items: z.array(z.object({
+    productId: text(128), variantId: text(128), sku: z.string().trim().max(100).optional(),
+    quantity: z.number().int().min(1).max(100),
+  })).min(1).max(50),
+  discountCode: z.string().trim().max(100).nullable().optional(),
+  affiliateCode: z.string().trim().max(100).nullable().optional(),
+  referralCode: z.string().trim().max(100).nullable().optional(),
+  termsAccepted: z.boolean().optional(),
+  researchUseAccepted: z.boolean().optional(),
+});
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as CreateOrderInput & {
-      termsAccepted?: boolean;
-      /** @deprecated Prefer termsAccepted */
-      researchUseAccepted?: boolean;
-    };
+    const parsed = orderSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json({ error: "One or more order details are invalid" }, { status: 400 });
+    }
+    const body = parsed.data;
     let userId: string | null = null;
     try {
       const session = await auth();
@@ -19,37 +40,6 @@ export async function POST(request: Request) {
       // Account lookup is optional for guest checkout. A missing or temporary
       // auth configuration must not prevent a customer from placing an order.
       console.error("Optional checkout session lookup failed", error);
-    }
-
-    if (!body.email?.trim()) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
-    }
-
-    if (!body.shippingAddress) {
-      return NextResponse.json(
-        { error: "Shipping address is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!body.items?.length) {
-      return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
-    }
-
-    if (
-      body.items.some(
-        (item) =>
-          !item.productId ||
-          !item.variantId ||
-          !Number.isInteger(item.quantity) ||
-          item.quantity < 1 ||
-          item.quantity > 100
-      )
-    ) {
-      return NextResponse.json(
-        { error: "One or more cart items are invalid" },
-        { status: 400 }
-      );
     }
 
     if (!body.termsAccepted && !body.researchUseAccepted) {
@@ -62,7 +52,7 @@ export async function POST(request: Request) {
     const order = await createOrder({
       ...body,
       userId,
-    });
+    } as CreateOrderInput);
 
     return NextResponse.json({
       id: order.id,

@@ -12,10 +12,10 @@ import { Input } from "@/components/ui/input";
 
 const registerSchema = z
   .object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    email: z.string().email("Please enter a valid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    firstName: z.string().trim().min(1, "First name is required").max(80),
+    lastName: z.string().trim().min(1, "Last name is required").max(80),
+    email: z.string().trim().email("Please enter a valid email address").max(254),
+    password: z.string().min(12, "Password must be at least 12 characters").max(128),
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -101,7 +101,7 @@ export function RegisterForm() {
         label="Password"
         type="password"
         autoComplete="new-password"
-        placeholder="At least 8 characters"
+        placeholder="At least 12 characters"
         error={errors.password?.message}
         {...register("password")}
       />
