@@ -17,8 +17,11 @@ const updateSchema = schema.extend({ id: z.string().trim().min(1) });
 
 async function convertedValues(input: z.infer<typeof schema>) {
   const conversion = await getCadExchangeRate(input.currency, input.transactionAt);
+  const toCad = (amount: number) => Math.round(amount * conversion.rate * 100) / 100;
   return {
-    amount: Math.round(input.amount * conversion.rate * 100) / 100,
+    amount: toCad(input.amount),
+    taxAmount: toCad(input.taxAmount),
+    shippingAmount: toCad(input.shippingAmount),
     foreignAmount: input.amount,
     fxRate: conversion.rate,
     fxRateDate: conversion.rateDate,
