@@ -5,7 +5,13 @@ export const PAID_ORDER_STATUSES = ["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED",
 export async function getBusinessLedger(from: Date, to: Date) {
   const [orders, manualEntries, variants] = await Promise.all([
     db.order.findMany({
-      where: { createdAt: { gte: from, lte: to }, status: { in: [...PAID_ORDER_STATUSES] } },
+      where: {
+        status: { in: [...PAID_ORDER_STATUSES] },
+        OR: [
+          { paidAt: { gte: from, lte: to } },
+          { paidAt: null, createdAt: { gte: from, lte: to } },
+        ],
+      },
       include: { items: true }, orderBy: { createdAt: "desc" },
     }),
     db.ledgerEntry.findMany({ where: { transactionAt: { gte: from, lte: to } }, orderBy: { transactionAt: "desc" } }),
