@@ -26,6 +26,18 @@ const publishedFileCoas: CoaDocumentSummary[] = [
     productName: "KPV",
     productSlug: "kpv",
   },
+  {
+    id: "file-ghk-115",
+    batchNumber: "GHK-115",
+    lotNumber: null,
+    testingDate: "2026-09-21",
+    testingProvider: "SideChain Analytics",
+    purityResult: null,
+    resultSummary: "Certificate of Analysis, report COA-2026-SC-02629. See the PDF for the reported results and sample details.",
+    documentUrl: "/coas/GA-002-GHK.pdf",
+    productName: "GHK-Cu",
+    productSlug: "ghk-cu",
+  },
 ];
 
 function includeFileCoas(documents: CoaDocumentSummary[]) {

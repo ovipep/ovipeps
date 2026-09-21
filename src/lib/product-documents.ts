@@ -88,6 +88,10 @@ export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
     label: "KPV COA",
     url: "/coas/GA-002-KPV.pdf",
   },
+  "ghk-cu": {
+    label: "GHK-Cu COA",
+    url: "/coas/GA-002-GHK.pdf",
+  },
   "mots-c": {
     label: "MOTS-C COA",
     url: "/coas/mots-c-coa-2026-08-23.pdf",
