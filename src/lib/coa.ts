@@ -10,7 +10,7 @@ const publishedFileCoas: CoaDocumentSummary[] = [
     testingProvider: "SideChain Analytics",
     purityResult: null,
     resultSummary: "Certificate of Analysis, report COA-2026-SC-02632. See the PDF for the reported results and sample details.",
-    documentUrl: "/coas/GA-002-RT.pdf",
+    documentUrl: "/coas/GA-002-RT-RET-604.pdf",
     productName: "Retatrutide GLP-3",
     productSlug: "glp-3",
   },

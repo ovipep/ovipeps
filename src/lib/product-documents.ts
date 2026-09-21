@@ -82,7 +82,7 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
 export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
   "glp-3": {
     label: "Retatrutide COA",
-    url: "/coas/GA-002-RT.pdf",
+    url: "/coas/GA-002-RT-RET-604.pdf",
   },
   "nad-plus": {
     label: "NAD+ COA",
