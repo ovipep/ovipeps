@@ -3,6 +3,18 @@ import type { CoaDocumentSummary } from "@/types/coa";
 
 const publishedFileCoas: CoaDocumentSummary[] = [
   {
+    id: "file-ret-604",
+    batchNumber: "RET-604",
+    lotNumber: null,
+    testingDate: "2026-09-21",
+    testingProvider: "SideChain Analytics",
+    purityResult: null,
+    resultSummary: "Certificate of Analysis, report COA-2026-SC-02632. See the PDF for the reported results and sample details.",
+    documentUrl: "/coas/GA-002-RT.pdf",
+    productName: "Retatrutide GLP-3",
+    productSlug: "glp-3",
+  },
+  {
     id: "file-nad-093",
     batchNumber: "NAD-093",
     lotNumber: null,
