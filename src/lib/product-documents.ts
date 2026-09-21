@@ -80,6 +80,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
 };
 
 export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
+  "nad-plus": {
+    label: "NAD+ COA",
+    url: "/coas/GA-002-NAD.pdf",
+  },
   "kpv": {
     label: "KPV COA",
     url: "/coas/GA-002-KPV.pdf",

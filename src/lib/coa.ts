@@ -3,6 +3,18 @@ import type { CoaDocumentSummary } from "@/types/coa";
 
 const publishedFileCoas: CoaDocumentSummary[] = [
   {
+    id: "file-nad-093",
+    batchNumber: "NAD-093",
+    lotNumber: null,
+    testingDate: "2026-09-21",
+    testingProvider: "SideChain Analytics",
+    purityResult: null,
+    resultSummary: "Certificate of Analysis, report COA-2026-SC-02628. See the PDF for the reported results and sample details.",
+    documentUrl: "/coas/GA-002-NAD.pdf",
+    productName: "NAD+",
+    productSlug: "nad-plus",
+  },
+  {
     id: "file-kpv-063",
     batchNumber: "KPV-063",
     lotNumber: null,
