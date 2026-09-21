@@ -76,7 +76,7 @@ export function ProductCard({
       {/* Gradient top accent */}
       <div className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky via-cyan to-teal-light transition-opacity duration-300", inStock ? "opacity-100" : "opacity-0 group-hover:opacity-100")} />
 
-      <Link href={`/shop/${product.slug}`} className="flex flex-1 flex-col">
+      <Link href={`/shop/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-sky/5 via-transparent to-cyan/5">
           {product.imageUrl ? (
             <motion.div
@@ -145,16 +145,19 @@ export function ProductCard({
             </button>
           </div>
         </div>
+      </Link>
 
         <div className="flex flex-1 flex-col gap-2 p-4">
-          <h3 className="text-base font-bold leading-snug text-foreground transition-colors group-hover:text-sky">
-            {product.name}
-          </h3>
+          <Link href={`/shop/${product.slug}`}>
+            <h3 className="text-base font-bold leading-snug text-foreground transition-colors group-hover:text-sky">
+              {product.name}
+            </h3>
+          </Link>
           <div className="flex flex-wrap gap-2 pt-1">
             {getProductDocument(product.slug) && (
-              <ProductDocumentPill productSlug={product.slug} insideProductLink />
+              <ProductDocumentPill productSlug={product.slug} />
             )}
-            <ProductCoaPill productSlug={product.slug} insideProductLink />
+            <ProductCoaPill productSlug={product.slug} />
           </div>
           <div className="mt-auto flex items-end justify-between gap-2 pt-2">
             {inStock && (
@@ -173,7 +176,6 @@ export function ProductCard({
             )}
           </div>
         </div>
-      </Link>
     </motion.article>
   );
 }
