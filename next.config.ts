@@ -63,6 +63,13 @@ const nextConfig: NextConfig = {
         source: "/api/orders/:path*",
         headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
       },
+      {
+        source: "/api/classroom/:slug/file",
+        headers: [
+          { key: "Content-Security-Policy", value: "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://www.bankofcanada.ca; upgrade-insecure-requests" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
+      },
     ];
   },
 };
