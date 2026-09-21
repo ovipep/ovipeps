@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Eye, FlaskConical, ShoppingBag, ShieldCheck, Zap } from "lucide-react";
+import { Eye, FlaskConical, ShoppingBag, Zap } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { getProductDocument } from "@/lib/product-documents";
 import { useCartStore } from "@/store/cart";
@@ -18,7 +18,6 @@ import {
 
 interface ProductCardProps {
   product: ProductCardData;
-  hasCoa?: boolean;
   onQuickView?: (product: ProductCardData) => void;
   className?: string;
   index?: number;
@@ -26,7 +25,6 @@ interface ProductCardProps {
 
 export function ProductCard({
   product,
-  hasCoa,
   onQuickView,
   className,
   index = 0,
@@ -37,7 +35,6 @@ export function ProductCard({
   const defaultVariant = getDefaultVariant(product.variants);
   const inStock = isProductInStock(product.variants);
   const availableVariant = product.variants.find((variant) => variant.inStock);
-  const showCoa = hasCoa ?? product.hasCoa;
   const hasMultipleVariants = product.variants.length > 1;
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -112,12 +109,6 @@ export function ProductCard({
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
                 <Zap className="h-3 w-3" />
                 Available Now
-              </span>
-            )}
-            {showCoa && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-teal to-teal-light px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
-                <ShieldCheck className="h-3 w-3" />
-                COA
               </span>
             )}
           </div>
