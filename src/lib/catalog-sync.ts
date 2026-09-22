@@ -62,6 +62,19 @@ const RESTOCKING_PRODUCTS = [
   },
 ] as const;
 
+// This is intentionally a separate catalog record from the original BAC Water
+// product.  The original product/SKU may already be referenced by historical
+// orders, so neither its slug nor its SKU can be reused for the 30 mL listing.
+const BAC_WATER_30ML_PRODUCT = {
+  name: "BAC Water — 30 mL",
+  slug: "bac-water-30ml",
+  shortDescription: "30 mL bacteriostatic water for laboratory research use",
+  researchCategory: "Supplies",
+  imageUrl: "/images/products/bac-water-secondary.png",
+  sku: "BACW-30ML",
+  variantName: "30 mL",
+} as const;
+
 async function syncCatalog() {
   for (const [index, product] of FALLBACK_PRODUCTS.entries()) {
     const stored = await db.product.upsert({
@@ -150,6 +163,41 @@ async function syncCatalog() {
       create: { key: "support_email", value: "ovipeps@gmail.com" },
     }),
   ]);
+
+  // Create the new product in a hidden, unpriced state. It becomes customer
+  // facing only after an administrator enters an intentional price and chooses
+  // "Publish in shop" in Back Office. Upserts make this safe on every request
+  // without changing later admin-entered price, inventory, or publication data.
+  const bacWater30ml = await db.product.upsert({
+    where: { slug: BAC_WATER_30ML_PRODUCT.slug },
+    update: {},
+    create: {
+      name: BAC_WATER_30ML_PRODUCT.name,
+      slug: BAC_WATER_30ML_PRODUCT.slug,
+      shortDescription: BAC_WATER_30ML_PRODUCT.shortDescription,
+      researchCategory: BAC_WATER_30ML_PRODUCT.researchCategory,
+      category: "SUPPLY",
+      imageUrl: BAC_WATER_30ML_PRODUCT.imageUrl,
+      published: false,
+      sortOrder: 220,
+    },
+  });
+  await db.productVariant.upsert({
+    where: { sku: BAC_WATER_30ML_PRODUCT.sku },
+    update: {},
+    create: {
+      productId: bacWater30ml.id,
+      name: BAC_WATER_30ML_PRODUCT.variantName,
+      sku: BAC_WATER_30ML_PRODUCT.sku,
+      price: 0,
+      concentration: BAC_WATER_30ML_PRODUCT.variantName,
+      size: BAC_WATER_30ML_PRODUCT.variantName,
+      stockQuantity: 0,
+      inStock: false,
+      isDefault: true,
+      sortOrder: 0,
+    },
+  });
 
 }
 
