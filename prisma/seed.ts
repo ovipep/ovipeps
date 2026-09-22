@@ -265,6 +265,39 @@ async function main() {
     });
   }
 
+  // Keep this separate from the original BAC Water product and SKU so existing
+  // inventory, reports, and historical order records remain untouched.
+  const bacWater30ml = await prisma.product.upsert({
+    where: { slug: "bac-water-30ml" },
+    update: {},
+    create: {
+      name: "BAC Water — 30 mL",
+      slug: "bac-water-30ml",
+      shortDescription: "30 mL bacteriostatic water for laboratory research use",
+      researchCategory: "Supplies",
+      category: "SUPPLY",
+      imageUrl: "/images/products/bac-water-secondary.png",
+      published: false,
+      sortOrder: 220,
+    },
+  });
+  await prisma.productVariant.upsert({
+    where: { sku: "BACW-30ML" },
+    update: {},
+    create: {
+      productId: bacWater30ml.id,
+      name: "30 mL",
+      sku: "BACW-30ML",
+      price: 0,
+      concentration: "30 mL",
+      size: "30 mL",
+      stockQuantity: 0,
+      inStock: false,
+      isDefault: true,
+      sortOrder: 0,
+    },
+  });
+
   const glp3 = await prisma.product.findUnique({ where: { slug: "glp-3" } });
   if (glp3) {
     await prisma.coaDocument.upsert({
