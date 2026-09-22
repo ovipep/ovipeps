@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { safeDbQuery } from "./safe-db";
 
 export interface ClassroomNavDocument {
   id: string;
@@ -27,19 +28,15 @@ export const FALLBACK_CLASSROOM_DOCUMENTS: ClassroomNavDocument[] = [
 ].map(([slug, displayName]) => ({ id: slug, slug, displayName }));
 
 export async function getVisibleClassroomDocuments() {
-  try {
-    const stored = await db.classroomDocument.findMany({
-      orderBy: [{ sortOrder: "asc" }, { displayName: "asc" }],
-      select: { id: true, displayName: true, slug: true, visible: true },
-    });
-    const storedSlugs = new Set(stored.map((document) => document.slug));
-    return [
-      ...stored.filter((document) => document.visible).map(({ id, displayName, slug }) => ({ id, displayName, slug })),
-      ...FALLBACK_CLASSROOM_DOCUMENTS.filter((document) => !storedSlugs.has(document.slug)),
-    ];
-  } catch {
-    return FALLBACK_CLASSROOM_DOCUMENTS;
-  }
+  return safeDbQuery(
+    () =>
+      db.classroomDocument.findMany({
+        where: { visible: true },
+        orderBy: [{ sortOrder: "asc" }, { displayName: "asc" }],
+        select: { id: true, displayName: true, slug: true },
+      }),
+    FALLBACK_CLASSROOM_DOCUMENTS
+  );
 }
 
 export function fallbackDocumentUrl(slug: string) {
