@@ -23,8 +23,6 @@ export const FALLBACK_CLASSROOM_DOCUMENTS: ClassroomNavDocument[] = [
   ["cjc-1295-ipamorelin", "CJC-1295 + Ipamorelin"],
   ["wolverine-stack", "Wolverine Stack"],
   ["klow", "KLOW"],
-  ["glow", "GLOW"],
-  ["5-amino-1q", "5 AMINO 1-Q"],
 ].map(([slug, displayName]) => ({ id: slug, slug, displayName }));
 
 export async function getVisibleClassroomDocuments() {
@@ -56,8 +54,6 @@ export function fallbackDocumentUrl(slug: string) {
     "cjc-1295-ipamorelin": "/documents/cjc-1295-ipamorelin-guide.png",
     "wolverine-stack": "/documents/wolverine-stack-guide.png",
     klow: "/documents/klow-guide.png",
-    glow: "/documents/glow-guide.png",
-    "5-amino-1q": "/documents/5-amino-1q-guide.png",
   };
   return urls[slug];
 }

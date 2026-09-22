@@ -1,0 +1,24 @@
+.fullDocument {
+  display: none;
+}
+
+.embeddedDocument {
+  display: block;
+}
+
+@media (max-width: 1279px), (hover: none) {
+  .fullDocument {
+    display: flex;
+    min-height: 55vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem 1.25rem;
+    text-align: center;
+  }
+
+  .embeddedDocument {
+    display: none;
+  }
+}
