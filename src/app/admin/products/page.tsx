@@ -11,8 +11,13 @@ export default async function AdminProductsPage() {
       variants: { orderBy: { sortOrder: "asc" }, select: { id: true, name: true, sku: true, price: true, stockQuantity: true } },
     },
   });
+  const inventoryProducts = products.flatMap((product) => {
+    const variants = product.variants.filter((variant) => variant.sku !== "BAC-30ML");
+    const hadLegacyBac30ml = variants.length !== product.variants.length;
+    return hadLegacyBac30ml && variants.length === 0 ? [] : [{ ...product, variants }];
+  });
   return <div className="space-y-6">
     <div><h1 className="text-2xl font-semibold tracking-tight text-navy-deep">Products & Inventory</h1><p className="mt-1 text-sm text-muted-foreground">Add products and vial sizes, change prices, and manage live shop inventory. Amber means 4 or fewer vials; red means restocking.</p></div>
-    <InventoryManager products={products} />
+    <InventoryManager products={inventoryProducts} />
   </div>;
 }
