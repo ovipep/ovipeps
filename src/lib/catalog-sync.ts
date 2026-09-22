@@ -138,7 +138,7 @@ async function syncCatalog() {
     ),
     db.product.updateMany({
       where: { slug: "bac-water" },
-      data: { imageUrl: "/images/products/bac-water.jpg" },
+      data: { imageUrl: "/images/products/bac-water.jpg", sortOrder: 998 },
     }),
     db.siteSetting.upsert({
       where: { key: "etransfer_email" },
@@ -170,7 +170,7 @@ async function syncCatalog() {
   // without changing later admin-entered price, inventory, or publication data.
   const bacWater30ml = await db.product.upsert({
     where: { slug: BAC_WATER_30ML_PRODUCT.slug },
-    update: { imageUrl: BAC_WATER_30ML_PRODUCT.imageUrl },
+    update: { imageUrl: BAC_WATER_30ML_PRODUCT.imageUrl, sortOrder: 999 },
     create: {
       name: BAC_WATER_30ML_PRODUCT.name,
       slug: BAC_WATER_30ML_PRODUCT.slug,
@@ -179,7 +179,7 @@ async function syncCatalog() {
       category: "SUPPLY",
       imageUrl: BAC_WATER_30ML_PRODUCT.imageUrl,
       published: false,
-      sortOrder: 220,
+      sortOrder: 999,
     },
   });
   await db.productVariant.upsert({
