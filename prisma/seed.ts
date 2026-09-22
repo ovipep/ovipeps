@@ -230,6 +230,7 @@ async function main() {
       researchCategory: "Supplies",
       category: "SUPPLY" as const,
       imageUrl: "/images/products/bac-water.jpg",
+      sortOrder: 998,
       variants: [
         { name: "30ml", sku: "BAC-30ML", price: 19.99, size: "30ml", stockQuantity: 0 },
       ],
@@ -269,7 +270,7 @@ async function main() {
   // inventory, reports, and historical order records remain untouched.
   const bacWater30ml = await prisma.product.upsert({
     where: { slug: "bac-water-30ml" },
-    update: { imageUrl: "/images/products/bac-water-30ml-transparent.svg" },
+    update: { imageUrl: "/images/products/bac-water-30ml-transparent.svg", sortOrder: 999 },
     create: {
       name: "BAC Water — 30 mL",
       slug: "bac-water-30ml",
@@ -278,7 +279,7 @@ async function main() {
       category: "SUPPLY",
       imageUrl: "/images/products/bac-water-30ml-transparent.svg",
       published: false,
-      sortOrder: 220,
+      sortOrder: 999,
     },
   });
   await prisma.productVariant.upsert({

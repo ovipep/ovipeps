@@ -252,6 +252,17 @@ function sortProducts(
   }
 
   return sorted.sort((a, b) => {
+    const bacOrder: Record<string, number> = {
+      "bac-water": 0,
+      "bac-water-30ml": 1,
+    };
+    const aBacOrder = bacOrder[a.slug];
+    const bBacOrder = bacOrder[b.slug];
+    if (aBacOrder !== undefined || bBacOrder !== undefined) {
+      if (aBacOrder === undefined) return -1;
+      if (bBacOrder === undefined) return 1;
+      return aBacOrder - bBacOrder;
+    }
     const retaFirst = Number(b.slug === "glp-3") - Number(a.slug === "glp-3");
     if (retaFirst !== 0) return retaFirst;
     return Number(isProductInStock(b.variants)) - Number(isProductInStock(a.variants));
