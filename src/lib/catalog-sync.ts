@@ -70,7 +70,7 @@ const BAC_WATER_30ML_PRODUCT = {
   slug: "bac-water-30ml",
   shortDescription: "30 mL bacteriostatic water for laboratory research use",
   researchCategory: "Supplies",
-  imageUrl: "/images/products/bac-water-secondary.png",
+  imageUrl: "/images/products/bac-water-30ml-transparent.svg",
   sku: "BACW-30ML",
   variantName: "30 mL",
 } as const;
@@ -170,7 +170,7 @@ async function syncCatalog() {
   // without changing later admin-entered price, inventory, or publication data.
   const bacWater30ml = await db.product.upsert({
     where: { slug: BAC_WATER_30ML_PRODUCT.slug },
-    update: {},
+    update: { imageUrl: BAC_WATER_30ML_PRODUCT.imageUrl },
     create: {
       name: BAC_WATER_30ML_PRODUCT.name,
       slug: BAC_WATER_30ML_PRODUCT.slug,

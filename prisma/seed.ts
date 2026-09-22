@@ -269,14 +269,14 @@ async function main() {
   // inventory, reports, and historical order records remain untouched.
   const bacWater30ml = await prisma.product.upsert({
     where: { slug: "bac-water-30ml" },
-    update: {},
+    update: { imageUrl: "/images/products/bac-water-30ml-transparent.svg" },
     create: {
       name: "BAC Water — 30 mL",
       slug: "bac-water-30ml",
       shortDescription: "30 mL bacteriostatic water for laboratory research use",
       researchCategory: "Supplies",
       category: "SUPPLY",
-      imageUrl: "/images/products/bac-water-secondary.png",
+      imageUrl: "/images/products/bac-water-30ml-transparent.svg",
       published: false,
       sortOrder: 220,
     },
