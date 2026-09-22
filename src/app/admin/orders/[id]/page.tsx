@@ -120,10 +120,12 @@ export default async function AdminOrderDetailPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Shipping Address</CardTitle>
+            <CardTitle>{(address as ShippingAddress & { deliveryMethod?: string } | null)?.deliveryMethod === "PICKUP" ? "Pick Up" : "Shipping Address"}</CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
-            {address ? (
+            {(address as ShippingAddress & { deliveryMethod?: string } | null)?.deliveryMethod === "PICKUP" ? (
+              <p>Customer selected Pick Up. No shipping address required.</p>
+            ) : address ? (
               <address className="not-italic space-y-0.5">
                 <p>
                   {address.firstName} {address.lastName}

@@ -45,28 +45,26 @@ const CANADIAN_PROVINCES = [
 const FLAT_SHIPPING_RATE = 25;
 
 const checkoutSchema = z.object({
+  deliveryMethod: z.enum(["SHIPPING", "PICKUP"]),
   email: z.string().email("Enter a valid email address"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  address1: z.string().min(1, "Street address is required"),
+  address1: z.string().optional(),
   address2: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  province: z.enum(
-    CANADIAN_PROVINCES.map((p) => p.value) as [string, ...string[]],
-    { message: "Select a province" }
-  ),
-  postalCode: z
-    .string()
-    .min(1, "Postal code is required")
-    .regex(
-      /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/,
-      "Enter a valid Canadian postal code"
-    ),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  postalCode: z.string().optional(),
   phone: z.string().optional(),
   affiliateCode: z.string().optional(),
   termsAccepted: z.boolean().refine((value) => value, {
     message: "Please agree to the Terms of Service to continue",
   }),
+}).superRefine((values, ctx) => {
+  if (values.deliveryMethod !== "SHIPPING") return;
+  if (!values.address1?.trim()) ctx.addIssue({ code: "custom", path: ["address1"], message: "Street address is required" });
+  if (!values.city?.trim()) ctx.addIssue({ code: "custom", path: ["city"], message: "City is required" });
+  if (!CANADIAN_PROVINCES.some((p) => p.value === values.province)) ctx.addIssue({ code: "custom", path: ["province"], message: "Select a province" });
+  if (!/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(values.postalCode ?? "")) ctx.addIssue({ code: "custom", path: ["postalCode"], message: "Enter a valid Canadian postal code" });
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
@@ -95,6 +93,7 @@ export function CheckoutForm() {
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
+      deliveryMethod: "SHIPPING",
       affiliateCode: affiliateCode ?? "",
       termsAccepted: false,
     },
@@ -111,6 +110,7 @@ export function CheckoutForm() {
   }, [affiliateCode, setValue]);
 
   const enteredAffiliateCode = watch("affiliateCode");
+  const deliveryMethod = watch("deliveryMethod");
 
   useEffect(() => {
     const code = enteredAffiliateCode?.trim();
@@ -147,10 +147,10 @@ export function CheckoutForm() {
       affiliateCodeState === "valid"
         ? Math.round(cartSubtotal * 0.05 * 100) / 100
         : 0;
-    const shippingAmount = FLAT_SHIPPING_RATE;
+    const shippingAmount = deliveryMethod === "PICKUP" ? 0 : FLAT_SHIPPING_RATE;
     const total = cartSubtotal - affiliateDiscountAmount + shippingAmount;
     return { cartSubtotal, affiliateDiscountAmount, shippingAmount, total };
-  }, [affiliateCodeState, items, subtotal]);
+  }, [affiliateCodeState, deliveryMethod, items, subtotal]);
 
   const onSubmit = async (values: CheckoutFormValues) => {
     if (!items.length) {
@@ -173,14 +173,15 @@ export function CheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: values.email,
+          deliveryMethod: values.deliveryMethod,
           shippingAddress: {
             firstName: values.firstName,
             lastName: values.lastName,
-            address1: values.address1,
+            address1: values.deliveryMethod === "PICKUP" ? undefined : values.address1,
             address2: values.address2 || undefined,
-            city: values.city,
-            province: values.province,
-            postalCode: values.postalCode.toUpperCase(),
+            city: values.deliveryMethod === "PICKUP" ? undefined : values.city,
+            province: values.deliveryMethod === "PICKUP" ? undefined : values.province,
+            postalCode: values.deliveryMethod === "PICKUP" ? undefined : values.postalCode?.toUpperCase(),
             country: "CA",
             phone: values.phone || undefined,
           },
@@ -336,11 +337,15 @@ export function CheckoutForm() {
                 <p className="text-xs font-bold uppercase tracking-wider text-cyan">
                   Step 2
                 </p>
-                <CardTitle>Shipping Address</CardTitle>
+                <CardTitle>Delivery Method</CardTitle>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex gap-6" role="group" aria-label="Delivery Method">
+              <label className="flex items-center gap-2"><input type="radio" value="SHIPPING" {...register("deliveryMethod")} /> Shipping</label>
+              <label className="flex items-center gap-2"><input type="radio" value="PICKUP" {...register("deliveryMethod")} /> Pick Up</label>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
                 label="First name"
@@ -355,6 +360,7 @@ export function CheckoutForm() {
                 {...register("lastName")}
               />
             </div>
+            {deliveryMethod === "SHIPPING" && <>
             <Input
               label="Address"
               autoComplete="address-line1"
@@ -407,6 +413,7 @@ export function CheckoutForm() {
                 {...register("phone")}
               />
             </div>
+            </>}
           </CardContent>
         </Card>
 
@@ -571,14 +578,12 @@ export function CheckoutForm() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
                 <span>
-                  {totals.shippingAmount === 0
-                    ? "Free"
-                    : formatCurrency(totals.shippingAmount)}
+                  {formatCurrency(totals.shippingAmount)}
                 </span>
               </div>
               <p className="rounded-xl bg-sky/5 p-3 text-xs font-medium text-sky">
                 <Truck className="mr-1.5 inline h-3.5 w-3.5" />
-                $25 CAD flat-rate shipping
+                {deliveryMethod === "PICKUP" ? "Pick Up — no shipping charge" : "$25 CAD flat-rate shipping"}
               </p>
               <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
                 <span>Total</span>

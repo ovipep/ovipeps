@@ -18,7 +18,7 @@ export default function CheckoutPage() {
             Checkout
           </h1>
           <p className="mt-3 text-muted-foreground">
-            Enter your contact and shipping details, then submit your order. No
+            Enter your contact details and choose shipping or pickup, then submit your order. No
             payment information is collected or processed on this website.
           </p>
         </div>

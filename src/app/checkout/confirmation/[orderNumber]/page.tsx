@@ -98,6 +98,7 @@ export default async function OrderConfirmationPage({
   }
 
   const shippingLines = formatShippingAddress(order.shippingAddress);
+  const isPickup = (order.shippingAddress as { deliveryMethod?: string } | null)?.deliveryMethod === "PICKUP";
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
@@ -250,10 +251,10 @@ export default async function OrderConfirmationPage({
 
           <Card>
             <CardHeader>
-              <CardTitle>Shipping Address</CardTitle>
+              <CardTitle>{isPickup ? "Pick Up" : "Shipping Address"}</CardTitle>
             </CardHeader>
             <CardContent>
-              {shippingLines ? (
+              {isPickup ? <p className="text-sm">No shipping address required. OVIpeps will provide pickup details.</p> : shippingLines ? (
                 <address className="space-y-0.5 text-sm not-italic text-foreground">
                   {shippingLines.map((line) => (
                     <p key={line}>{line}</p>

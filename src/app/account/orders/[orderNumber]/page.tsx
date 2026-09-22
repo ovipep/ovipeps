@@ -77,6 +77,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   }
 
   const shippingLines = formatShippingAddress(order.shippingAddress);
+  const isPickup = (order.shippingAddress as { deliveryMethod?: string } | null)?.deliveryMethod === "PICKUP";
   const trackingNumber =
     order.trackingNumber ?? order.shipments[0]?.trackingNumber;
   const trackingCarrier =
@@ -242,10 +243,10 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Shipping Address</CardTitle>
+                  <CardTitle>{isPickup ? "Pick Up" : "Shipping Address"}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {shippingLines ? (
+                  {isPickup ? <p className="text-sm">No shipping address required. OVIpeps will provide pickup details.</p> : shippingLines ? (
                     <address className="space-y-0.5 text-sm not-italic">
                       {shippingLines.map((line) => (
                         <p key={line}>{line}</p>

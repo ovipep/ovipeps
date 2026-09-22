@@ -25,11 +25,11 @@ import { deliverRestockEvent } from "@/lib/restock-notifications";
 export interface ShippingAddress {
   firstName: string;
   lastName: string;
-  address1: string;
+  address1?: string;
   address2?: string;
-  city: string;
-  province: string;
-  postalCode: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
   country: string;
   phone?: string;
 }
@@ -43,6 +43,7 @@ export interface CreateOrderItem {
 
 export interface CreateOrderInput {
   email: string;
+  deliveryMethod?: "SHIPPING" | "PICKUP";
   shippingAddress: ShippingAddress;
   items: CreateOrderItem[];
   discountCode?: string | null;
@@ -481,7 +482,7 @@ export async function createOrder(input: CreateOrderInput) {
   );
   const discountCode = promotion.discountCode;
 
-  const shippingAmount = FLAT_SHIPPING_RATE;
+  const shippingAmount = input.deliveryMethod === "PICKUP" ? 0 : FLAT_SHIPPING_RATE;
   const taxAmount = 0;
   const total =
     Math.round((subtotal - discountAmount + shippingAmount + taxAmount) * 100) /
@@ -534,7 +535,10 @@ export async function createOrder(input: CreateOrderInput) {
         discountCode: discountCode ?? undefined,
         affiliateCode: affiliate?.code,
         referralCode: input.referralCode?.trim() || undefined,
-        shippingAddress: input.shippingAddress as unknown as Prisma.InputJsonValue,
+        shippingAddress: {
+          ...input.shippingAddress,
+          deliveryMethod: input.deliveryMethod ?? "SHIPPING",
+        } as unknown as Prisma.InputJsonValue,
         items: {
           create: orderItems,
         },
