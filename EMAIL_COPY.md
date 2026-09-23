@@ -11,7 +11,7 @@ We’re excited to confirm that order **{{orderNumber}}** has been reserved. The
 1. Log in to your Canadian bank’s online banking or mobile app.
 2. Send the exact order total to the verified payment address shown in the email.
 3. Enter **ONLY {{orderNumber}}** in the message or memo field.
-4. Confirm AutoDeposit displays **IN Z** before sending.
+4. Confirm AutoDeposit displays **Ivo Ziedins** before sending.
 
 Storage and handling: Keep products at a consistent temperature; refrigeration is highly recommended for stable storage. Keep each vial sealed in its original packaging, protect it from light and moisture, and retain the batch label. Follow your qualified laboratory’s protocol and the product’s batch documentation.
 
