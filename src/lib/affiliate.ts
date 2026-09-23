@@ -248,6 +248,66 @@ export async function attributeOrder(orderId: string, affiliateCode: string | nu
   return affiliate;
 }
 
+export async function reconcileAffiliateOrderAttributions() {
+  const orders = await db.order.findMany({
+    where: {
+      affiliateCode: { not: null },
+      affiliateId: null,
+      status: { notIn: ["CANCELLED", "REFUNDED"] },
+    },
+    select: { id: true, orderNumber: true, affiliateCode: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const repaired: string[] = [];
+  const failures: Array<{ orderNumber: string; error: string }> = [];
+  for (const order of orders) {
+    try {
+      const code = order.affiliateCode?.trim().toUpperCase();
+      const affiliate = code
+        ? await db.affiliateAccount.findUnique({ where: { code } })
+        : null;
+      if (!affiliate) {
+        failures.push({
+          orderNumber: order.orderNumber,
+          error: "Affiliate code does not exist",
+        });
+        continue;
+      }
+
+      const attributionDaysSetting = await db.siteSetting.findUnique({
+        where: { key: "affiliate_attribution_days" },
+      });
+      const attributionDays = Number(attributionDaysSetting?.value ?? 30);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + attributionDays);
+
+      await db.$transaction([
+        db.order.update({
+          where: { id: order.id },
+          data: { affiliateCode: affiliate.code, affiliateId: affiliate.id },
+        }),
+        db.affiliateAttribution.create({
+          data: {
+            affiliateId: affiliate.id,
+            code: affiliate.code,
+            expiresAt,
+            converted: true,
+          },
+        }),
+      ]);
+      repaired.push(order.orderNumber);
+    } catch (error) {
+      failures.push({
+        orderNumber: order.orderNumber,
+        error: error instanceof Error ? error.message : "Attribution reconciliation failed",
+      });
+    }
+  }
+
+  return { checked: orders.length, repaired, failures };
+}
+
 export async function createCommission(orderId: string) {
   const order = await db.order.findUnique({
     where: { id: orderId },

@@ -1,4 +1,5 @@
 import {
+  reconcileAffiliateOrderAttributions,
   reconcileAllAffiliateMinimums,
   reconcilePaidAffiliateCommissions,
 } from "@/lib/affiliate";
@@ -24,14 +25,18 @@ export async function GET(request: Request) {
 
   try {
     const expiredOrders = await expireUnpaidOrders();
+    const affiliateAttributions = await reconcileAffiliateOrderAttributions();
     const affiliateCommissions = await reconcilePaidAffiliateCommissions();
     await reconcileAllAffiliateMinimums();
     const restockDeliveries = await retryPendingRestockDeliveries();
     const inventoryVariants = await reconcileInventoryAlerts();
 
-    if (affiliateCommissions.failures.length) {
+    if (affiliateAttributions.failures.length || affiliateCommissions.failures.length) {
       throw new Error(
-        `Affiliate commission repair failed for: ${affiliateCommissions.failures
+        `Affiliate repair failed for: ${[
+          ...affiliateAttributions.failures,
+          ...affiliateCommissions.failures,
+        ]
           .map((failure) => failure.orderNumber)
           .join(", ")}`
       );
@@ -40,6 +45,7 @@ export async function GET(request: Request) {
     console.info("Automation reconciliation completed", {
       checkedAt: checkedAt.toISOString(),
       expiredOrders,
+      affiliateAttributions,
       affiliateCommissions,
       restockDeliveries,
       inventoryVariants,
@@ -49,6 +55,7 @@ export async function GET(request: Request) {
       ok: true,
       checkedAt: checkedAt.toISOString(),
       expiredOrders,
+      affiliateAttributions,
       affiliateCommissions,
       restockDeliveries,
       inventoryVariants,

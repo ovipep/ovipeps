@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import type { AffiliateDashboardData } from "@/lib/affiliate-types";
 import type { CommissionStatus } from "@/generated/prisma/enums";
 import {
+  reconcileAffiliateOrderAttributions,
   reconcileAffiliateMinimums,
   reconcilePaidAffiliateCommissions,
 } from "@/lib/affiliate";
@@ -37,6 +38,7 @@ export async function getAffiliateDashboardData(
     select: { id: true },
   });
   if (initialAccount) {
+    await reconcileAffiliateOrderAttributions();
     await reconcilePaidAffiliateCommissions(initialAccount.id);
     await reconcileAffiliateMinimums(initialAccount.id);
   }

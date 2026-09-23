@@ -5,12 +5,14 @@ import { db } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
 import { AffiliateStatusActions } from "@/components/admin/affiliate-status-actions";
 import {
+  reconcileAffiliateOrderAttributions,
   reconcileAllAffiliateMinimums,
   reconcilePaidAffiliateCommissions,
 } from "@/lib/affiliate";
 import { getUtcMonthBounds } from "@/lib/affiliate-program";
 
 export default async function AdminAffiliatesPage() {
+  await reconcileAffiliateOrderAttributions();
   await reconcilePaidAffiliateCommissions();
   await reconcileAllAffiliateMinimums();
   const monthBounds = getUtcMonthBounds(new Date());
