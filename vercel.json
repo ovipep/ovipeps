@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/reconcile-automations",
-      "schedule": "47 13 * * *"
+      "schedule": "47 14 * * *"
     }
   ]
 }
