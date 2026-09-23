@@ -224,7 +224,7 @@ export function getEmailTemplateSampleVariables(
       items: "Retatrutide (GLP-3) — 10 mg × 1: $80.00 CAD",
       total: "$80.00 CAD",
       etransferEmail: "ovipeps@gmail.com",
-      autodepositName: "IN Z",
+      autodepositName: "Ivo Ziedins",
     };
   }
   if (key === "affiliate_approved") {
@@ -511,7 +511,7 @@ ${input.eta}
 E-TRANSFER INSTRUCTIONS
 Send your Interac e-Transfer to ${input.eTransferEmail}.
 Enter ONLY ${input.purchaseOrderNumber} in the e-transfer message or notes field so we can match your payment.
-Confirm AutoDeposit displays IN Z.
+Confirm AutoDeposit displays Ivo Ziedins.
 
 ${input.eTransferInstructions}
 
