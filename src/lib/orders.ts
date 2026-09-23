@@ -305,7 +305,7 @@ async function sendOrderConfirmationEmail(
       total: `$${order.total.toFixed(2)} CAD`,
       name: options.customerName ?? getOrderCustomerFirstName(order),
       etransferEmail: eTransferSetting?.value ?? "ovipeps@gmail.com",
-      autodepositName: "IN Z",
+      autodepositName: "Ivo Ziedins",
       items: order.items
         .map(
           (item) =>
