@@ -99,7 +99,7 @@ export default function PaymentInstructionsPage() {
                     sending funds.
                   </p>
                   <p>
-                    Before sending, confirm that AutoDeposit displays the name <strong>IN Z</strong>.
+                    Before sending, confirm that AutoDeposit displays the name <strong>Ivo Ziedins</strong>.
                   </p>
                 </>
               ),
