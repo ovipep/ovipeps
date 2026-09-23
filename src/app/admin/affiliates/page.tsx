@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
 import { AffiliateStatusActions } from "@/components/admin/affiliate-status-actions";
-import { reconcileAllAffiliateMinimums } from "@/lib/affiliate";
+import {
+  reconcileAllAffiliateMinimums,
+  reconcilePaidAffiliateCommissions,
+} from "@/lib/affiliate";
 import { getUtcMonthBounds } from "@/lib/affiliate-program";
 
 export default async function AdminAffiliatesPage() {
+  await reconcilePaidAffiliateCommissions();
   await reconcileAllAffiliateMinimums();
   const monthBounds = getUtcMonthBounds(new Date());
   const affiliates = await db.affiliateAccount.findMany({

@@ -1,7 +1,10 @@
 import { db } from "@/lib/db";
 import type { AffiliateDashboardData } from "@/lib/affiliate-types";
 import type { CommissionStatus } from "@/generated/prisma/enums";
-import { reconcileAffiliateMinimums } from "@/lib/affiliate";
+import {
+  reconcileAffiliateMinimums,
+  reconcilePaidAffiliateCommissions,
+} from "@/lib/affiliate";
 import {
   AFFILIATE_MONTHLY_MINIMUM,
   getAffiliateCommissionRate,
@@ -33,7 +36,10 @@ export async function getAffiliateDashboardData(
     where: { userId },
     select: { id: true },
   });
-  if (initialAccount) await reconcileAffiliateMinimums(initialAccount.id);
+  if (initialAccount) {
+    await reconcilePaidAffiliateCommissions(initialAccount.id);
+    await reconcileAffiliateMinimums(initialAccount.id);
+  }
 
   const account = await db.affiliateAccount.findUnique({
     where: { userId },

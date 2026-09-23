@@ -256,8 +256,14 @@ export async function createCommission(orderId: string) {
 
   if (!order?.affiliateId || order.commission) return null;
 
-  const affiliate = await reconcileAffiliateMinimums(order.affiliateId);
-  if (!affiliate || affiliate.status !== "ACTIVE") return null;
+  // The affiliate was already validated when the order was attributed. A later
+  // freeze must not erase commission from an order that was legitimately tied
+  // to that affiliate while the account was active.
+  await reconcileAffiliateMinimums(order.affiliateId);
+  const affiliate = await db.affiliateAccount.findUnique({
+    where: { id: order.affiliateId },
+  });
+  if (!affiliate) return null;
 
   const commissionableAmount = roundMoney(
     Math.max(0, order.subtotal - order.discountAmount)
@@ -330,4 +336,40 @@ export async function createCommission(orderId: string) {
 
     return created;
   });
+}
+
+const COMMISSION_ELIGIBLE_ORDER_STATUSES = [
+  "PAYMENT_RECEIVED",
+  "PROCESSING",
+  "SHIPPED",
+  "COMPLETED",
+] as const;
+
+export async function reconcilePaidAffiliateCommissions(affiliateId?: string) {
+  const orders = await db.order.findMany({
+    where: {
+      affiliateId: affiliateId ? affiliateId : { not: null },
+      status: { in: [...COMMISSION_ELIGIBLE_ORDER_STATUSES] },
+      commission: { is: null },
+    },
+    select: { id: true, orderNumber: true },
+    orderBy: { paidAt: "asc" },
+  });
+
+  const repaired: string[] = [];
+  const failures: Array<{ orderNumber: string; error: string }> = [];
+
+  for (const order of orders) {
+    try {
+      const commission = await createCommission(order.id);
+      if (commission) repaired.push(order.orderNumber);
+    } catch (error) {
+      failures.push({
+        orderNumber: order.orderNumber,
+        error: error instanceof Error ? error.message : "Commission reconciliation failed",
+      });
+    }
+  }
+
+  return { checked: orders.length, repaired, failures };
 }

@@ -197,6 +197,18 @@ export async function deliverRestockEvent(eventId: string) {
   }
 }
 
+export async function retryPendingRestockDeliveries() {
+  const deliveries = await db.restockDelivery.findMany({
+    where: { status: { in: ["PENDING", "FAILED"] } },
+    select: { eventId: true },
+  });
+  const eventIds = [...new Set(deliveries.map((delivery) => delivery.eventId))];
+  for (const eventId of eventIds) {
+    await deliverRestockEvent(eventId);
+  }
+  return { deliveries: deliveries.length, events: eventIds.length };
+}
+
 export async function getManagedRestockSubscription(token: string) {
   return db.restockSubscription.findUnique({
     where: { manageTokenHash: hashManageToken(token) },

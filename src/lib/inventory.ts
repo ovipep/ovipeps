@@ -121,13 +121,14 @@ export async function sendInventoryAlertsForVariants(variantIds: string[]) {
 
     if (previous?.value === state) continue;
 
-    await db.siteSetting.upsert({
-      where: { key },
-      update: { value: state },
-      create: { key, value: state },
-    });
-
-    if (state === "NORMAL") continue;
+    if (state === "NORMAL") {
+      await db.siteSetting.upsert({
+        where: { key },
+        update: { value: state },
+        create: { key, value: state },
+      });
+      continue;
+    }
 
     const supportSetting = await db.siteSetting.findUnique({
       where: { key: "support_email" },
@@ -153,5 +154,22 @@ export async function sendInventoryAlertsForVariants(variantIds: string[]) {
       }
     );
     if (!result.success) throw new Error(result.error);
+
+    // Record the alert state only after the provider accepts the email. If a
+    // delivery attempt fails, the next reconciliation pass will retry it.
+    await db.siteSetting.upsert({
+      where: { key },
+      update: { value: state },
+      create: { key, value: state },
+    });
   }
+}
+
+export async function reconcileInventoryAlerts() {
+  const variants = await db.productVariant.findMany({
+    where: { stockQuantity: { lte: LOW_STOCK_THRESHOLD } },
+    select: { id: true },
+  });
+  await sendInventoryAlertsForVariants(variants.map((variant) => variant.id));
+  return variants.length;
 }
