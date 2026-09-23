@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Resend, type Attachment } from "resend";
 import { db } from "@/lib/db";
 
@@ -243,11 +244,23 @@ interface SendEmailOptions {
   idempotencyKey?: string;
 }
 
+const OWNER_EMAIL = "ovipeps@gmail.com";
+const MAX_SEND_ATTEMPTS = 3;
+
+function isOwnerRecipient(to: string) {
+  return to.trim().toLowerCase() === OWNER_EMAIL;
+}
+
+function retryDelay(attempt: number) {
+  return new Promise((resolve) => setTimeout(resolve, attempt * 400));
+}
+
 export async function sendEmail(
   to: string,
   template: EmailTemplate,
   options: SendEmailOptions = {}
 ) {
+  const recipient = to.trim().toLowerCase();
   const apiKey =
     process.env.RESEND_API_KEY ?? process.env.RESEND_ADMIN_API_KEY;
   const from =
@@ -255,30 +268,68 @@ export async function sendEmail(
     "OVIpeps <orders@ovipeps.ca>";
   if (!apiKey) {
     console.warn(
-      `[Email not sent: Resend API key is not configured] To: ${to} | Subject: ${template.subject}`
+      `[Email not sent: Resend API key is not configured] To: ${recipient} | Subject: ${template.subject}`
     );
     return {
       success: false,
       error: "RESEND_API_KEY or RESEND_ADMIN_API_KEY must be configured",
     };
   }
-  const { data, error } = await new Resend(apiKey).emails.send(
-    {
-      from,
-      replyTo: process.env.RESEND_REPLY_TO ?? "ovipeps@gmail.com",
-      to,
-      subject: template.subject,
-      html: template.html,
-      text: template.text,
-      attachments: options.attachments,
-    },
-    { idempotencyKey: options.idempotencyKey }
-  );
-  if (error) {
-    console.error("Resend email failed", error);
-    return { success: false, error: error.message };
+  const resend = new Resend(apiKey);
+  const idempotencyKey = options.idempotencyKey ?? `email-${randomUUID()}`;
+  let lastError = "Unknown email delivery error";
+
+  for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt += 1) {
+    try {
+      const { data, error } = await resend.emails.send(
+        {
+          from,
+          replyTo: process.env.RESEND_REPLY_TO ?? OWNER_EMAIL,
+          to: recipient,
+          // Every external/customer message is copied to the owner. Avoid a
+          // duplicate when the owner is already the primary recipient.
+          cc: isOwnerRecipient(recipient) ? undefined : OWNER_EMAIL,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+          attachments: options.attachments,
+        },
+        { idempotencyKey }
+      );
+      if (!error) {
+        console.info("Resend email accepted", {
+          emailId: data?.id,
+          to: recipient,
+          cc: isOwnerRecipient(recipient) ? [] : [OWNER_EMAIL],
+          subject: template.subject,
+          attempt,
+        });
+        return { success: true, id: data?.id };
+      }
+      lastError = error.message;
+      console.error("Resend email attempt failed", {
+        to: recipient,
+        subject: template.subject,
+        attempt,
+        error: error.message,
+      });
+    } catch (error) {
+      lastError =
+        error instanceof Error ? error.message : "Email provider request failed";
+      console.error("Resend email attempt threw", {
+        to: recipient,
+        subject: template.subject,
+        attempt,
+        error: lastError,
+      });
+    }
+
+    if (attempt < MAX_SEND_ATTEMPTS) {
+      await retryDelay(attempt);
+    }
   }
-  return { success: true, id: data?.id };
+
+  return { success: false, error: lastError };
 }
 
 export function buildRestockEmail(input: {
