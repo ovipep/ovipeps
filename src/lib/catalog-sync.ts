@@ -212,7 +212,15 @@ async function syncCatalog() {
   // visible as Restocking until both are entered in Back Office.
   const syringePack = await db.product.upsert({
     where: { slug: SYRINGE_30_PACK.slug },
-    update: {},
+    update: {
+      name: SYRINGE_30_PACK.name,
+      shortDescription: SYRINGE_30_PACK.shortDescription,
+      description: SYRINGE_30_PACK.description,
+      researchCategory: "Supplies",
+      category: "SUPPLY",
+      imageUrl: SYRINGE_30_PACK.imageUrl,
+      published: true,
+    },
     create: {
       name: SYRINGE_30_PACK.name,
       slug: SYRINGE_30_PACK.slug,
