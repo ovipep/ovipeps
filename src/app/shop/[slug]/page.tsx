@@ -146,6 +146,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 ...(product.slug === "bac-water"
                   ? ["/images/products/bac-water-secondary.png"]
                   : []),
+                ...(product.slug === "disposable-1ml-30g-half-inch-syringes-30-pack"
+                  ? ["/images/products/syringes-1ml-30g-detail.png"]
+                  : []),
               ]}
             />
 

@@ -36,6 +36,7 @@ export function ProductDetailTabs({
   hasCoa,
 }: ProductDetailTabsProps) {
   const visibleTabs = TAB_IDS.filter((tab) => {
+    if (product.category === "SUPPLY" && (tab === "research" || tab === "storage")) return false;
     if (tab === "lab") return hasCoa;
     if (tab === "batch") return product.batches.length > 0;
     return true;

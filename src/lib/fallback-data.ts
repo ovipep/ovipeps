@@ -170,6 +170,15 @@ export const FALLBACK_PRODUCTS: ProductCardData[] = [
     featured: true,
     variants: [{ id: "v10", name: "10mg/10mg", sku: "WOLV-10-10", price: 179.99, inStock: false, isDefault: true }],
   },
+  {
+    id: "fb-syringes-30-pack",
+    name: 'Disposable 1 mL/cc 30G 1/2" Syringe with Needle — Pack of 30',
+    slug: "disposable-1ml-30g-half-inch-syringes-30-pack",
+    imageUrl: "/images/products/syringes-1ml-30g-30-pack.png",
+    researchCategory: "Supplies",
+    shortDescription: 'Thirty individually wrapped disposable 1 mL/cc syringes with 30G, 1/2" needles.',
+    variants: [{ id: "v-syringes-30-pack", name: "Pack of 30", sku: "1CC-30G-1-2-30PACK", price: 0, inStock: false, stockQuantity: 0, isDefault: true }],
+  },
 ];
 
 export const FALLBACK_SETTINGS: Record<string, string> = {

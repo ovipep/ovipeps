@@ -32,9 +32,12 @@ export async function updateVariantInventory(input: {
   const result = await db.$transaction(async (tx) => {
     const existing = await tx.productVariant.findUnique({
       where: { id: input.variantId },
-      select: { productId: true },
+      select: { productId: true, sku: true },
     });
     if (!existing) throw new Error("Product vial size not found");
+    if (existing.sku === "1CC-30G-1-2-30PACK" && input.stockQuantity > 0 && input.price <= 0) {
+      throw new Error("Enter a price before making the syringe pack available");
+    }
 
     // Serialize inventory edits for every vial size belonging to this product.
     await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${existing.productId} FOR UPDATE`;

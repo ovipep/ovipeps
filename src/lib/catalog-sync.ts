@@ -75,6 +75,15 @@ const BAC_WATER_30ML_PRODUCT = {
   variantName: "30 mL",
 } as const;
 
+const SYRINGE_30_PACK = {
+  name: 'Disposable 1 mL/cc 30G 1/2" Syringe with Needle — Pack of 30',
+  slug: "disposable-1ml-30g-half-inch-syringes-30-pack",
+  shortDescription: 'Thirty individually wrapped disposable 1 mL/cc syringes with 30G, 1/2" needles.',
+  description: 'Pack of 30 individually wrapped disposable syringes with needles. Capacity: 1 mL/cc. Needle gauge: 30G. Needle length: 1/2 inch.',
+  imageUrl: "/images/products/syringes-1ml-30g-30-pack.png",
+  sku: "1CC-30G-1-2-30PACK",
+} as const;
+
 async function syncCatalog() {
   for (const [index, product] of FALLBACK_PRODUCTS.entries()) {
     const stored = await db.product.upsert({
@@ -192,6 +201,39 @@ async function syncCatalog() {
       price: 0,
       concentration: BAC_WATER_30ML_PRODUCT.variantName,
       size: BAC_WATER_30ML_PRODUCT.variantName,
+      stockQuantity: 0,
+      inStock: false,
+      isDefault: true,
+      sortOrder: 0,
+    },
+  });
+
+  // Keep the price and stock under administrator control; the listing is
+  // visible as Restocking until both are entered in Back Office.
+  const syringePack = await db.product.upsert({
+    where: { slug: SYRINGE_30_PACK.slug },
+    update: {},
+    create: {
+      name: SYRINGE_30_PACK.name,
+      slug: SYRINGE_30_PACK.slug,
+      shortDescription: SYRINGE_30_PACK.shortDescription,
+      description: SYRINGE_30_PACK.description,
+      researchCategory: "Supplies",
+      category: "SUPPLY",
+      imageUrl: SYRINGE_30_PACK.imageUrl,
+      published: true,
+      sortOrder: 997,
+    },
+  });
+  await db.productVariant.upsert({
+    where: { sku: SYRINGE_30_PACK.sku },
+    update: {},
+    create: {
+      productId: syringePack.id,
+      name: "Pack of 30",
+      sku: SYRINGE_30_PACK.sku,
+      price: 0,
+      size: "30 syringes",
       stockQuantity: 0,
       inStock: false,
       isDefault: true,

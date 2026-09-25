@@ -299,6 +299,37 @@ async function main() {
     },
   });
 
+  const syringePack = await prisma.product.upsert({
+    where: { slug: "disposable-1ml-30g-half-inch-syringes-30-pack" },
+    update: {},
+    create: {
+      name: 'Disposable 1 mL/cc 30G 1/2" Syringe with Needle — Pack of 30',
+      slug: "disposable-1ml-30g-half-inch-syringes-30-pack",
+      shortDescription: 'Thirty individually wrapped disposable 1 mL/cc syringes with 30G, 1/2" needles.',
+      description: 'Pack of 30 individually wrapped disposable syringes with needles. Capacity: 1 mL/cc. Needle gauge: 30G. Needle length: 1/2 inch.',
+      researchCategory: "Supplies",
+      category: "SUPPLY",
+      imageUrl: "/images/products/syringes-1ml-30g-30-pack.png",
+      published: true,
+      sortOrder: 997,
+    },
+  });
+  await prisma.productVariant.upsert({
+    where: { sku: "1CC-30G-1-2-30PACK" },
+    update: {},
+    create: {
+      productId: syringePack.id,
+      name: "Pack of 30",
+      sku: "1CC-30G-1-2-30PACK",
+      price: 0,
+      size: "30 syringes",
+      stockQuantity: 0,
+      inStock: false,
+      isDefault: true,
+      sortOrder: 0,
+    },
+  });
+
   const glp3 = await prisma.product.findUnique({ where: { slug: "glp-3" } });
   if (glp3) {
     await prisma.coaDocument.upsert({
