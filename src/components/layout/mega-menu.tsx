@@ -87,7 +87,7 @@ export function MegaMenu({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-1/2 top-full z-50 mt-2 w-[min(100vw-2rem,44rem)] -translate-x-1/2"
+            className="fixed inset-x-4 top-12 z-50 mx-auto max-h-[calc(100dvh-4rem)] w-auto max-w-[44rem] overflow-y-auto overscroll-contain"
           >
             <div className="overflow-hidden rounded-2xl border border-sky/20 bg-white/95 shadow-2xl shadow-sky/15 backdrop-blur-xl">
               <div className="grid gap-0 md:grid-cols-[1fr_auto]">
