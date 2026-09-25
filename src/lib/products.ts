@@ -255,6 +255,7 @@ function sortProducts(
     const bacOrder: Record<string, number> = {
       "bac-water": 0,
       "bac-water-30ml": 1,
+      "disposable-1ml-30g-half-inch-syringes-30-pack": 2,
     };
     const aBacOrder = bacOrder[a.slug];
     const bBacOrder = bacOrder[b.slug];

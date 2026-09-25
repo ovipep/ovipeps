@@ -220,6 +220,7 @@ async function syncCatalog() {
       category: "SUPPLY",
       imageUrl: SYRINGE_30_PACK.imageUrl,
       published: true,
+      sortOrder: 1000,
     },
     create: {
       name: SYRINGE_30_PACK.name,
@@ -230,7 +231,7 @@ async function syncCatalog() {
       category: "SUPPLY",
       imageUrl: SYRINGE_30_PACK.imageUrl,
       published: true,
-      sortOrder: 997,
+      sortOrder: 1000,
     },
   });
   await db.productVariant.upsert({

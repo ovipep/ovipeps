@@ -301,7 +301,7 @@ async function main() {
 
   const syringePack = await prisma.product.upsert({
     where: { slug: "disposable-1ml-30g-half-inch-syringes-30-pack" },
-    update: {},
+    update: { sortOrder: 1000 },
     create: {
       name: 'Disposable 1 mL/cc 30G 1/2" Syringe with Needle — Pack of 30',
       slug: "disposable-1ml-30g-half-inch-syringes-30-pack",
@@ -311,7 +311,7 @@ async function main() {
       category: "SUPPLY",
       imageUrl: "/images/products/syringes-1ml-30g-30-pack.png",
       published: true,
-      sortOrder: 997,
+      sortOrder: 1000,
     },
   });
   await prisma.productVariant.upsert({
