@@ -393,14 +393,16 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
     imageUrl: fallback.imageUrl ?? null,
     researchCategory: fallback.researchCategory ?? null,
     shortDescription: fallback.shortDescription ?? null,
-    description: fallback.shortDescription ?? null,
+    description: fallback.slug === "disposable-1ml-30g-half-inch-syringes-30-pack"
+      ? 'Pack of 30 individually wrapped disposable syringes with needles. Capacity: 1 mL/cc. Needle gauge: 30G. Needle length: 1/2 inch.'
+      : fallback.shortDescription ?? null,
     metaTitle: null,
     metaDescription: null,
     isNew: fallback.isNew ?? false,
     featured: fallback.featured ?? false,
     published: true,
     sortOrder: 0,
-    category: "RESEARCH_PEPTIDE" as const,
+    category: fallback.researchCategory === "Supplies" ? "SUPPLY" as const : "RESEARCH_PEPTIDE" as const,
     createdAt: new Date(),
     updatedAt: new Date(),
     variants: fallback.variants.map((v, i) => ({
