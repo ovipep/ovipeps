@@ -263,7 +263,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               Related Products
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Other compounds in{" "}
+              Other products in{" "}
               {product.researchCategory ?? "our research catalog"}.
             </p>
             <ProductGrid className="mt-8">

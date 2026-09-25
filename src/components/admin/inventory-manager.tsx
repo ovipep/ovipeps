@@ -58,7 +58,7 @@ export function InventoryManager({ products }: { products: Product[] }) {
         <Button size="sm" variant="outline" onClick={() => void send(`/api/admin/products/${product.id}`, "PATCH", { published: !product.published }, `publish-${product.id}`)}>{product.published ? "Hide from shop" : "Publish in shop"}</Button>
       </div>
       <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-sm">
-        <thead><tr className="border-b border-border text-left text-muted-foreground"><th className="px-4 py-2">Vial size</th><th className="px-4 py-2">SKU</th><th className="px-4 py-2">Price (CAD)</th><th className="px-4 py-2">Available vials</th><th className="px-4 py-2">Status</th><th /></tr></thead>
+        <thead><tr className="border-b border-border text-left text-muted-foreground"><th className="px-4 py-2">Size / pack</th><th className="px-4 py-2">SKU</th><th className="px-4 py-2">Price (CAD)</th><th className="px-4 py-2">Available units</th><th className="px-4 py-2">Status</th><th /></tr></thead>
         <tbody>{product.variants.map((variant) => <VariantRow key={variant.id} variant={variant} busy={busy === variant.id} onSave={(body) => send(`/api/admin/variants/${variant.id}`, "PATCH", body, variant.id)} />)}</tbody>
       </table></div>
       <form className="grid gap-2 border-t border-border bg-muted/20 p-3 sm:grid-cols-5" onSubmit={async (event) => {
@@ -67,7 +67,7 @@ export function InventoryManager({ products }: { products: Product[] }) {
         const saved = await send(`/api/admin/products/${product.id}/variants`, "POST", { size: data.get("size"), sku: data.get("sku"), price: Number(data.get("price")), stockQuantity: Number(data.get("stock")) }, `new-${product.id}`);
         if (saved) form.reset();
       }}>
-        <Input name="size" placeholder="Vial size, e.g. 10mg" required /><Input name="sku" placeholder="Unique SKU" required /><Input name="price" type="number" min="0" step="0.01" placeholder="Price" required /><Input name="stock" type="number" min="0" step="1" placeholder="Inventory" required /><Button type="submit" variant="outline" disabled={busy === `new-${product.id}`}><Plus className="h-4 w-4" /> Add vial size</Button>
+        <Input name="size" placeholder="Size or pack, e.g. 10mg" required /><Input name="sku" placeholder="Unique SKU" required /><Input name="price" type="number" min="0" step="0.01" placeholder="Price" required /><Input name="stock" type="number" min="0" step="1" placeholder="Inventory" required /><Button type="submit" variant="outline" disabled={busy === `new-${product.id}`}><Plus className="h-4 w-4" /> Add size / pack</Button>
       </form>
     </section>)}
   </div>;

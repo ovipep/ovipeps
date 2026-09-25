@@ -149,7 +149,7 @@ export function ProductDetailClient({
             )}
           />
           {inStock
-            ? `Available now — only ${stockQuantity} vials in stock`
+            ? `Available now — only ${stockQuantity} units in stock`
             : "Restocking"}
         </span>
       </div>
@@ -167,7 +167,7 @@ export function ProductDetailClient({
       {!inStock && (
         <div className="rounded-xl border border-sky/15 bg-sky/5 p-4">
           <p className="text-sm text-muted-foreground">
-            Want updates when this compound returns? Reach out and we&apos;ll help with
+            Want updates when this product returns? Reach out and we&apos;ll help with
             availability questions.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">

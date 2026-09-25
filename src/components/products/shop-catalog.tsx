@@ -174,7 +174,7 @@ export function ShopCatalog({
               ) : (
                 <>
                   <span className="text-lg font-bold text-sky">{products.length}</span>{" "}
-                  {products.length === 1 ? "compound" : "compounds"} found
+                  {products.length === 1 ? "product" : "products"} found
                 </>
               )}
             </p>
@@ -201,7 +201,7 @@ export function ShopCatalog({
               className="rounded-2xl border-2 border-dashed border-sky/30 bg-gradient-to-br from-sky/5 to-cyan/5 px-6 py-20 text-center"
             >
               <p className="text-lg font-bold text-foreground">
-                No compounds match your criteria
+                No products match your criteria
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 Try adjusting your filters or search terms.

@@ -192,7 +192,7 @@ export function QuickViewModal({
                   )}
                 />
                 {inStock
-                  ? `Available — ${selectedVariant?.stockQuantity ?? "limited"} vials left`
+                  ? `Available — ${selectedVariant?.stockQuantity ?? "limited"} units left`
                   : "Restocking"}
               </span>
             </div>

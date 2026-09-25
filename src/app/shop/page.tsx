@@ -56,7 +56,7 @@ async function ShopContent({ searchParams }: { searchParams: Record<string, stri
           Limited stock available now
         </p>
         <p className="mt-1.5 text-sm leading-relaxed text-emerald-950/80">
-          Live prices and vial counts are shown on every product below. Products
+          Live prices and stock counts are shown on every product below. Products
           with zero inventory are marked Restocking.
         </p>
       </div>
