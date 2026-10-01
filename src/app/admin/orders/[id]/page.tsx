@@ -22,10 +22,13 @@ interface ShippingAddress {
 
 export default async function AdminOrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ shipmentError?: string; shipmentSaved?: string }>;
 }) {
   const { id } = await params;
+  const { shipmentError, shipmentSaved } = await searchParams;
 
   const order = await db.order.findUnique({
     where: { id },
@@ -43,6 +46,9 @@ export default async function AdminOrderDetailPage({
 
   return (
     <div className="space-y-6">
+      {shipmentError && <p role="alert" className="rounded-xl border border-error/40 bg-error/5 p-4 text-sm text-error">{shipmentError}</p>}
+      {shipmentSaved === "save-tracking" && <p role="status" className="rounded-xl border border-success/40 bg-success/5 p-4 text-sm">Tracking number saved.</p>}
+      {shipmentSaved === "ship" && order.status === "COMPLETED" && <p role="status" className="rounded-xl border border-success/40 bg-success/5 p-4 text-sm">Order marked Complete. Tracking information saved.</p>}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-navy-deep">
@@ -82,14 +88,15 @@ export default async function AdminOrderDetailPage({
         </Card>
       )}
 
-      {(order.status === "PROCESSING" || order.status === "PAYMENT_RECEIVED") && (
+      {(["PROCESSING", "PAYMENT_RECEIVED", "SHIPPED", "COMPLETED"].includes(order.status)) && (
         <Card className="border-primary/40 bg-primary/5">
-          <CardHeader><CardTitle>Pending Shipping</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{order.status === "COMPLETED" || order.status === "SHIPPED" ? "Tracking Information" : "Pending Shipping"}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">Select Shipped after this order has been shipped. The order status will then change to Complete.</p>
+            <p className="text-sm text-muted-foreground">Save tracking separately, or select Shipped to save tracking and mark this order Complete. Tracking is optional.</p>
             <ShipOrderButton
               orderId={order.id}
               initialTrackingNumber={order.trackingNumber ?? ""}
+              canShip={order.status !== "COMPLETED"}
             />
           </CardContent>
         </Card>
