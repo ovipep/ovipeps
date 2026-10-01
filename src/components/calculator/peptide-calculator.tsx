@@ -312,6 +312,14 @@ export function PeptideCalculator() {
                   <div><span className="block text-xs text-white/55">Volume</span><strong className="mt-1 block">{formatCalculatorNumber(result.volumeNeededMl!)} mL</strong></div>
                   <div><span className="block text-xs text-white/55">Concentration</span><strong className="mt-1 block">{formatCalculatorNumber(result.concentrationMgMl!)} mg/mL</strong></div>
                 </div>
+                <div className="mt-5 rounded-xl border border-white/15 bg-white/10 px-4 py-4" aria-live="polite">
+                  <p className="text-sm text-white/70">Full doses per vial</p>
+                  <p className="mt-1 text-3xl font-bold">{result.fullDoses}</p>
+                  <p className="mt-1 text-sm text-white/70">At {targetQuantity} {targetUnit} per dose</p>
+                  {result.remainingQuantityMg! > parsedInput.vialQuantityMg * Number.EPSILON * 4 ? (
+                    <p className="mt-2 text-sm text-white/70">Left over: {formatCalculatorNumber(result.remainingQuantityMg! * 1000, 6)} mcg — less than one full dose.</p>
+                  ) : null}
+                </div>
                 <p className="mt-5 text-xs text-white/50">Your entries stay in your browser.</p>
               </>
             )}

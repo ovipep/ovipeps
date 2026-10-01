@@ -19,6 +19,8 @@ export interface PeptideCalculatorResult {
   volumeNeededMl: number | null;
   syringeUnits: number | null;
   syringeUnitsPerMl: number | null;
+  fullDoses: number | null;
+  remainingQuantityMg: number | null;
 }
 
 const SYRINGE_UNITS_PER_ML: Record<Exclude<SyringeScale, "none">, number> = {
@@ -64,6 +66,8 @@ export function calculatePeptideReconstitution(
       targetMg: null,
       volumeNeededMl: null,
       syringeUnits: null,
+      fullDoses: null,
+      remainingQuantityMg: null,
       syringeUnitsPerMl: getSyringeUnitsPerMl(input.syringeScale),
     };
   }
@@ -72,6 +76,15 @@ export function calculatePeptideReconstitution(
   const concentrationMcgMl = concentrationMgMl * 1000;
   const targetMg = convertTargetToMg(input.targetQuantity, input.targetUnit);
   const volumeNeededMl = targetMg / concentrationMgMl;
+  const doseCount = input.vialQuantityMg / targetMg;
+  // Correct floating-point noise at exact divisions without rounding partial doses up.
+  const nearestInteger = Math.round(doseCount);
+  const fullDoses = Math.floor(
+    Math.abs(doseCount - nearestInteger) <= Number.EPSILON * Math.max(1, doseCount) * 4
+      ? nearestInteger
+      : doseCount
+  );
+  const remainingQuantityMg = Math.max(0, input.vialQuantityMg - fullDoses * targetMg);
 
   const unitsPerMl = getSyringeUnitsPerMl(input.syringeScale);
   const syringeUnits =
@@ -86,6 +99,8 @@ export function calculatePeptideReconstitution(
     volumeNeededMl,
     syringeUnits,
     syringeUnitsPerMl: unitsPerMl,
+    fullDoses,
+    remainingQuantityMg,
   };
 }
 
@@ -114,6 +129,9 @@ export function buildCalculatorSummary(
     `Concentration: ${formatCalculatorNumber(result.concentrationMgMl!)} mg/mL`,
     `Concentration: ${formatCalculatorNumber(result.concentrationMcgMl!)} mcg/mL`,
     `Volume needed: ${formatCalculatorNumber(result.volumeNeededMl!)} mL`,
+    `Full doses per vial: ${result.fullDoses}`,
+    `Quantity per dose: ${input.targetQuantity} ${input.targetUnit}`,
+    `Remaining quantity: ${formatCalculatorNumber(result.remainingQuantityMg! * 1000, 6)} mcg`,
   ];
 
   if (result.syringeUnits !== null && result.syringeUnitsPerMl !== null) {
