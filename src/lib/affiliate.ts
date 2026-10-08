@@ -344,11 +344,14 @@ export async function createCommission(orderId: string) {
       existingCommissions.reduce((sum, row) => sum + row.commissionableAmount, 0)
   );
   const commissionRate = getAffiliateCommissionRate(combinedMonthlySales);
+  // Finalized payout commissions are historical records. A late order for
+  // the same month must not rewrite money already paid or locked for payment.
+  const mutableCommissions = existingCommissions.filter((row) => row.status === "PENDING" || row.status === "APPROVED");
   const existingOldTotal = roundMoney(
-    existingCommissions.reduce((sum, row) => sum + row.commissionAmount, 0)
+    mutableCommissions.reduce((sum, row) => sum + row.commissionAmount, 0)
   );
   const existingNewTotal = roundMoney(
-    existingCommissions.reduce(
+    mutableCommissions.reduce(
       (sum, row) => sum + roundMoney(row.commissionableAmount * (commissionRate / 100)),
       0
     )
@@ -357,7 +360,7 @@ export async function createCommission(orderId: string) {
   const earningsDelta = roundMoney(existingNewTotal + commissionAmount - existingOldTotal);
 
   return db.$transaction(async (tx) => {
-    for (const existing of existingCommissions) {
+    for (const existing of mutableCommissions) {
       await tx.affiliateCommission.update({
         where: { id: existing.id },
         data: {

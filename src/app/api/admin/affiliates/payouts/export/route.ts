@@ -1,3 +1,4 @@
+import { getAffiliatePaymentSummary } from "@/lib/affiliate-payment-summary";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -29,7 +30,7 @@ export async function GET() {
       },
     }),
     db.affiliatePayout.findMany({
-      include: { items: true },
+      include: { items: { include: { affiliate: { include: { user: { select: { firstName: true, lastName: true, email: true } } } } } } },
     }),
   ]);
 
@@ -42,6 +43,23 @@ export async function GET() {
     )
   );
 
+  const summary = await getAffiliatePaymentSummary();
+  // Include paid reports even if an affiliate's first partial month had no
+  // minimum-performance record. Payment history must never disappear on export.
+  const recordedPeriods = new Set(performance.map((record) => `${record.periodYear}-${record.periodMonth}-${record.affiliateId}`));
+  const reportRecords = [...performance];
+  for (const payout of payouts) for (const item of payout.items) {
+    if (!recordedPeriods.has(`${payout.periodYear}-${payout.periodMonth}-${item.affiliateId}`)) {
+      reportRecords.push({ id: item.id, affiliateId: item.affiliateId,
+        periodYear: payout.periodYear, periodMonth: payout.periodMonth,
+        qualifyingSales: item.grossSales, commissionRate: item.commissionRate,
+        commissionOwed: item.commissionOwed, minimumMet: item.grossSales >= 300,
+        missedMinimumCount: item.affiliate.missedMinimumMonths,
+        evaluatedAt: item.createdAt, createdAt: item.createdAt, updatedAt: item.updatedAt,
+        affiliate: item.affiliate });
+    }
+  }
+  reportRecords.sort((a, b) => a.periodYear - b.periodYear || a.periodMonth - b.periodMonth);
   const header = [
     "Month",
     "Year",
@@ -61,8 +79,11 @@ export async function GET() {
     "Payment Method",
     "Payment Reference",
     "Sent By",
+    "Remaining for Period (CAD)",
+    "Affiliate Total Paid All Time (CAD)",
+    "All Affiliate Payouts All Time (CAD)",
   ];
-  const rows = performance.map((record) => {
+  const rows = reportRecords.map((record) => {
     const item = payoutItems.get(
       `${record.periodYear}-${record.periodMonth}-${record.affiliateId}`
     );
@@ -97,6 +118,9 @@ export async function GET() {
           : "",
       item?.paymentReference ?? "",
       item?.paidBy ?? "",
+      (item?.status === "PAID" ? 0 : item?.commissionOwed ?? record.commissionOwed).toFixed(2),
+      (summary.paid.get(record.affiliateId) ?? 0).toFixed(2),
+      summary.totalPaid.toFixed(2),
     ];
   });
 

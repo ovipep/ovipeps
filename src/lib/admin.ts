@@ -1,3 +1,4 @@
+import { recordAffiliatePayment } from "@/lib/affiliate-payments";
 import { db } from "@/lib/db";
 import { buildEmailTemplate, sendEmail } from "@/lib/emails";
 import {
@@ -30,6 +31,7 @@ export async function getDashboardMetrics() {
     affiliateOrderAgg,
     outstandingCommissionAgg,
     activeRestockSubscribers,
+    paidAffiliatePayouts,
   ] = await Promise.all([
     db.order.aggregate({
       where: paidOrdersWhere,
@@ -53,6 +55,7 @@ export async function getDashboardMetrics() {
       _sum: { commissionAmount: true },
     }),
     db.restockSubscription.count({ where: { status: "ACTIVE" } }),
+    db.affiliatePayoutItem.findMany({ where: { status: "PAID" }, select: { paymentAmount: true, commissionOwed: true } }),
   ]);
 
   const revenue = revenueAgg._sum.total ?? 0;
@@ -74,6 +77,7 @@ export async function getDashboardMetrics() {
     })),
     affiliateRevenue,
     outstandingCommission,
+    totalAffiliatePaid: roundMoney(paidAffiliatePayouts.reduce((sum, item) => sum + (item.paymentAmount ?? item.commissionOwed), 0)),
     activeRestockSubscribers,
   };
 }
@@ -356,65 +360,8 @@ export async function markPayoutItemPaid(
     paymentReference?: string;
   }
 ) {
-  const item = await db.affiliatePayoutItem.findUnique({
-    where: { id: payoutItemId },
-  });
-
-  if (!item) {
-    throw new Error("Payout item not found");
-  }
-
-  if (item.status === "PAID") {
-    throw new Error("Payout item is already marked as paid");
-  }
-
-  const commissionIds = Array.isArray(item.commissionIds)
-    ? item.commissionIds.filter((id): id is string => typeof id === "string")
-    : item.commissionId
-      ? [item.commissionId]
-      : [];
-
-  await db.$transaction(async (tx) => {
-    await tx.affiliatePayoutItem.update({
-      where: { id: payoutItemId },
-      data: {
-        status: "PAID",
-        paidAt: options.paidAt,
-        paymentReference: options.paymentReference?.trim() || undefined,
-        paymentMethod: options.paymentMethod,
-        paymentAmount: options.paymentAmount,
-        paidBy: options.paidBy.trim(),
-      },
-    });
-
-    if (commissionIds.length) {
-      await tx.affiliateCommission.updateMany({
-        where: { id: { in: commissionIds } },
-        data: {
-          status: "PAID",
-          paidAt: options.paidAt,
-        },
-      });
-
-      await tx.affiliateAccount.update({
-        where: { id: item.affiliateId },
-        data: {
-          pendingEarnings: { decrement: item.commissionOwed },
-          paidEarnings: { increment: options.paymentAmount },
-        },
-      });
-    }
-
-    const remaining = await tx.affiliatePayoutItem.count({
-      where: { payoutId: item.payoutId, id: { not: item.id }, status: { not: "PAID" } },
-    });
-    if (remaining === 0) {
-      await tx.affiliatePayout.update({
-        where: { id: item.payoutId },
-        data: { status: "PAID", processedAt: options.paidAt, processedBy: options.paidBy.trim() },
-      });
-    }
-  });
-
-  return item;
+  return db.$transaction(
+    (tx) => recordAffiliatePayment(tx, payoutItemId, options),
+    { maxWait: 10_000, timeout: 15_000 },
+  );
 }

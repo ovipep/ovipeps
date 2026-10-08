@@ -1,3 +1,4 @@
+import { getAffiliatePaymentSummary } from "@/lib/affiliate-payment-summary";
 import { db } from "@/lib/db";
 import type { AffiliateDashboardData } from "@/lib/affiliate-types";
 import type { CommissionStatus } from "@/generated/prisma/enums";
@@ -68,6 +69,7 @@ export async function getAffiliateDashboardData(
 
   if (!account) return null;
 
+  const paymentSummary = await getAffiliatePaymentSummary(account.id);
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const currentMonthBounds = getUtcMonthBounds(new Date());
@@ -119,8 +121,8 @@ export async function getAffiliateDashboardData(
       totalClicks: account.totalClicks,
       totalOrders: account.totalOrders,
       totalEarnings: account.totalEarnings,
-      paidEarnings: account.paidEarnings,
-      pendingEarnings: account.pendingEarnings,
+      paidEarnings: paymentSummary.paid.get(account.id) ?? 0,
+      pendingEarnings: paymentSummary.outstanding.get(account.id) ?? 0,
       missedMinimumMonths: account.missedMinimumMonths,
       frozenAt: account.frozenAt?.toISOString() ?? null,
     },

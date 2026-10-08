@@ -1,3 +1,4 @@
+import { getAffiliatePaymentSummary } from "@/lib/affiliate-payment-summary";
 import { GeneratePayoutForm, MarkPayoutPaidButton } from "@/components/admin/payout-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminAffiliatePayoutsPage() {
+  const [summary, affiliates] = await Promise.all([
+    getAffiliatePaymentSummary(),
+    db.affiliateAccount.findMany({ include: { user: { select: { firstName: true, lastName: true, email: true } } }, orderBy: { createdAt: "asc" } }),
+  ]);
   const payouts = await db.affiliatePayout.findMany({
     orderBy: [{ periodYear: "desc" }, { periodMonth: "desc" }],
     include: {
@@ -32,6 +37,17 @@ export default async function AdminAffiliatePayoutsPage() {
         <Link href="/api/admin/affiliates/payouts/export"><Button variant="outline">Download ongoing CSV ledger</Button></Link>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Outstanding affiliate commissions</p><p className="text-2xl font-semibold">{formatCurrency(summary.totalOutstanding)}</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total paid out — all time</p><p className="text-2xl font-semibold">{formatCurrency(summary.totalPaid)}</p></CardContent></Card>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-4">Affiliate</th><th className="p-4">Outstanding commission</th><th className="p-4">Paid out — all time</th></tr></thead><tbody>
+          {affiliates.map((affiliate) => <tr id={`affiliate-${affiliate.id}`} key={affiliate.id} className="border-b"><td className="p-4">{affiliate.user.firstName} {affiliate.user.lastName}<p className="text-sm text-muted-foreground">{affiliate.user.email}</p></td><td className="p-4 tabular-nums">{formatCurrency(summary.outstanding.get(affiliate.id) ?? 0)}</td><td className="p-4 tabular-nums">{formatCurrency(summary.paid.get(affiliate.id) ?? 0)}</td></tr>)}
+          {!affiliates.length && <tr><td colSpan={3} className="p-4">No affiliate accounts yet.</td></tr>}
+        </tbody></table>
+      </div>
+      <p className="text-sm text-muted-foreground">Generate a report for a completed month, then select Paid beside each affiliate after sending the full payment. Payments are recorded as Business Ledger expenses automatically; do not add them again as manual expenses.</p>
       <Card>
         <CardHeader>
           <CardTitle>Generate Monthly Report</CardTitle>
@@ -53,7 +69,7 @@ export default async function AdminAffiliatePayoutsPage() {
                     {payout.periodMonth}/{payout.periodYear}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Total: {formatCurrency(payout.totalAmount)}
+                    Commission earned: {formatCurrency(payout.totalAmount)} · Still owed: {formatCurrency(payout.items.reduce((sum, item) => sum + (item.status === "PAID" ? 0 : item.commissionOwed), 0))}
                   </p>
                 </div>
                 <Badge
@@ -64,14 +80,14 @@ export default async function AdminAffiliatePayoutsPage() {
                   {payout.status}
                 </Badge>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-muted-foreground">
                       <th className="pb-3 pr-4 font-medium">Affiliate</th>
                       <th className="pb-3 pr-4 font-medium">Gross Sales</th>
                       <th className="pb-3 pr-4 font-medium">Rate</th>
-                      <th className="pb-3 pr-4 font-medium">Commission</th>
+                      <th className="pb-3 pr-4 font-medium">Still owed</th>
                       <th className="pb-3 pr-4 font-medium">Status</th>
                       <th className="pb-3 pr-4 font-medium">Payment record</th>
                       <th className="pb-3 font-medium">Action</th>
@@ -96,7 +112,8 @@ export default async function AdminAffiliatePayoutsPage() {
                           {item.commissionRate}%
                         </td>
                         <td className="py-3 pr-4 tabular-nums">
-                          {formatCurrency(item.commissionOwed)}
+                          {formatCurrency(item.status === "PAID" ? 0 : item.commissionOwed)}
+                          <p className="text-xs text-muted-foreground">Earned: {formatCurrency(item.commissionOwed)}</p>
                         </td>
                         <td className="py-3 pr-4">
                           <Badge

@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run test:shipping && node scripts/apply-restock-migration.mjs",
+    "prebuild": "npm run test:shipping && npm run test:affiliates && node scripts/apply-restock-migration.mjs",
     "test:shipping": "node --import tsx --test scripts/order-shipping.test.ts",
+    "test:affiliates": "node --import tsx --test scripts/affiliate-payments.test.ts",
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",

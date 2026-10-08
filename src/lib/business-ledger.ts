@@ -1,9 +1,10 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 
 export const PAID_ORDER_STATUSES = ["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED", "COMPLETED"] as const;
 
 export async function getBusinessLedger(from: Date, to: Date) {
-  const [orders, manualEntries, variants] = await Promise.all([
+  const [orders, manualEntries, variants, affiliatePayments] = await Promise.all([
     db.order.findMany({
       where: {
         status: { in: [...PAID_ORDER_STATUSES] },
@@ -16,6 +17,11 @@ export async function getBusinessLedger(from: Date, to: Date) {
     }),
     db.ledgerEntry.findMany({ where: { transactionAt: { gte: from, lte: to } }, orderBy: { transactionAt: "desc" } }),
     db.productVariant.findMany({ include: { product: { select: { name: true } } }, orderBy: [{ product: { name: "asc" } }, { sortOrder: "asc" }] }),
+    db.affiliatePayoutItem.findMany({
+      where: { status: "PAID", paidAt: { gte: from, lte: to } },
+      include: { payout: true, affiliate: { include: { user: { select: { firstName: true, lastName: true, email: true } } } } },
+      orderBy: { paidAt: "desc" },
+    }),
   ]);
   const orderRows = orders.map((order) => ({
     id: `order-${order.id}`, date: order.paidAt ?? order.createdAt, type: "INCOME",
@@ -39,5 +45,24 @@ export async function getBusinessLedger(from: Date, to: Date) {
     fxRate: entry.fxRate ?? 1, fxRateDate: entry.fxRateDate ?? entry.transactionAt,
     manualId: entry.id,
   }));
-  return { rows: [...orderRows, ...manualRows].sort((a, b) => b.date.getTime() - a.date.getTime()), variants };
+  const affiliateRows = affiliatePayments.map(affiliatePayoutLedgerRow);
+  return { rows: [...orderRows, ...manualRows, ...affiliateRows].sort((a, b) => b.date.getTime() - a.date.getTime()), variants };
+}
+
+type LedgerPayout = Prisma.AffiliatePayoutItemGetPayload<{ include: { payout: true; affiliate: { include: { user: { select: { firstName: true; lastName: true; email: true } } } } } }>;
+
+export function affiliatePayoutLedgerRow(item: LedgerPayout) {
+    const amount = item.paymentAmount ?? item.commissionOwed;
+    const date = item.paidAt!;
+    const user = item.affiliate.user;
+    return {
+      id: `affiliate-payout-${item.id}`, date, type: "EXPENSE",
+      category: "Affiliate commissions",
+      description: `${user.firstName ?? ""} ${user.lastName ?? ""} (${user.email}) — ${item.payout.periodMonth}/${item.payout.periodYear} commission payout`,
+      merchandise: 0, shipping: 0, tax: 0, expense: amount, total: -amount,
+      reference: item.paymentReference ?? item.id,
+      paymentMethod: item.paymentMethod === "E_TRANSFER" ? "e-Transfer" : item.paymentMethod === "CRYPTO" ? "Crypto" : "",
+      notes: `Sent by: ${item.paidBy ?? "—"}. ${item.notes ?? ""}`,
+      currency: "CAD", foreignAmount: amount, fxRate: 1, fxRateDate: date, manualId: null,
+    };
 }

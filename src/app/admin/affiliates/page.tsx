@@ -1,3 +1,4 @@
+import { getAffiliatePaymentSummary } from "@/lib/affiliate-payment-summary";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export default async function AdminAffiliatesPage() {
   await reconcileAffiliateOrderAttributions();
   await reconcilePaidAffiliateCommissions();
   await reconcileAllAffiliateMinimums();
+  const summary = await getAffiliatePaymentSummary();
   const monthBounds = getUtcMonthBounds(new Date());
   const affiliates = await db.affiliateAccount.findMany({
     orderBy: { createdAt: "desc" },
@@ -66,17 +68,22 @@ export default async function AdminAffiliatesPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-border bg-card p-4"><p className="text-sm text-muted-foreground">Outstanding affiliate commissions</p><p className="text-2xl font-semibold">{formatCurrency(summary.totalOutstanding)}</p></div>
+        <div className="rounded-xl border border-border bg-card p-4"><p className="text-sm text-muted-foreground">Total affiliate payouts — all time</p><p className="text-2xl font-semibold">{formatCurrency(summary.totalPaid)}</p></div>
+      </div>
+      <p className="text-sm text-muted-foreground">Mark a completed month Paid under Payouts after sending payment. Its outstanding commission clears; newer earnings and the full payment history remain.</p>
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/40 text-left text-muted-foreground">
               <th className="px-4 py-3 font-medium">Affiliate</th>
               <th className="px-4 py-3 font-medium">Code</th>
               <th className="px-4 py-3 font-medium">Rate</th>
-              <th className="px-4 py-3 font-medium">This month</th>
+              <th className="px-4 py-3 font-medium">Sales this month</th>
               <th className="px-4 py-3 font-medium">Misses</th>
-              <th className="px-4 py-3 font-medium">Pending</th>
-              <th className="px-4 py-3 font-medium">Paid</th>
+              <th className="px-4 py-3 font-medium">Outstanding commission</th>
+              <th className="px-4 py-3 font-medium">Paid out — all time</th>
               <th className="px-4 py-3 font-medium">Status</th>
             </tr>
           </thead>
@@ -106,15 +113,16 @@ export default async function AdminAffiliatesPage() {
                   <td className="px-4 py-3 tabular-nums">{formatCurrency(salesByAffiliate.get(affiliate.id) ?? 0)}</td>
                   <td className="px-4 py-3 tabular-nums">{affiliate.missedMinimumMonths}/3</td>
                   <td className="px-4 py-3 tabular-nums">
-                    {formatCurrency(affiliate.pendingEarnings)}
+                    {formatCurrency(summary.outstanding.get(affiliate.id) ?? 0)}
                   </td>
                   <td className="px-4 py-3 tabular-nums">
-                    {formatCurrency(affiliate.paidEarnings)}
+                    {formatCurrency(summary.paid.get(affiliate.id) ?? 0)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="space-y-2">
                       <Badge variant={affiliate.status === "ACTIVE" ? "success" : "default"}>{affiliate.status === "INACTIVE" ? "TERMINATED" : affiliate.status === "SUSPENDED" ? "FROZEN" : affiliate.status}</Badge>
                       <AffiliateStatusActions affiliateId={affiliate.id} status={affiliate.status} />
+                      <Link href={`/admin/affiliates/payouts#affiliate-${affiliate.id}`} className="block text-sm font-medium text-primary underline">Mark Paid / history</Link>
                     </div>
                   </td>
                 </tr>
