@@ -31,6 +31,8 @@ export interface AffiliateDashboardData {
     nextTierThreshold: number | null;
     nextTierRate: number | null;
     amountToNextTier: number;
+    periodLabel: string;
+    updatedAt: string;
   };
   conversionRate: number;
   commissionByStatus: Partial<Record<CommissionStatus, number>>;

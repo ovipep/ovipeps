@@ -9,9 +9,7 @@ import {
   reconcilePaidAffiliateCommissions,
 } from "@/lib/affiliate";
 import {
-  AFFILIATE_MONTHLY_MINIMUM,
-  getAffiliateCommissionRate,
-  getNextAffiliateTier,
+  getAffiliateMonthProgress,
   getUtcMonthBounds,
   roundMoney,
 } from "@/lib/affiliate-program";
@@ -109,8 +107,6 @@ export async function getAffiliateDashboardData(
   const qualifyingSales = roundMoney(
     currentMonthCommissions.reduce((sum, row) => sum + row.commissionableAmount, 0)
   );
-  const currentCommissionRate = getAffiliateCommissionRate(qualifyingSales);
-  const nextTier = getNextAffiliateTier(qualifyingSales);
 
   return {
     account: {
@@ -127,17 +123,7 @@ export async function getAffiliateDashboardData(
       missedMinimumMonths: account.missedMinimumMonths,
       frozenAt: account.frozenAt?.toISOString() ?? null,
     },
-    currentMonth: {
-      qualifyingSales,
-      commissionRate: currentCommissionRate,
-      minimumMet: qualifyingSales >= AFFILIATE_MONTHLY_MINIMUM,
-      amountToMinimum: roundMoney(Math.max(0, AFFILIATE_MONTHLY_MINIMUM - qualifyingSales)),
-      nextTierThreshold: nextTier?.threshold ?? null,
-      nextTierRate: nextTier?.rate ?? null,
-      amountToNextTier: nextTier
-        ? roundMoney(Math.max(0, nextTier.threshold - qualifyingSales))
-        : 0,
-    },
+    currentMonth: getAffiliateMonthProgress(qualifyingSales),
     conversionRate,
     commissionByStatus,
     clickChart: groupByDay(recentClicks),

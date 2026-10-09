@@ -2,7 +2,8 @@
 
 import { PayoutEmailForm } from "@/components/affiliates/payout-email-form";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   Area,
   AreaChart,
@@ -156,6 +157,25 @@ function DataTable({
 }
 
 export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
+  const router = useRouter();
+  const [refreshing, startRefresh] = useTransition();
+  useEffect(() => {
+    let lastRefresh = Date.now();
+    const refresh = () => {
+      if (document.visibilityState !== "visible" || Date.now() - lastRefresh < 5000) return;
+      lastRefresh = Date.now();
+      startRefresh(() => router.refresh());
+    };
+    const timer = window.setInterval(refresh, 60_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [router]);
+  const latestPayoutDate = data.payouts.filter((row) => row.status === "PAID" && row.paidAt).map((row) => row.paidAt!).sort().at(-1);
   const hasAffiliateCode = !data.account.code.startsWith("PENDING-");
   const referralUrl = hasAffiliateCode ? `${SITE_URL}?r=${data.account.code}` : null;
   const pendingCommission = data.commissionByStatus.PENDING ?? 0;
@@ -166,6 +186,7 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
   const overviewCards = [
     { label: "Outstanding commission", value: formatCurrency(data.account.pendingEarnings), icon: DollarSign },
     { label: "Total paid to you — all time", value: formatCurrency(data.account.paidEarnings), icon: DollarSign },
+    { label: "Latest payout date", value: latestPayoutDate ? formatDate(latestPayoutDate) : "No payout date recorded", icon: DollarSign },
     {
       label: "Total clicks",
       value: data.account.totalClicks.toLocaleString(),
@@ -242,42 +263,41 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
         ))}
       </div>
 
-      <p className="text-sm text-muted-foreground">Outstanding commission includes pending, approved, and monthly payout amounts not yet paid. Your all-time paid total increases when OVIpeps records a payment. Refresh this page to see the latest amounts.</p>
-      <PayoutEmailForm payoutEmail={data.account.payoutEmail} />
+      <p className="text-sm text-muted-foreground">Outstanding commission includes pending, approved, and monthly payout amounts not yet paid. Your all-time paid total increases when OVIpeps records a payment. Figures refresh automatically every minute while this page is visible.</p>
 
       <Card className="border-sky/20 bg-gradient-to-br from-sky/5 to-cyan/5">
         <CardHeader>
-          <CardTitle>This month&apos;s tier progress</CardTitle>
-          <CardDescription>
-            Commission is based on your combined qualifying merchandise subtotal before
-            shipping and taxes. Your customer&apos;s automatic 5% discount is deducted first.
-          </CardDescription>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>{data.currentMonth.periodLabel} — monthly sales progress</CardTitle>
+            <Button type="button" variant="outline" size="sm" disabled={refreshing} onClick={() => startRefresh(() => router.refresh())}>{refreshing ? "Updating…" : "Refresh figures"}</Button>
+          </div>
+          <CardDescription>Qualifying sales from paid orders, after the customer discount and before shipping and taxes. Targets restart each month.</CardDescription>
+          <p className="text-sm text-muted-foreground" role="status">Updates automatically every minute. Last updated: {new Intl.DateTimeFormat("en-CA", { hour: "2-digit", minute: "2-digit", timeZone: "America/Toronto", timeZoneName: "short" }).format(new Date(data.currentMonth.updatedAt))}.</p>
         </CardHeader>
-        <CardContent className="grid gap-5 sm:grid-cols-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Monthly minimum</p>
-            <p className="mt-1 text-lg font-semibold text-navy-deep">
-              {data.currentMonth.minimumMet
-                ? "Met"
-                : `${formatCurrency(data.currentMonth.amountToMinimum)} to go`}
-            </p>
+        <CardContent className="grid gap-6 md:grid-cols-3">
+          <div className="space-y-2">
+            <p className="text-sm font-semibold">Qualifying sales this month</p>
+            <p className="text-2xl font-semibold text-navy-deep">{formatCurrency(data.currentMonth.qualifyingSales)}</p>
+            <p className="text-sm">Current commission tier: <strong>{data.currentMonth.commissionRate}%</strong></p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Missed months</p>
-            <p className="mt-1 text-lg font-semibold text-navy-deep">
-              {data.account.missedMinimumMonths} of 3
-            </p>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold">$300 monthly minimum</p>
+            <p className="text-2xl font-semibold text-navy-deep">{data.currentMonth.minimumMet ? "Minimum met" : `${formatCurrency(data.currentMonth.amountToMinimum)} more to sell`}</p>
+            <progress className="h-3 w-full accent-teal" aria-label="Progress toward the $300 monthly minimum" value={Math.min(data.currentMonth.qualifyingSales, 300)} max={300} />
+            <p className="text-sm">{data.currentMonth.minimumMet ? "You have met this month’s affiliate sales requirement." : "More qualifying sales needed this month to meet your affiliate requirement."}</p>
+            <p className="text-sm text-muted-foreground">Missed minimums: {data.account.missedMinimumMonths} of 3. Three missed months, even if not consecutive, freeze your affiliate account.</p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Next tier</p>
-            <p className="mt-1 text-lg font-semibold text-navy-deep">
-              {data.currentMonth.nextTierRate
-                ? `${formatCurrency(data.currentMonth.amountToNextTier)} to ${data.currentMonth.nextTierRate}%`
-                : "Top 25% tier reached"}
-            </p>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold">Next commission tier</p>
+            <p className="text-2xl font-semibold text-navy-deep">{data.currentMonth.nextTierRate ? `${formatCurrency(data.currentMonth.amountToNextTier)} more to sell` : "Top 25% tier reached"}</p>
+            {data.currentMonth.nextTierThreshold && data.currentMonth.nextTierRate ? <>
+              <progress className="h-3 w-full accent-teal" aria-label={`Progress toward the ${data.currentMonth.nextTierRate}% commission tier`} value={Math.min(data.currentMonth.qualifyingSales, data.currentMonth.nextTierThreshold)} max={data.currentMonth.nextTierThreshold} />
+              <p className="text-sm">Reach <strong>{formatCurrency(data.currentMonth.nextTierThreshold)}</strong> in qualifying sales this month for the <strong>{data.currentMonth.nextTierRate}%</strong> tier.</p>
+            </> : <p className="text-sm">You have reached the highest commission tier for this month.</p>}
           </div>
         </CardContent>
       </Card>
+      <PayoutEmailForm payoutEmail={data.account.payoutEmail} />
 
       {hasAffiliateCode && referralUrl ? <Card>
         <CardHeader>
@@ -453,10 +473,11 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
 
       <DataTable
         title="Payouts"
-        description="Payment history and running total in CAD"
+        description="Actual payout dates, payment history, and running total in CAD. Unpaid reports show Awaiting payment."
         emptyMessage="No payouts processed yet."
         columns={[
-          { key: "period", label: "Period" },
+          { key: "period", label: "Commission month" },
+          { key: "paid", label: "Payout date" },
           { key: "gross", label: "Gross sales" },
           { key: "owed", label: "Still owed" },
           { key: "received", label: "Amount received" },
@@ -464,7 +485,7 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
           { key: "method", label: "Payment method" },
           { key: "reference", label: "Reference" },
           { key: "status", label: "Status" },
-          { key: "paid", label: "Paid on" },
+
         ]}
         rows={data.payouts.map((row) => ({
           period: new Intl.DateTimeFormat("en-CA", {
@@ -484,7 +505,7 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
               {row.status}
             </Badge>
           ),
-          paid: row.paidAt ? formatDate(row.paidAt) : "—",
+          paid: row.paidAt ? formatDate(row.paidAt) : row.status === "PAID" ? "Date not recorded" : "Awaiting payment",
         }))}
       />
     </div>

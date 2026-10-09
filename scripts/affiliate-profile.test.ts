@@ -1,3 +1,4 @@
+import { getAffiliateMonthProgress } from "../src/lib/affiliate-program";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { PrismaClient } from "../src/generated/prisma/client";
@@ -50,7 +51,7 @@ test("affiliate dashboard displays complete outstanding amount, actual lifetime 
   const { AffiliateDashboard } = await import("../src/components/affiliates/affiliate-dashboard");
   const data: import("../src/lib/affiliate-types").AffiliateDashboardData = {
     account: { id: "test", code: "TESTCODE", commissionRate: 10, status: "ACTIVE", totalClicks: 0, totalOrders: 0, totalEarnings: 110, pendingEarnings: 30, paidEarnings: 80, payoutEmail: null, missedMinimumMonths: 0, frozenAt: null },
-    currentMonth: { qualifyingSales: 0, commissionRate: 10, minimumMet: false, amountToMinimum: 300, nextTierThreshold: 1500, nextTierRate: 20, amountToNextTier: 1500 },
+    currentMonth: getAffiliateMonthProgress(0, new Date("2026-10-08T12:00:00Z")),
     conversionRate: 0, commissionByStatus: { PENDING: 10, APPROVED: 5, LOCKED: 15, PAID: 100 },
     clicks: [], attributions: [], commissions: [], payouts: buildAffiliatePayoutHistory([payout("done", 80)]), clickChart: [], commissionChart: [],
   };
@@ -61,4 +62,30 @@ test("affiliate dashboard displays complete outstanding amount, actual lifetime 
   assert.match(html, /Awaiting monthly payout<\/p><p[^>]*>\$15\.00/);
   assert.match(html, /Not set/); assert.match(html, /Save payout email/);
   assert.match(html, /type="email"/); assert.match(html, /Running paid total/);
+  assert.match(html, /October 2026 — monthly sales progress/);
+  assert.match(html, /\$300\.00 more to sell/); assert.match(html, /\$1,500\.00 more to sell/);
+  assert.match(html, /Payout date/); assert.match(html, /September 30, 2026/);
+  assert.match(html, /Updates automatically every minute/);
+});
+
+for (const [sales, minimumLeft, rate, nextRate, nextLeft] of [
+  [0, 300, 10, 20, 1500],
+  [299.99, 0.01, 10, 20, 1200.01],
+  [300, 0, 10, 20, 1200],
+  [1499.99, 0, 10, 20, 0.01],
+  [1500, 0, 20, 25, 3500],
+  [4999.99, 0, 20, 25, 0.01],
+  [5000, 0, 25, null, 0],
+] as const) test(`monthly progress at $${sales} shows accurate minimum and next-tier balance`, () => {
+  const progress = getAffiliateMonthProgress(sales, new Date("2026-10-08T12:00:00Z"));
+  assert.equal(progress.amountToMinimum, minimumLeft); assert.equal(progress.commissionRate, rate);
+  assert.equal(progress.nextTierRate, nextRate); assert.equal(progress.amountToNextTier, nextLeft);
+  assert.equal(progress.minimumMet, sales >= 300); assert.equal(progress.periodLabel, "October 2026");
+});
+
+test("monthly progress labels follow the same calendar boundaries as payout reports", () => {
+  const october = getAffiliateMonthProgress(250, new Date("2026-10-31T23:59:59Z"));
+  const november = getAffiliateMonthProgress(0, new Date("2026-11-01T00:00:00Z"));
+  assert.equal(october.periodLabel, "October 2026"); assert.equal(october.amountToMinimum, 50);
+  assert.equal(november.periodLabel, "November 2026"); assert.equal(november.amountToMinimum, 300); assert.equal(november.amountToNextTier, 1500);
 });

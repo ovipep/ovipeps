@@ -37,3 +37,20 @@ export function getPeriodBounds(year: number, month: number) {
     end: new Date(Date.UTC(year, month, 1)),
   };
 }
+
+export function getAffiliateMonthProgress(monthlySales: number, now = new Date()) {
+  const qualifyingSales = roundMoney(Math.max(0, monthlySales));
+  const nextTier = getNextAffiliateTier(qualifyingSales);
+  const { start } = getUtcMonthBounds(now);
+  return {
+    qualifyingSales,
+    commissionRate: getAffiliateCommissionRate(qualifyingSales),
+    minimumMet: qualifyingSales >= AFFILIATE_MONTHLY_MINIMUM,
+    amountToMinimum: roundMoney(Math.max(0, AFFILIATE_MONTHLY_MINIMUM - qualifyingSales)),
+    nextTierThreshold: nextTier?.threshold ?? null,
+    nextTierRate: nextTier?.rate ?? null,
+    amountToNextTier: nextTier ? roundMoney(Math.max(0, nextTier.threshold - qualifyingSales)) : 0,
+    periodLabel: new Intl.DateTimeFormat("en-CA", { month: "long", year: "numeric", timeZone: "UTC" }).format(start),
+    updatedAt: now.toISOString(),
+  };
+}
