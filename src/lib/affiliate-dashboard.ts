@@ -1,3 +1,4 @@
+import { buildAffiliatePayoutHistory } from "@/lib/affiliate-payout-history";
 import { getAffiliatePaymentSummary } from "@/lib/affiliate-payment-summary";
 import { db } from "@/lib/db";
 import type { AffiliateDashboardData } from "@/lib/affiliate-types";
@@ -61,7 +62,6 @@ export async function getAffiliateDashboardData(
       },
       payouts: {
         orderBy: { createdAt: "desc" },
-        take: 50,
         include: { payout: true },
       },
     },
@@ -123,6 +123,7 @@ export async function getAffiliateDashboardData(
       totalEarnings: account.totalEarnings,
       paidEarnings: paymentSummary.paid.get(account.id) ?? 0,
       pendingEarnings: paymentSummary.outstanding.get(account.id) ?? 0,
+      payoutEmail: account.payoutEmail,
       missedMinimumMonths: account.missedMinimumMonths,
       frozenAt: account.frozenAt?.toISOString() ?? null,
     },
@@ -166,15 +167,6 @@ export async function getAffiliateDashboardData(
       flagReason: row.flagReason,
       createdAt: row.createdAt.toISOString(),
     })),
-    payouts: account.payouts.map((row) => ({
-      id: row.id,
-      periodMonth: row.payout.periodMonth,
-      periodYear: row.payout.periodYear,
-      grossSales: row.grossSales,
-      commissionOwed: row.commissionOwed,
-      status: row.status,
-      paidAt: row.paidAt?.toISOString() ?? null,
-      createdAt: row.createdAt.toISOString(),
-    })),
+    payouts: buildAffiliatePayoutHistory(account.payouts),
   };
 }

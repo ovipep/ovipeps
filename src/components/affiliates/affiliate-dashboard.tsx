@@ -1,5 +1,7 @@
 "use client";
 
+import { PayoutEmailForm } from "@/components/affiliates/payout-email-form";
+
 import { useState, type ReactNode } from "react";
 import {
   Area,
@@ -158,10 +160,12 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
   const referralUrl = hasAffiliateCode ? `${SITE_URL}?r=${data.account.code}` : null;
   const pendingCommission = data.commissionByStatus.PENDING ?? 0;
   const approvedCommission = data.commissionByStatus.APPROVED ?? 0;
-  const paidCommission = data.commissionByStatus.PAID ?? 0;
+  const lockedCommission = data.commissionByStatus.LOCKED ?? 0;
   const isFrozen = data.account.status === "SUSPENDED";
 
   const overviewCards = [
+    { label: "Outstanding commission", value: formatCurrency(data.account.pendingEarnings), icon: DollarSign },
+    { label: "Total paid to you — all time", value: formatCurrency(data.account.paidEarnings), icon: DollarSign },
     {
       label: "Total clicks",
       value: data.account.totalClicks.toLocaleString(),
@@ -198,8 +202,8 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
       icon: DollarSign,
     },
     {
-      label: "Paid commission",
-      value: formatCurrency(paidCommission),
+      label: "Awaiting monthly payout",
+      value: formatCurrency(lockedCommission),
       icon: DollarSign,
     },
   ];
@@ -237,6 +241,9 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
           </Card>
         ))}
       </div>
+
+      <p className="text-sm text-muted-foreground">Outstanding commission includes pending, approved, and monthly payout amounts not yet paid. Your all-time paid total increases when OVIpeps records a payment. Refresh this page to see the latest amounts.</p>
+      <PayoutEmailForm payoutEmail={data.account.payoutEmail} />
 
       <Card className="border-sky/20 bg-gradient-to-br from-sky/5 to-cyan/5">
         <CardHeader>
@@ -446,12 +453,16 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
 
       <DataTable
         title="Payouts"
-        description="Monthly payout history"
+        description="Payment history and running total in CAD"
         emptyMessage="No payouts processed yet."
         columns={[
           { key: "period", label: "Period" },
           { key: "gross", label: "Gross sales" },
-          { key: "owed", label: "Commission owed" },
+          { key: "owed", label: "Still owed" },
+          { key: "received", label: "Amount received" },
+          { key: "running", label: "Running paid total" },
+          { key: "method", label: "Payment method" },
+          { key: "reference", label: "Reference" },
           { key: "status", label: "Status" },
           { key: "paid", label: "Paid on" },
         ]}
@@ -461,7 +472,11 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
             year: "numeric",
           }).format(new Date(row.periodYear, row.periodMonth - 1, 1)),
           gross: formatCurrency(row.grossSales),
-          owed: formatCurrency(row.commissionOwed),
+          owed: formatCurrency(row.status === "PAID" ? 0 : row.commissionOwed),
+          received: row.status === "PAID" ? formatCurrency(row.paymentAmount ?? row.commissionOwed) : "—",
+          running: row.runningPaidTotal === null ? "—" : formatCurrency(row.runningPaidTotal),
+          method: row.paymentMethod === "E_TRANSFER" ? "e-Transfer" : row.paymentMethod === "CRYPTO" ? "Crypto" : "—",
+          reference: row.paymentReference ?? "—",
           status: (
             <Badge
               variant={row.status === "PAID" ? "success" : "default"}

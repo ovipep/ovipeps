@@ -6,7 +6,7 @@
     "dev": "next dev",
     "prebuild": "npm run test:shipping && npm run test:affiliates && node scripts/apply-restock-migration.mjs",
     "test:shipping": "node --import tsx --test scripts/order-shipping.test.ts",
-    "test:affiliates": "node --import tsx --test scripts/affiliate-payments.test.ts",
+    "test:affiliates": "node --import tsx --test scripts/affiliate-payments.test.ts scripts/affiliate-profile.test.ts",
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",

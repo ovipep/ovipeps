@@ -42,9 +42,9 @@ export default async function AdminAffiliatePayoutsPage() {
         <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total paid out — all time</p><p className="text-2xl font-semibold">{formatCurrency(summary.totalPaid)}</p></CardContent></Card>
       </div>
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-4">Affiliate</th><th className="p-4">Outstanding commission</th><th className="p-4">Paid out — all time</th></tr></thead><tbody>
-          {affiliates.map((affiliate) => <tr id={`affiliate-${affiliate.id}`} key={affiliate.id} className="border-b"><td className="p-4">{affiliate.user.firstName} {affiliate.user.lastName}<p className="text-sm text-muted-foreground">{affiliate.user.email}</p></td><td className="p-4 tabular-nums">{formatCurrency(summary.outstanding.get(affiliate.id) ?? 0)}</td><td className="p-4 tabular-nums">{formatCurrency(summary.paid.get(affiliate.id) ?? 0)}</td></tr>)}
-          {!affiliates.length && <tr><td colSpan={3} className="p-4">No affiliate accounts yet.</td></tr>}
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-4">Affiliate</th><th className="p-4">Preferred payout email</th><th className="p-4">Outstanding commission</th><th className="p-4">Paid out — all time</th></tr></thead><tbody>
+          {affiliates.map((affiliate) => <tr id={`affiliate-${affiliate.id}`} key={affiliate.id} className="border-b"><td className="p-4">{affiliate.user.firstName} {affiliate.user.lastName}<p className="text-sm text-muted-foreground">{affiliate.user.email}</p></td><td className="p-4">{affiliate.payoutEmail ?? "Not set by affiliate"}</td><td className="p-4 tabular-nums">{formatCurrency(summary.outstanding.get(affiliate.id) ?? 0)}</td><td className="p-4 tabular-nums">{formatCurrency(summary.paid.get(affiliate.id) ?? 0)}</td></tr>)}
+          {!affiliates.length && <tr><td colSpan={4} className="p-4">No affiliate accounts yet.</td></tr>}
         </tbody></table>
       </div>
       <p className="text-sm text-muted-foreground">Generate a report for a completed month, then select Paid beside each affiliate after sending the full payment. Payments are recorded as Business Ledger expenses automatically; do not add them again as manual expenses.</p>
@@ -141,7 +141,7 @@ export default async function AdminAffiliatePayoutsPage() {
                         </td>
                         <td className="py-3">
                           {item.status !== "PAID" && item.commissionOwed > 0 && (
-                            <MarkPayoutPaidButton payoutItemId={item.id} amount={item.commissionOwed} />
+                            <MarkPayoutPaidButton payoutItemId={item.id} amount={item.commissionOwed} payoutEmail={item.affiliate.payoutEmail} />
                           )}
                         </td>
                       </tr>

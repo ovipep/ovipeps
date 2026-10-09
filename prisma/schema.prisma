@@ -390,6 +390,7 @@ model AffiliateAccount {
   totalEarnings            Float           @default(0)
   paidEarnings             Float           @default(0)
   pendingEarnings          Float           @default(0)
+  payoutEmail              String?
   missedMinimumMonths      Int             @default(0)
   minimumTrackingStartedAt DateTime        @default(now())
   frozenAt                 DateTime?

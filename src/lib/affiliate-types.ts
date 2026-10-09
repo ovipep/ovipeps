@@ -19,6 +19,7 @@ export interface AffiliateDashboardData {
     totalEarnings: number;
     paidEarnings: number;
     pendingEarnings: number;
+    payoutEmail: string | null;
     missedMinimumMonths: number;
     frozenAt: string | null;
   };
@@ -66,6 +67,10 @@ export interface AffiliateDashboardData {
     periodYear: number;
     grossSales: number;
     commissionOwed: number;
+    paymentAmount: number | null;
+    paymentMethod: string | null;
+    paymentReference: string | null;
+    runningPaidTotal: number | null;
     status: string;
     paidAt: string | null;
     createdAt: string;

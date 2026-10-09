@@ -66,7 +66,7 @@ export function GeneratePayoutForm() {
   );
 }
 
-export function MarkPayoutPaidButton({ payoutItemId, amount }: { payoutItemId: string; amount: number }) {
+export function MarkPayoutPaidButton({ payoutItemId, amount, payoutEmail }: { payoutItemId: string; amount: number; payoutEmail?: string | null }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +113,7 @@ export function MarkPayoutPaidButton({ payoutItemId, amount }: { payoutItemId: s
     <div className="min-w-[260px] space-y-2 rounded-lg border border-border bg-muted/20 p-3">
       <p className="text-sm font-semibold">Mark Paid</p>
       <p className="text-sm text-muted-foreground">Record a payment you have already sent. Clears this month’s amount owed and adds it to payout history and the Business Ledger.</p>
+      <p className="text-sm"><strong>Preferred e-Transfer email:</strong> {payoutEmail ?? "Not set — ask the affiliate to save it in their dashboard."}</p>
       <label className="block text-xs font-medium">Method
         <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as "E_TRANSFER" | "CRYPTO")} className="mt-1 h-9 w-full rounded-md border border-border bg-white px-2 text-sm">
           <option value="E_TRANSFER">e-Transfer</option>

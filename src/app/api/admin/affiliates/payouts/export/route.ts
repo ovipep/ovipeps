@@ -65,6 +65,7 @@ export async function GET() {
     "Year",
     "Affiliate",
     "Email",
+    "Current Preferred Payout Email",
     "Affiliate Code",
     "Qualifying Sales Before Shipping (CAD)",
     "Customer Discount (%)",
@@ -96,6 +97,7 @@ export async function GET() {
         .filter(Boolean)
         .join(" "),
       record.affiliate.user.email,
+      record.affiliate.payoutEmail ?? "",
       record.affiliate.code.startsWith("PENDING-") ? "" : record.affiliate.code,
       record.qualifyingSales.toFixed(2),
       AFFILIATE_CUSTOMER_DISCOUNT_RATE.toFixed(2),

@@ -56,6 +56,18 @@ async function main() {
         throw error;
       }
     }
+    // Additive change: existing accounts remain unset until the affiliate saves
+    // their preferred address. Never assume the login email is the payout email.
+    const payoutEmailSql = await readFile(
+      new URL("../prisma/migrations/20261009000500_affiliate_payout_email/migration.sql", import.meta.url),
+      "utf8"
+    );
+    await client.query(payoutEmailSql);
+    const payoutEmailColumn = await client.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'AffiliateAccount' AND column_name = 'payoutEmail'`
+    );
+    if (payoutEmailColumn.rowCount !== 1) throw new Error("Affiliate payout email column verification failed");
+    console.log("Affiliate payout email column verified");
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [817_202_609]).catch(() => undefined);
     await client.end();

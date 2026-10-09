@@ -78,6 +78,7 @@ export default async function AdminAffiliatesPage() {
           <thead>
             <tr className="border-b border-border bg-muted/40 text-left text-muted-foreground">
               <th className="px-4 py-3 font-medium">Affiliate</th>
+              <th className="px-4 py-3 font-medium">Payout email</th>
               <th className="px-4 py-3 font-medium">Code</th>
               <th className="px-4 py-3 font-medium">Rate</th>
               <th className="px-4 py-3 font-medium">Sales this month</th>
@@ -90,7 +91,7 @@ export default async function AdminAffiliatesPage() {
           <tbody>
             {affiliates.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                   No affiliate accounts yet.
                 </td>
               </tr>
@@ -108,6 +109,7 @@ export default async function AdminAffiliatesPage() {
                       {affiliate.user.email}
                     </p>
                   </td>
+                  <td className="px-4 py-3">{affiliate.payoutEmail ?? "Not set by affiliate"}</td>
                   <td className="px-4 py-3 font-mono text-xs">{affiliate.code.startsWith("PENDING-") ? "Awaiting setup" : affiliate.code}</td>
                   <td className="px-4 py-3 tabular-nums">{affiliate.commissionRate}%</td>
                   <td className="px-4 py-3 tabular-nums">{formatCurrency(salesByAffiliate.get(affiliate.id) ?? 0)}</td>
