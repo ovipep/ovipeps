@@ -13,6 +13,7 @@ export default function LoginForm() {
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -54,13 +55,23 @@ export default function LoginForm() {
               autoComplete="email"
             />
             <Input
+              id="sign-in-password"
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
             />
+            <button
+              type="button"
+              aria-controls="sign-in-password"
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-sky hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {showPassword ? "Hide password" : "Show password"}
+            </button>
             {error && <p className="text-sm text-error">{error}</p>}
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Signing in…" : "Sign in"}
