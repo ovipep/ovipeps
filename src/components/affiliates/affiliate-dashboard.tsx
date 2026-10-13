@@ -478,12 +478,13 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
         columns={[
           { key: "period", label: "Commission month" },
           { key: "paid", label: "Payout date" },
+          { key: "payoutReference", label: "Payout reference" },
           { key: "gross", label: "Gross sales" },
           { key: "owed", label: "Still owed" },
           { key: "received", label: "Amount received" },
           { key: "running", label: "Running paid total" },
           { key: "method", label: "Payment method" },
-          { key: "reference", label: "Reference" },
+          { key: "reference", label: "Bank transaction ID" },
           { key: "status", label: "Status" },
 
         ]}
@@ -492,6 +493,7 @@ export function AffiliateDashboard({ data }: AffiliateDashboardProps) {
             month: "long",
             year: "numeric",
           }).format(new Date(row.periodYear, row.periodMonth - 1, 1)),
+          payoutReference: <span className="break-all font-mono">{row.payoutReference}</span>,
           gross: formatCurrency(row.grossSales),
           owed: formatCurrency(row.status === "PAID" ? 0 : row.commissionOwed),
           received: row.status === "PAID" ? formatCurrency(row.paymentAmount ?? row.commissionOwed) : "—",

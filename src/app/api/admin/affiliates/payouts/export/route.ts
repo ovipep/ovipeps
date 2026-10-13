@@ -1,3 +1,4 @@
+import { getAffiliatePayoutReference } from "@/lib/affiliate-payout-reference";
 import { getAffiliatePaymentSummary } from "@/lib/affiliate-payment-summary";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
@@ -78,7 +79,8 @@ export async function GET() {
     "Payout Status",
     "Date Paid",
     "Payment Method",
-    "Payment Reference",
+    "Payout Reference (Automatic)",
+    "Bank Transaction ID",
     "Sent By",
     "Remaining for Period (CAD)",
     "Affiliate Total Paid All Time (CAD)",
@@ -118,6 +120,7 @@ export async function GET() {
         : item?.paymentMethod === "CRYPTO"
           ? "Crypto"
           : "",
+      item ? getAffiliatePayoutReference(item.id) : "",
       item?.paymentReference ?? "",
       item?.paidBy ?? "",
       (item?.status === "PAID" ? 0 : item?.commissionOwed ?? record.commissionOwed).toFixed(2),

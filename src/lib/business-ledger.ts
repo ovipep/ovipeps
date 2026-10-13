@@ -1,3 +1,4 @@
+import { getAffiliatePayoutReference } from "@/lib/affiliate-payout-reference";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 
@@ -60,9 +61,9 @@ export function affiliatePayoutLedgerRow(item: LedgerPayout) {
       category: "Affiliate commissions",
       description: `${user.firstName ?? ""} ${user.lastName ?? ""} (${user.email}) — ${item.payout.periodMonth}/${item.payout.periodYear} commission payout`,
       merchandise: 0, shipping: 0, tax: 0, expense: amount, total: -amount,
-      reference: item.paymentReference ?? item.id,
+      reference: getAffiliatePayoutReference(item.id),
       paymentMethod: item.paymentMethod === "E_TRANSFER" ? "e-Transfer" : item.paymentMethod === "CRYPTO" ? "Crypto" : "",
-      notes: `Sent by: ${item.paidBy ?? "—"}. ${item.notes ?? ""}`,
+      notes: `Sent by: ${item.paidBy ?? "—"}. ${item.paymentReference ? `Bank transaction ID: ${item.paymentReference}. ` : ""}${item.notes ?? ""}`,
       currency: "CAD", foreignAmount: amount, fxRate: 1, fxRateDate: date, manualId: null,
     };
 }

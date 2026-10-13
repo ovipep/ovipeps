@@ -1,3 +1,4 @@
+import { getAffiliatePayoutReference } from "@/lib/affiliate-payout-reference";
 import { getAffiliatePaymentSummary } from "@/lib/affiliate-payment-summary";
 import { GeneratePayoutForm, MarkPayoutPaidButton } from "@/components/admin/payout-actions";
 import { Badge } from "@/components/ui/badge";
@@ -129,13 +130,14 @@ export default async function AdminAffiliatePayoutsPage() {
                             </p>
                           )}
                         </td>
-                        <td className="py-3 pr-4 text-xs text-muted-foreground">
+                        <td className="py-3 pr-4 text-sm text-muted-foreground">
+                          <p className="mb-2">Payout reference: <span className="break-all font-mono">{getAffiliatePayoutReference(item.id)}</span></p>
                           {item.status === "PAID" ? (
                             <div className="space-y-1">
                               <p>{item.paymentMethod === "E_TRANSFER" ? "e-Transfer" : "Crypto"}</p>
                               <p>{formatCurrency(item.paymentAmount ?? item.commissionOwed)} sent</p>
                               <p>By {item.paidBy ?? "—"}</p>
-                              {item.paymentReference ? <p>Ref: {item.paymentReference}</p> : null}
+                              {item.paymentReference ? <p>Bank transaction ID: {item.paymentReference}</p> : null}
                             </div>
                           ) : "—"}
                         </td>

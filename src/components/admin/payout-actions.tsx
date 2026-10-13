@@ -1,5 +1,6 @@
 "use client";
 
+import { getAffiliatePayoutReference } from "@/lib/affiliate-payout-reference";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,7 @@ export function MarkPayoutPaidButton({ payoutItemId, amount, payoutEmail }: { pa
     }
   }
 
-  if (saved) return <p role="status" className="text-sm text-success">Paid — payment recorded.</p>;
+  if (saved) return <p role="status" className="break-all text-sm text-success">Paid — payment recorded. Reference: {getAffiliatePayoutReference(payoutItemId)}</p>;
 
   return (
     <div className="min-w-[260px] space-y-2 rounded-lg border border-border bg-muted/20 p-3">
@@ -124,8 +125,9 @@ export function MarkPayoutPaidButton({ payoutItemId, amount, payoutEmail }: { pa
         <Input label="Amount paid (CAD)" type="number" value={paymentAmount} readOnly />
         <Input label="Date paid" type="date" max={new Date().toISOString().slice(0, 10)} value={paidAt} onChange={(event) => setPaidAt(event.target.value)} />
       </div>
+      <Input label="Payout reference (automatic)" value={getAffiliatePayoutReference(payoutItemId)} readOnly />
       <Input label="Sent by (employee)" placeholder="Employee name" value={paidBy} onChange={(event) => setPaidBy(event.target.value)} />
-      <Input label="Reference / transaction ID" placeholder="Optional" value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} />
+      <Input label="Bank / e-Transfer transaction ID (optional)" placeholder="Optional" value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} />
       <Button size="sm" onClick={handleMarkPaid} disabled={loading || paidBy.trim().length < 2 || !paidAt || Number(paymentAmount) <= 0}>
         {loading ? "Saving…" : "Paid"}
       </Button>

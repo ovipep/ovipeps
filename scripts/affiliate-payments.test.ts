@@ -100,7 +100,8 @@ test("recorded payouts flow into ledger expense and net cash with payment-date r
   const row = affiliatePayoutLedgerRow(item);
   assert.equal(row.expense, 80); assert.equal(row.total, -80);
   assert.equal(row.merchandise, 0); assert.equal(row.tax, 0);
-  assert.equal(row.date, payment.paidAt); assert.equal(row.reference, "REF-123");
+  assert.equal(row.date, payment.paidAt); assert.equal(row.reference, "OVI-PAYOUT-paid-test");
+  assert.match(row.notes, /Bank transaction ID: REF-123/);
   assert.equal(row.manualId, null); assert.match(row.description, /9\/2026/);
   const legacy = affiliatePayoutLedgerRow({ ...item, paymentAmount: null });
   assert.equal(legacy.expense, 80);

@@ -1,3 +1,4 @@
+import { getAffiliatePayoutReference } from "../src/lib/affiliate-payout-reference";
 import { getAffiliateMonthProgress } from "../src/lib/affiliate-program";
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -66,6 +67,7 @@ test("affiliate dashboard displays complete outstanding amount, actual lifetime 
   assert.match(html, /\$300\.00 more to sell/); assert.match(html, /\$1,500\.00 more to sell/);
   assert.match(html, /Payout date/); assert.match(html, /September 30, 2026/);
   assert.match(html, /Updates automatically every minute/);
+  assert.match(html, /OVI-PAYOUT-done/);
 });
 
 for (const [sales, minimumLeft, rate, nextRate, nextLeft] of [
@@ -88,4 +90,35 @@ test("monthly progress labels follow the same calendar boundaries as payout repo
   const november = getAffiliateMonthProgress(0, new Date("2026-11-01T00:00:00Z"));
   assert.equal(october.periodLabel, "October 2026"); assert.equal(october.amountToMinimum, 50);
   assert.equal(november.periodLabel, "November 2026"); assert.equal(november.amountToMinimum, 300); assert.equal(november.amountToNextTier, 1500);
+});
+
+
+test("automatic payout references are permanent and cannot collide for distinct record IDs", () => {
+  const ids = ["cmtest-A", "cmtest-a", "cmtest-a1", "cmtest-a10", ...Array.from({ length: 10000 }, (_, i) => `cmrecord${i}`)];
+  const references = ids.map(getAffiliatePayoutReference);
+  assert.equal(new Set(references).size, ids.length);
+  assert.equal(getAffiliatePayoutReference("cmtest-A"), getAffiliatePayoutReference("cmtest-A"));
+  assert.equal(references[0], "OVI-PAYOUT-cmtest-A");
+  assert.throws(() => getAffiliatePayoutReference(""), /record ID/);
+});
+
+test("historical payouts get unique references while retaining external bank transaction IDs", () => {
+  const rows = buildAffiliatePayoutHistory([{ ...payout("old-a", 20), paymentReference: "BANK-REF" }, { ...payout("old-b", 30), paymentReference: "BANK-REF" }]);
+  assert.equal(rows[0].payoutReference, "OVI-PAYOUT-old-a");
+  assert.equal(rows[1].payoutReference, "OVI-PAYOUT-old-b");
+  assert.equal(rows[0].paymentReference, "BANK-REF");
+  assert.notEqual(rows[0].payoutReference, rows[1].payoutReference);
+});
+
+test("admin payout form automatically shows an uneditable reference alongside optional bank ID", async () => {
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { AppRouterContext } = await import("next/dist/shared/lib/app-router-context.shared-runtime");
+  const { MarkPayoutPaidButton } = await import("../src/components/admin/payout-actions");
+  const router = { refresh: () => {} } as import("next/dist/shared/lib/app-router-context.shared-runtime").AppRouterInstance;
+  const html = renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: router }, createElement(MarkPayoutPaidButton, { payoutItemId: "cm-form", amount: 40 })));
+  assert.match(html, /Payout reference \(automatic\)/);
+  const automaticInput = html.match(/<input[^>]*value="OVI-PAYOUT-cm-form"[^>]*>/)?.[0];
+  assert.ok(automaticInput); assert.match(automaticInput, /readOnly/);
+  assert.match(html, /Bank \/ e-Transfer transaction ID \(optional\)/);
 });

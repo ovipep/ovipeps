@@ -65,6 +65,7 @@ export interface AffiliateDashboardData {
   }[];
   payouts: {
     id: string;
+    payoutReference: string;
     periodMonth: number;
     periodYear: number;
     grossSales: number;

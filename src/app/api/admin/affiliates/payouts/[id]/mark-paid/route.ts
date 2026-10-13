@@ -1,3 +1,4 @@
+import { getAffiliatePayoutReference } from "@/lib/affiliate-payout-reference";
 import { NextResponse } from "next/server";
 import { markPayoutItemPaid } from "@/lib/admin";
 import { requireAdmin } from "@/lib/auth";
@@ -23,7 +24,7 @@ export async function POST(
   try {
     const { id } = await params;
     const body = paymentSchema.parse(await request.json());
-    await markPayoutItemPaid(id, {
+    const paidItem = await markPayoutItemPaid(id, {
       paymentMethod: body.paymentMethod,
       paymentAmount: body.paymentAmount,
       paidBy: body.paidBy,
@@ -31,7 +32,7 @@ export async function POST(
       paymentReference: body.paymentReference,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, payoutReference: getAffiliatePayoutReference(paidItem.id) });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to mark payout as paid";

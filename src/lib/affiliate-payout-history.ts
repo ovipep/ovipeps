@@ -1,3 +1,4 @@
+import { getAffiliatePayoutReference } from "@/lib/affiliate-payout-reference";
 import { roundMoney } from "@/lib/affiliate-program";
 
 type PayoutRecord = {
@@ -25,7 +26,7 @@ export function buildAffiliatePayoutHistory(records: PayoutRecord[]) {
     runningTotals.set(row.id, total);
   }
   return records.map((row) => ({
-    id: row.id, periodMonth: row.payout.periodMonth, periodYear: row.payout.periodYear,
+    id: row.id, payoutReference: getAffiliatePayoutReference(row.id), periodMonth: row.payout.periodMonth, periodYear: row.payout.periodYear,
     grossSales: row.grossSales, commissionOwed: row.commissionOwed,
     paymentAmount: row.paymentAmount, paymentMethod: row.paymentMethod,
     paymentReference: row.paymentReference, status: row.status,
