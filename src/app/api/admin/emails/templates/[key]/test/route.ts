@@ -32,7 +32,8 @@ export async function POST(
 
   const template = await buildEmailTemplate(
     key,
-    getEmailTemplateSampleVariables(key)
+    getEmailTemplateSampleVariables(key),
+    { includeReconstituteVideo: key === "order_confirmation" }
   );
   const result = await sendEmail(parsed.data.email.toLowerCase(), {
     ...template,

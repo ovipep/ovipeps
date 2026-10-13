@@ -1,3 +1,4 @@
+import { orderIncludesPeptides } from "@/lib/order-email-video";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { syncAvailableProducts } from "@/lib/catalog-sync";
@@ -288,9 +289,14 @@ async function sendOrderConfirmationEmail(
   options: { resend?: boolean; customerName?: string } = {}
 ) {
   const includesRetatrutide = order.items.some(isRetatrutideOrderItem);
-  const eTransferSetting = await db.siteSetting.findUnique({
-    where: { key: "etransfer_email" },
-  });
+  const [eTransferSetting, purchasedProducts] = await Promise.all([
+    db.siteSetting.findUnique({ where: { key: "etransfer_email" } }),
+    db.product.findMany({
+      where: { id: { in: [...new Set(order.items.map((item) => item.productId))] } },
+      select: { category: true },
+    }),
+  ]);
+  const includesPeptides = orderIncludesPeptides(purchasedProducts);
   const attachments = await getOrderConfirmationAttachments(
     includesRetatrutide
   );
@@ -312,7 +318,7 @@ async function sendOrderConfirmationEmail(
             `${item.productName} — ${item.variantName} × ${item.quantity}: $${item.totalPrice.toFixed(2)} CAD`
         )
         .join("\n"),
-    }),
+    }, { includeReconstituteVideo: includesPeptides }),
     { attachments, idempotencyKey }
   );
   if (!result.success) {

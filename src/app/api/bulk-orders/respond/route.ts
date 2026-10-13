@@ -1,6 +1,7 @@
+import { orderIncludesPeptides } from "@/lib/order-email-video";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
-import { ensureBulkOrderSchema } from "@/lib/bulk-orders";
+import { parseBulkOrderItems, ensureBulkOrderSchema } from "@/lib/bulk-orders";
 import { db } from "@/lib/db";
 import {
   buildBulkPurchaseInstructionsEmail,
@@ -66,6 +67,10 @@ export async function POST(request: Request) {
   const eTransferEmail = values.get("etransfer_email") ?? "ovipeps@gmail.com";
   const eTransferInstructions = values.get("etransfer_instructions") ?? "Send the exact quoted amount and include your purchase order number in the message field.";
 
+  const purchasedProducts = await db.product.findMany({
+    where: { id: { in: parseBulkOrderItems(updated.items).map((item) => item.productId) } },
+    select: { category: true },
+  });
   const [customerDelivery, adminDelivery] = await Promise.all([
     sendEmail(
       updated.email,
@@ -77,6 +82,7 @@ export async function POST(request: Request) {
         eTransferEmail,
         eTransferInstructions,
         quoteExpiresAt: updated.quoteExpiresAt!,
+        includeReconstituteVideo: orderIncludesPeptides(purchasedProducts),
       }),
       { idempotencyKey: `bulk-purchase-customer-${updated.id}-${purchaseOrderNumber}` }
     ),

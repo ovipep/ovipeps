@@ -1,3 +1,4 @@
+import { reconstituteVideoSection } from "@/lib/order-email-video";
 import { randomUUID } from "node:crypto";
 import { Resend, type Attachment } from "resend";
 import { db } from "@/lib/db";
@@ -185,7 +186,8 @@ function textToHtml(value: string) {
 
 export async function buildEmailTemplate(
   key: EmailTemplateKey,
-  variables: Record<string, string>
+  variables: Record<string, string>,
+  options: { includeReconstituteVideo?: boolean } = {}
 ): Promise<EmailTemplate> {
   const defaults = EMAIL_TEMPLATE_DEFAULTS[key];
   let subject = defaults.subject;
@@ -207,10 +209,11 @@ export async function buildEmailTemplate(
 
   const renderedSubject = renderTokens(subject, variables).replace(/[\r\n]+/g, " ").trim();
   const renderedBody = renderTokens(body, variables);
+  const video = key === "order_confirmation" && options.includeReconstituteVideo ? reconstituteVideoSection() : null;
   return {
     subject: renderedSubject,
-    html: wrap(textToHtml(renderedBody), renderedSubject),
-    text: renderedBody,
+    html: wrap(textToHtml(renderedBody) + (video?.html ?? ""), renderedSubject),
+    text: renderedBody + (video?.text ?? ""),
   };
 }
 
@@ -493,6 +496,7 @@ export function buildBulkPurchaseInstructionsEmail(input: {
   eTransferEmail: string;
   eTransferInstructions: string;
   quoteExpiresAt: Date;
+  includeReconstituteVideo?: boolean;
 }): EmailTemplate {
   const subject = `E-transfer instructions — ${input.purchaseOrderNumber}`;
   const expiry = input.quoteExpiresAt.toLocaleString("en-CA", { timeZone: "America/Toronto", dateStyle: "medium", timeStyle: "short" });
@@ -518,7 +522,8 @@ ${input.eTransferInstructions}
 This price is valid for 72 hours from the time your quote was issued and expires ${expiry} Eastern Time. Payment must be received before that deadline.
 
 Your order will be marked Purchased only after payment has been received and confirmed.`;
-  return { subject, text: body, html: wrap(textToHtml(body), subject) };
+  const video = input.includeReconstituteVideo ? reconstituteVideoSection() : null;
+  return { subject, text: body + (video?.text ?? ""), html: wrap(textToHtml(body) + (video?.html ?? ""), subject) };
 }
 
 export function buildBulkPurchaseIntentAdminEmail(input: {
