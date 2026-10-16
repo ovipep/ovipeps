@@ -90,7 +90,7 @@ export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
   },
   "glp-3": {
     label: "Retatrutide COA",
-    url: "/coas/GA-002-RT-RET-604.pdf",
+    url: "/coas/retatrutide-15mg-coa-2026-10-16.pdf",
   },
   "nad-plus": {
     label: "NAD+ COA",
