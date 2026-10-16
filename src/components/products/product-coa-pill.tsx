@@ -26,7 +26,7 @@ export function ProductCoaPill({
       <button
         type="button"
         className={cn(pillClasses, className)}
-        aria-label={`Open ${coa.label} PDF in a new tab`}
+        aria-label={`Open ${coa.label} in a new tab`}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -45,7 +45,7 @@ export function ProductCoaPill({
       target="_blank"
       rel="noopener noreferrer"
       className={cn(pillClasses, className)}
-      aria-label={`Open ${coa.label} PDF in a new tab`}
+      aria-label={`Open ${coa.label} in a new tab`}
     >
       <ShieldCheck className="h-3 w-3" aria-hidden="true" />
       {coa.label}
