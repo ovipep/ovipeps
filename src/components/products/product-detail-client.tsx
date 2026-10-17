@@ -25,7 +25,7 @@ export function ProductDetailClient({
   variants,
 }: ProductDetailClientProps) {
   const addItem = useCartStore((s) => s.addItem);
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>();
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(() => getDefaultVariant(variants));
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export function ProductDetailClient({
 
   const inStock = selectedVariant?.inStock ?? false;
   const stockQuantity = selectedVariant?.stockQuantity ?? 0;
-  const hasMultipleVariants = variants.length > 1;
+  const hasVariants = variants.length > 0;
 
   const handleAddToCart = () => {
     if (!selectedVariant || !inStock) return;
@@ -64,7 +64,7 @@ export function ProductDetailClient({
           <p className="text-3xl font-semibold tracking-tight text-navy-deep">
             {inStock ? formatCurrency(selectedVariant.price) : "Restocking"}
           </p>
-          {hasMultipleVariants && (
+          {hasVariants && (
             <p className="mt-1 text-sm text-muted-foreground">
               SKU: {selectedVariant.sku}
             </p>
@@ -72,7 +72,7 @@ export function ProductDetailClient({
         </div>
       )}
 
-      {hasMultipleVariants && (
+      {hasVariants && (
         <div>
           <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Select Variant
@@ -82,7 +82,8 @@ export function ProductDetailClient({
               <button
                 key={variant.id}
                 type="button"
-                onClick={() => setSelectedVariant(variant)}
+                aria-pressed={selectedVariant?.id === variant.id}
+                onClick={() => { setSelectedVariant(variant); setQuantity(1); }}
                 className={cn(
                   "rounded-lg border px-4 py-2.5 text-sm font-medium transition-all",
                   selectedVariant?.id === variant.id

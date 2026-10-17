@@ -21,8 +21,7 @@ import { ProductDetailTabs } from "@/components/products/product-detail-tabs";
 import { ProductCard } from "@/components/products/product-card";
 import { ProductGrid } from "@/components/products/product-grid";
 import { Badge } from "@/components/ui/badge";
-import { getLowestPrice, type ProductVariant } from "@/types/product";
-import { formatCurrency } from "@/lib/utils";
+import { type ProductVariant } from "@/types/product";
 import { getProductDocument } from "@/lib/product-documents";
 import { ProductDocumentPill } from "@/components/products/product-document-pill";
 import { ProductCoaPill } from "@/components/products/product-coa-pill";
@@ -86,8 +85,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const variants = mapDetailVariants(product.variants);
   const hasCoa = product.coaDocuments.length > 0;
-  const lowestPrice = getLowestPrice(variants);
-  const inStock = variants.some((variant) => variant.inStock);
   const disclaimer =
     researchDisclaimer ??
     "All products are sold for research purposes only. Not intended for human consumption.";
@@ -183,12 +180,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.shortDescription && (
               <p className="mt-4 text-base leading-relaxed text-muted-foreground">
                 {product.shortDescription}
-              </p>
-            )}
-
-            {variants.length === 1 && inStock && (
-              <p className="mt-6 text-3xl font-semibold text-navy-deep">
-                {formatCurrency(lowestPrice)}
               </p>
             )}
 
