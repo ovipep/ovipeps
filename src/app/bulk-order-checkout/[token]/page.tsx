@@ -96,8 +96,9 @@ export default async function BulkCheckoutPage({
         <p className="mt-4 whitespace-pre-wrap">{plan.fulfillmentNote}</p>
         {plan.allowBackorder && (
           <p className="mt-3 text-sm">
-            Available units are reserved when the order is recorded. Remaining
-            units are recorded as backordered and reserved as inventory arrives.
+            Bulk items await restock unless OVIpeps explicitly allocates available
+            inventory. Existing reservations are retained. Pending units ship
+            when restocked.
           </p>
         )}
       </div>

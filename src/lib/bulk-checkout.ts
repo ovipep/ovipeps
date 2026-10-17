@@ -107,6 +107,7 @@ export async function prepareBulkRecap(
       variantName: v.name,
       sku: v.sku,
       quantity: i.quantity,
+      useExistingInventory: i.useExistingInventory === true,
       ...(i.additionalQuantity ? {additionalQuantity:i.additionalQuantity} : {}),
       unitPrice: i.lineTotal / i.quantity,
       totalPrice: i.lineTotal,
@@ -366,7 +367,9 @@ export async function recordBulkOrder(
         "The existing order reserves more units than this recap. Review the quantities.",
       );
     const needed = line.quantity - alreadyReserved;
-    const take = Math.min(Math.max(0, v.stockQuantity), needed);
+    const take = line.useExistingInventory === true
+      ? Math.min(Math.max(0, v.stockQuantity), needed)
+      : 0;
     if (take < needed && !plan.allowBackorder)
       throw new BulkCheckoutError(
         `${line.productName} has insufficient stock; the order was not recorded`,

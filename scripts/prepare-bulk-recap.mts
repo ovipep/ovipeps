@@ -6,10 +6,20 @@ import { prepareBulkRecap, approveAndSendBulkRecap, reconcileApprovedExistingBul
 async function main() {
   const raw=process.env.BULK_RECAP_PREPARE_REQUEST;
   if(!raw || process.env.VERCEL !== '1' || process.env.VERCEL_ENV !== 'production') return;
-  const command=z.object({action:z.enum(["prepare","approve_send","inspect_order","reconcile_order"]).default("prepare"),replaceHeldDraft:z.boolean().optional(),supplementalDocumentKeys:z.array(z.enum(["peptide_reference"])).optional(),requestId:z.string().min(1),existingOrderNumber:z.string().min(1),items:z.array(z.object({slug:z.string(),size:z.string(),quantity:z.number().int().positive(),additionalQuantity:z.number().int().nonnegative().optional(),lineTotal:z.number().positive()})).min(1),shippingAmount:z.number().nonnegative(),taxAmount:z.number().nonnegative(),fulfillmentNote:z.string().min(1),allowBackorder:z.boolean()}).parse(JSON.parse(raw));
+  const command=z.object({action:z.enum(["prepare","approve_send","inspect_order","reconcile_order","correct_stock_allocation"]).default("prepare"),replaceHeldDraft:z.boolean().optional(),supplementalDocumentKeys:z.array(z.enum(["peptide_reference"])).optional(),requestId:z.string().min(1),existingOrderNumber:z.string().min(1),items:z.array(z.object({slug:z.string(),size:z.string(),quantity:z.number().int().positive(),additionalQuantity:z.number().int().nonnegative().optional(),lineTotal:z.number().positive()})).min(1),shippingAmount:z.number().nonnegative(),taxAmount:z.number().nonnegative(),fulfillmentNote:z.string().min(1),allowBackorder:z.boolean()}).parse(JSON.parse(raw));
   const request=await db.bulkOrderRequest.findUniqueOrThrow({where:{id:command.requestId}});
   const owner=await db.user.findFirst({where:{email:{equals:'ovipeps@gmail.com',mode:'insensitive'},role:'ADMIN'},select:{id:true}});
   if(!owner) throw new Error('Owner administrator is required for this recap task');
+  if (command.action==='correct_stock_allocation') {
+    if(command.requestId!=='da618543-9960-4aab-b8d9-b983d7abf73e' || command.existingOrderNumber!=='OVI-MVCHCFT9-6KWU') throw new Error('Correction is restricted to the authorized order');
+    const {correctBulkStockAllocation}=await import('../src/lib/bulk-stock-correction');
+    const result=await db.$transaction(tx=>correctBulkStockAllocation(tx,command.requestId,command.existingOrderNumber,owner.id));
+    const order=await db.order.findUniqueOrThrow({where:{orderNumber:command.existingOrderNumber},include:{items:{include:{variant:{select:{stockQuantity:true}}}}}});
+    const tb=order.items.find(i=>i.sku==='TB500-10MG');const cjc=order.items.find(i=>i.sku==='CJCIPA-10MG');
+    if(tb?.reservedQuantity!==0 || tb.quantity!==10 || cjc?.reservedQuantity!==3 || cjc.quantity!==13 || order.total!==1488.5) throw new Error('Stock correction verification failed');
+    console.log('BULK_STOCK_CORRECTION_VERIFIED '+JSON.stringify({...result,orderNumber:order.orderNumber,total:order.total,items:order.items.map(i=>({sku:i.sku,quantity:i.quantity,reserved:i.reservedQuantity,pendingRestock:i.quantity-(i.reservedQuantity??i.quantity),availableStock:i.variant.stockQuantity})),emailSent:false}));
+    return;
+  }
   if (command.action === 'inspect_order' || command.action === 'reconcile_order') {
     const plan=request.checkoutPlan as unknown as import('../src/lib/bulk-checkout-schema').BulkPlan | null;
     if (!plan || !request.recapVersion || plan.existingOrderNumber !== command.existingOrderNumber || plan.items.length !== command.items.length) throw new Error('Saved recap does not match this order');

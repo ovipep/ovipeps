@@ -28,6 +28,7 @@ function fixture() {
       productSlug: "bpc-157",
       category: "RESEARCH_PEPTIDE",
       variantId: "bpc10",
+      useExistingInventory: true,
       variantName: "10mg",
       sku: "BPC10",
       quantity: 10,
@@ -288,4 +289,32 @@ test("matching authenticated customer can claim a reconciled guest order without
  const r=await recordBulkOrder(f.tx,"token",user,address,"version-1");
  assert.equal(r.created,false);assert.equal(r.order.userId,user.id);assert.equal(f.variants.bpc10.stockQuantity,stock);
  await assert.rejects(()=>recordBulkOrder(f.tx,"token",{...user,id:"other-id"},address,"version-1"),/another account/);
+});
+
+test("bulk orders do not consume shelf stock unless explicitly selected per line", async () => {
+ const f=fixture();f.plan.items.forEach(i=>{delete i.useExistingInventory});f.variants.tb10.stockQuantity=1;
+ const r=await recordBulkOrder(f.tx,"token",user,address,"version-1");
+ assert.equal(f.variants.bpc10.stockQuantity,10);assert.equal(f.variants.tb10.stockQuantity,1);
+ assert.equal(r.order.items.find((i:any)=>i.variantId==='tb10')?.reservedQuantity,0);
+ assert.equal(r.order.items.find((i:any)=>i.variantId==='cjc10')?.reservedQuantity,3);
+});
+
+
+test("restock allocation preserves existing shelf inventory and price-only saves allocate nothing", async () => {
+ const {reserveBackordersInTransaction,reserveBackorders}=await import('../src/lib/bulk-reservations');
+ const variant={id:'tb10',productId:'tb',stockQuantity:11};const line={id:'line',quantity:10,reservedQuantity:0,order:{id:'order',status:'PAYMENT_RECEIVED',createdAt:new Date()}};
+ const tx={ $queryRaw:async()=>[],productVariant:{findUnique:async()=>variant,findUniqueOrThrow:async()=>variant,updateMany:async({data}:any)=>{variant.stockQuantity-=data.stockQuantity.decrement;return {count:1}},update:async()=>variant},orderItem:{findMany:async()=>[line],findUnique:async()=>line,update:async({data}:any)=>{line.reservedQuantity+=data.reservedQuantity.increment;return line}},order:{findUnique:async()=>({status:'PAYMENT_RECEIVED'})}} as unknown as Prisma.TransactionClient;
+ assert.equal(await reserveBackorders('tb10',0,1),0);
+ assert.equal(await reserveBackordersInTransaction(tx,'tb10',10,1),10);
+ assert.equal(variant.stockQuantity,1);assert.equal(line.reservedQuantity,10);
+});
+test("authorized correction returns exactly one TB vial once and retains three CJC reservations", async () => {
+ const {correctBulkStockAllocation}=await import('../src/lib/bulk-stock-correction');
+ const f=fixture();const result=await recordBulkOrder(f.tx,'token',user,address,'version-1');
+ const order=result.order as any;order.total=1488.5;order.shippedAt=null;order.items.forEach((i:any)=>{i.id=i.variantId;i.sku=i.variantId==='tb10'?'TB500-10MG':i.variantId==='cjc10'?'CJCIPA-10MG':'BPC157-10MG'});order.items.find((i:any)=>i.variantId==='tb10').reservedQuantity=1;
+ let audited=false;let stock=0;
+ const tx={...f.tx,bulkOrderRequest:{findUniqueOrThrow:async()=>f.request,update:async({data}:any)=>Object.assign(f.request,data)},order:{findUniqueOrThrow:async()=>order,update:async({data}:any)=>Object.assign(order,data)},orderItem:{update:async({where,data}:any)=>Object.assign(order.items.find((i:any)=>i.id===where.id),data)},productVariant:{findUniqueOrThrow:async()=>({id:'tb10',stockQuantity:stock}),update:async({data}:any)=>{stock+=data.stockQuantity.increment}},auditLog:{findFirst:async()=>audited?{}:null,create:async()=>{audited=true;return {}}}} as unknown as Prisma.TransactionClient;
+ const r=await correctBulkStockAllocation(tx,'request-1','EXISTING-ORDER','admin-1');assert.equal(r.released,1);assert.equal(stock,1);
+ assert.equal(order.items.find((i:any)=>i.variantId==='tb10').reservedQuantity,0);assert.equal(order.items.find((i:any)=>i.variantId==='cjc10').reservedQuantity,3);assert.equal(order.total,1488.5);
+ assert.equal((await correctBulkStockAllocation(tx,'request-1','EXISTING-ORDER','admin-1')).released,0);assert.equal(stock,1);
 });

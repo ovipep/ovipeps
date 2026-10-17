@@ -42,6 +42,7 @@ export async function updateVariantInventory(input: {
 
     // Serialize inventory edits for every vial size belonging to this product.
     await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${existing.productId} FOR UPDATE`;
+    const previousVariant = await tx.productVariant.findUniqueOrThrow({ where: { id: input.variantId }, select: { stockQuantity: true } });
     const before = await tx.productVariant.aggregate({
       where: { productId: existing.productId },
       _sum: { stockQuantity: true },
@@ -67,9 +68,9 @@ export async function updateVariantInventory(input: {
     const event = wasOut && isAvailable
       ? await tx.restockEvent.create({ data: { productId: existing.productId } })
       : null;
-    return { variant, eventId: event?.id ?? null };
+    return { variant, eventId: event?.id ?? null, addedUnits: Math.max(0,input.stockQuantity-previousVariant.stockQuantity), preserveStock: Math.max(0,previousVariant.stockQuantity) };
   });
-  await reserveBackorders(result.variant.id);
+  await reserveBackorders(result.variant.id, result.addedUnits, result.preserveStock);
   // A restock fully reserved by existing orders must not be advertised as available.
   const available = await db.productVariant.aggregate({where:{productId:result.variant.productId},_sum:{stockQuantity:true}});
   if ((available._sum.stockQuantity ?? 0) > 0) await deliverCreatedEvent(result.eventId);
@@ -105,7 +106,7 @@ export async function createVariantInventory(input: {
       : null;
     return { variant, eventId: event?.id ?? null };
   });
-  await reserveBackorders(result.variant.id);
+  await reserveBackorders(result.variant.id, Math.max(0,input.stockQuantity), 0);
   // A restock fully reserved by existing orders must not be advertised as available.
   const available = await db.productVariant.aggregate({where:{productId:result.variant.productId},_sum:{stockQuantity:true}});
   if ((available._sum.stockQuantity ?? 0) > 0) await deliverCreatedEvent(result.eventId);

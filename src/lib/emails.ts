@@ -577,7 +577,7 @@ ${input.fulfillmentNote}
 ${input.placed ? 'SIGN IN TO VIEW YOUR ORDER' : 'SIGN IN AND CONFIRM YOUR SHIPPING ADDRESS'}
 ${input.checkoutUrl}
 Use the same email address that received this message. If you do not yet have an account, choose Create Account on that page.
-${input.placed ? 'Your order number, shipping details, and order history are available in your account.' : 'Review the recap, confirm your shipping address, and submit your bulk order. Stock is reserved when your order is recorded. Items pending restock remain identified as backordered.'}
+${input.placed ? 'Your order number, shipping details, and order history are available in your account.' : 'Review the recap, confirm your shipping address, and submit your bulk order. Bulk items await restock unless OVIpeps explicitly allocates available inventory. Items pending restock remain identified as backordered.'}
 
 PAYMENT DETAILS
 Send ${price(input.total)} by Interac e-Transfer to ${input.etransferEmail}.

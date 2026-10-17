@@ -42,7 +42,7 @@ export default async function OrdersPage() {
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
     include: {
-      items: { select: { id: true } },
+      items: { select: { id: true, quantity: true, reservedQuantity: true } },
     },
   });
 
@@ -96,6 +96,11 @@ export default async function OrdersPage() {
                             Placed {formatDate(order.createdAt)} · {order.items.length}{" "}
                             {order.items.length === 1 ? "item" : "items"}
                           </p>
+                          {order.items.some(i => i.reservedQuantity !== null && i.reservedQuantity < i.quantity) && (
+                            <p className="mt-2 text-sm font-semibold text-amber-700">
+                              {order.items.reduce((n,i)=>n + i.quantity - (i.reservedQuantity ?? i.quantity),0)} vials pending shipping upon restock
+                            </p>
+                          )}
                         </div>
                         <Badge variant={getStatusVariant(order.status)}>
                           {order.status === "AWAITING_PAYMENT"

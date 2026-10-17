@@ -67,6 +67,7 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
                 variantId: i.variantId,
                 quantity: i.quantity,
                 additionalQuantity: i.additionalQuantity,
+                useExistingInventory: i.useExistingInventory === true,
                 lineTotal: i.totalPrice,
               })),
               supplementalDocumentKeys: plan.supplementalDocumentKeys ?? [],
@@ -97,7 +98,7 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
               shippingAmount: 0,
               taxAmount: 0,
               fulfillmentNote: "",
-              allowBackorder: false,
+              allowBackorder: true,
               existingOrderNumber: "",
             },
       );
@@ -247,6 +248,10 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
                   />
                 </label>
                 <label className="text-xs font-bold">Of the total, additional vials (optional)<input type="number" min="0" max={Math.max(0,line.quantity-1)} value={line.additionalQuantity ?? 0} onChange={e=>edit({...input,items:input.items.map((i,n)=>n===index?{...i,additionalQuantity:Number(e.target.value)}:i)})} className="mt-2 w-full rounded border p-2 text-sm" /></label>
+                <label className="flex gap-2 text-xs font-semibold">
+                  <input type="checkbox" checked={line.useExistingInventory === true} onChange={e => edit({...input,items:input.items.map((i,n)=>n===index?{...i,useExistingInventory:e.target.checked}:i)})} />
+                  Use available inventory for this line. Otherwise await restock; existing reservations are retained.
+                </label>
                 <button
                   type="button"
                   onClick={() =>

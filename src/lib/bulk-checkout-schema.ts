@@ -6,6 +6,7 @@ export const bulkPlanInputSchema = z.object({
       z.object({
         variantId: z.string().min(1).max(128),
         quantity: z.number().int().min(1).max(1000),
+        useExistingInventory: z.boolean().optional(),
         additionalQuantity: z.number().int().min(0).max(999).optional(),
         lineTotal: z
           .number()
@@ -28,7 +29,7 @@ export const bulkPlanInputSchema = z.object({
   shippingAmount: z.number().finite().min(0).max(10000),
   taxAmount: z.number().finite().min(0).max(10000).default(0),
   fulfillmentNote: z.string().trim().min(1).max(5000),
-  allowBackorder: z.boolean().default(false),
+  allowBackorder: z.boolean().default(true),
   existingOrderNumber: z.string().trim().max(100).optional(),
 });
 export type BulkPlanInput = z.infer<typeof bulkPlanInputSchema>;
@@ -41,6 +42,7 @@ export interface BulkPlanLine {
   variantName: string;
   sku: string;
   quantity: number;
+  useExistingInventory?: boolean;
   additionalQuantity?: number;
   unitPrice: number;
   totalPrice: number;
