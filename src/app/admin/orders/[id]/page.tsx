@@ -179,7 +179,7 @@ export default async function AdminOrderDetailPage({
               {order.items.map((item) => (
                 <tr key={item.id} className="border-b border-border/60">
                   <td className="py-3 pr-4">
-                    {item.productName}
+                    {item.productName}{item.reservedQuantity !== null && item.reservedQuantity < item.quantity && <span className="block text-xs font-semibold text-amber-700">{item.reservedQuantity} reserved · {item.quantity - item.reservedQuantity} pending restock</span>}
                     {item.variantName && (
                       <span className="text-muted-foreground">
                         {" "}
@@ -202,6 +202,7 @@ export default async function AdminOrderDetailPage({
         </CardContent>
       </Card>
 
+      {order.notes && <div className="rounded-xl border bg-sky/5 p-5"><h2 className="font-bold">Fulfillment / order notes</h2><p className="mt-2 whitespace-pre-wrap text-sm">{order.notes}</p></div>}
       <Card>
         <CardHeader>
           <CardTitle>Summary</CardTitle>

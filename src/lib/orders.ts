@@ -101,10 +101,11 @@ async function cancelExpiredOrder(orderId: string, now = new Date()) {
     if (cancelled.count !== 1) return { cancelled: false, eventIds: [] as string[] };
 
     for (const item of order.items) {
+      if ((item.reservedQuantity ?? item.quantity) <= 0) continue;
       await tx.productVariant.update({
         where: { id: item.variantId },
         data: {
-          stockQuantity: { increment: item.quantity },
+          stockQuantity: { increment: item.reservedQuantity ?? item.quantity },
           inStock: true,
         },
       });
@@ -196,10 +197,11 @@ export async function deleteOrder(
       }
 
       for (const item of order.items) {
+        if ((item.reservedQuantity ?? item.quantity) <= 0) continue;
         await tx.productVariant.update({
           where: { id: item.variantId },
           data: {
-            stockQuantity: { increment: item.quantity },
+            stockQuantity: { increment: item.reservedQuantity ?? item.quantity },
             inStock: true,
           },
         });
@@ -236,6 +238,7 @@ export async function deleteOrder(
       });
     }
 
+    await tx.bulkOrderRequest.updateMany({where:{orderId:order.id},data:{status:"OPTED_OUT",recapApprovedAt:null,orderId:null}});
     await tx.order.delete({ where: { id: order.id } });
     await tx.auditLog.create({
       data: {
@@ -344,6 +347,12 @@ export async function resendOrderConfirmation(orderId: string) {
     include: { items: true },
   });
   if (!order) throw new Error("Order not found");
+  const bulk = await db.bulkOrderRequest.findFirst({where:{orderId:order.id}});
+  if (bulk?.decisionToken) {
+    const { sendRecordedBulkConfirmation } = await import("@/lib/bulk-checkout");
+    await sendRecordedBulkConfirmation(bulk.decisionToken);
+    return { id: bulk.recapEmailId ?? undefined, attachmentCount: 0, includesRetatrutide: order.items.some(isRetatrutideOrderItem) };
+  }
   return sendOrderConfirmationEmail(order, { resend: true });
 }
 

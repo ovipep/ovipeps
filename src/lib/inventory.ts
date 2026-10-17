@@ -1,3 +1,4 @@
+import { reserveBackorders } from "@/lib/bulk-reservations";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/emails";
 import { deliverRestockEvent } from "@/lib/restock-notifications";
@@ -68,8 +69,12 @@ export async function updateVariantInventory(input: {
       : null;
     return { variant, eventId: event?.id ?? null };
   });
-  await deliverCreatedEvent(result.eventId);
-  return result.variant;
+  await reserveBackorders(result.variant.id);
+  // A restock fully reserved by existing orders must not be advertised as available.
+  const available = await db.productVariant.aggregate({where:{productId:result.variant.productId},_sum:{stockQuantity:true}});
+  if ((available._sum.stockQuantity ?? 0) > 0) await deliverCreatedEvent(result.eventId);
+  else if (result.eventId) await db.restockEvent.delete({where:{id:result.eventId}});
+  return db.productVariant.findUniqueOrThrow({where:{id:result.variant.id},include:{product:{select:{slug:true}}}});
 }
 
 export async function createVariantInventory(input: {
@@ -100,8 +105,12 @@ export async function createVariantInventory(input: {
       : null;
     return { variant, eventId: event?.id ?? null };
   });
-  await deliverCreatedEvent(result.eventId);
-  return result.variant;
+  await reserveBackorders(result.variant.id);
+  // A restock fully reserved by existing orders must not be advertised as available.
+  const available = await db.productVariant.aggregate({where:{productId:result.variant.productId},_sum:{stockQuantity:true}});
+  if ((available._sum.stockQuantity ?? 0) > 0) await deliverCreatedEvent(result.eventId);
+  else if (result.eventId) await db.restockEvent.delete({where:{id:result.eventId}});
+  return db.productVariant.findUniqueOrThrow({where:{id:result.variant.id},include:{product:{select:{slug:true}}}});
 }
 
 function alertSettingKey(variantId: string) {

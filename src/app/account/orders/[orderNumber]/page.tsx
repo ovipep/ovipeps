@@ -200,7 +200,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                         className="flex justify-between gap-3 text-sm"
                       >
                         <div>
-                          <p className="font-medium">{item.productName}</p>
+                          <p className="font-medium">{item.productName}{item.reservedQuantity !== null && item.reservedQuantity < item.quantity && <span className="block text-xs font-semibold text-amber-700">{item.reservedQuantity} reserved · {item.quantity - item.reservedQuantity} pending restock</span>}</p>
                           <p className="text-muted-foreground">
                             {item.variantName} × {item.quantity}
                           </p>

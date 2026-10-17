@@ -547,3 +547,48 @@ Review: ${siteUrl}/admin/bulk-orders
 Request reference: ${input.requestId}`;
   return { subject, text: body, html: wrap(textToHtml(body), subject) };
 }
+
+export function buildBulkRecapEmail(input: {
+  firstName: string; reference: string; items: {productName:string;variantName:string;quantity:number;totalPrice:number}[];
+  subtotal:number;shippingAmount:number;taxAmount:number;total:number;fulfillmentNote:string;
+  checkoutUrl:string;etransferEmail:string;documents:{label:string;filename:string}[];placed?:boolean;existingOrderNumber?:string;
+}): EmailTemplate {
+  const price = (n:number) => `$${n.toFixed(2)} CAD`;
+  const subject = `${input.placed ? 'Bulk order recorded' : 'Your bulk order recap'} — ${input.reference}`;
+  const body = `Hi ${input.firstName},
+
+${input.placed ? 'Your bulk order is recorded in your OVIpeps account.' : input.existingOrderNumber ? `Thank you for your reply. Here is the revised itemized recap for your existing order ${input.existingOrderNumber}. This is one combined order.` : 'Thank you for your reply. Here is the itemized recap of your bulk order.'}
+
+${input.items.map(i=>`${i.productName} — ${i.variantName} × ${i.quantity}: ${price(i.totalPrice)}`).join('\n')}
+
+Products: ${price(input.subtotal)}
+Shipping: ${price(input.shippingAmount)}
+Tax: ${price(input.taxAmount)}
+TOTAL: ${price(input.total)}
+
+FULFILLMENT
+${input.fulfillmentNote}
+
+${input.placed ? 'SIGN IN TO VIEW YOUR ORDER' : 'SIGN IN AND CONFIRM YOUR SHIPPING ADDRESS'}
+${input.checkoutUrl}
+Use the same email address that received this message. If you do not yet have an account, choose Create Account on that page.
+${input.placed ? 'Your order number, shipping details, and order history are available in your account.' : 'Review the recap, confirm your shipping address, and submit your bulk order. Stock is reserved when your order is recorded. Items pending restock remain identified as backordered.'}
+
+PAYMENT DETAILS
+Send ${price(input.total)} by Interac e-Transfer to ${input.etransferEmail}.
+Confirm AutoDeposit displays Ivo Ziedins.
+${input.placed ? `Enter ONLY ${input.reference} in the message or memo field.` : 'Please complete the address confirmation first, then use ONLY the order number shown on your recorded order in the transfer message. Use this combined total and pay only once. If you have already sent any payment, contact OVIpeps before transferring more.'}
+Payment is due within 72 hours of the recorded order. No payment is processed on the website.
+
+ATTACHED DOCUMENTS
+${input.documents.map(d=>d.filename).join('\n') || 'No PDF documents are currently published for these items.'}
+Published product guides and COAs are included only for the purchased products. COAs for pending batches will be provided when published.
+
+Questions or changes? Reply to ovipeps@gmail.com.
+
+Thank you,
+OVIpeps`;
+  const video = reconstituteVideoSection();
+  const button = `<p style="margin:24px 0;"><a href="${escapeHtml(input.checkoutUrl)}" style="display:inline-block;background:${brandColor};color:#fff;padding:14px 20px;border-radius:10px;font-weight:700;text-decoration:none;">${input.placed ? 'Sign in / View order' : 'Sign in / Confirm shipping address'}</a></p>`;
+  return {subject,text:body+video.text,html:wrap(button+textToHtml(body)+video.html,subject)};
+}

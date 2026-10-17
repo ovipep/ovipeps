@@ -7,7 +7,9 @@ export const metadata: Metadata = {
   description: "Create an OVIpeps account to track orders and manage your research profile.",
 };
 
-export default function RegisterPage() {
+export default async function RegisterPage({ searchParams }: { searchParams: Promise<{callbackUrl?:string}> }) {
+  const requested = (await searchParams).callbackUrl;
+  const callbackUrl = requested?.startsWith("/") && !requested.startsWith("//") && !requested.includes("\\") ? requested : "/account/orders";
   return (
     <>
       <PageHero
@@ -18,7 +20,7 @@ export default function RegisterPage() {
 
       <div className="mx-auto max-w-md px-4 py-12 sm:px-6">
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm shadow-navy/5 sm:p-8">
-          <RegisterForm />
+          <RegisterForm callbackUrl={callbackUrl} />
         </div>
 
         <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">

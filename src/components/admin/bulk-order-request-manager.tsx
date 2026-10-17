@@ -1,12 +1,15 @@
 "use client";
 
+import Link from "next/link";
+import { BulkRecapEditor } from "@/components/admin/bulk-recap-editor";
 import { useState } from "react";
-import { Banknote, Clock3, Mail, Save, Truck, XCircle } from "lucide-react";
+import { Clock3, Mail, Save, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Item { productName: string; kits: number; units: number }
 interface RequestRecord {
   id: string; firstName: string; lastName: string; email: string; items: Item[];
+  orderId: string | null; orderNumber: string | null;
   customerReply: string | null;
   additionalContext: string | null; status: string; adminDecision: string | null;
   discountedPricing: string | null; eta: string | null; paymentConfirmed: boolean;
@@ -15,6 +18,7 @@ interface RequestRecord {
 }
 
 function label(status: string) {
+  if (status === "PENDING_REVIEW") return "Reply Received - Review Required";
   if (status === "AWAITING_PAYMENT") return "Awaiting E-Transfer";
   if (status === "PENDING_SHIPMENT") return "Pending Shipment";
   if (status === "COMPLETE") return "Complete";
@@ -64,16 +68,16 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
     <div className="mt-5 grid gap-3 sm:grid-cols-2">{entry.items.map((item, index) => <div key={`${item.productName}-${index}`} className="rounded-xl border border-sky/10 bg-sky/5 p-3"><p className="text-sm font-semibold text-navy-deep">{item.productName}</p><p className="mt-1 text-xs text-muted-foreground">{item.kits} kit{item.kits === 1 ? "" : "s"} · {item.units} units</p></div>)}</div>
     {entry.additionalContext && <div className="mt-4 rounded-xl bg-muted/60 p-4"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Additional Context/Information</p><p className="mt-2 whitespace-pre-wrap text-sm">{entry.additionalContext}</p></div>}
     {entry.customerReply && <div className="mt-4 rounded-xl border border-sky/20 bg-sky/5 p-4"><p className="text-xs font-bold uppercase tracking-wider text-navy-deep">Customer reply with decision</p><p className="mt-2 whitespace-pre-wrap break-words text-sm">{entry.customerReply}</p></div>}
+    {entry.orderId && <p className="mt-4 rounded-xl bg-emerald-50 p-4 text-sm font-semibold">Linked shop order: <Link href={`/admin/orders/${entry.orderId}`} className="underline">{entry.orderNumber ?? entry.orderId}</Link>. Manage payment, tracking, and shipping from Orders.</p>}
+    {!entry.orderId && <BulkRecapEditor requestId={entry.id} />}
     <div className="mt-6 grid gap-4">
       <label className="text-sm font-semibold text-navy-deep">Discounted pricing<textarea value={entry.discountedPricing ?? ""} onChange={(event) => field(entry.id, "discountedPricing", event.target.value)} rows={3} className="mt-2 w-full rounded-xl border border-sky/20 px-3 py-2 font-normal" placeholder="Enter the discounted price breakdown for the request." /></label>
       <label className="text-sm font-semibold text-navy-deep">ETA<input value={entry.eta ?? ""} onChange={(event) => field(entry.id, "eta", event.target.value)} className="mt-2 h-10 w-full rounded-xl border border-sky/20 px-3 font-normal" placeholder="Example: 7–10 business days" /></label>
       <label className="text-sm font-semibold text-navy-deep">Final purchase decision / admin notes<textarea value={entry.adminDecision ?? ""} onChange={(event) => field(entry.id, "adminDecision", event.target.value)} rows={3} className="mt-2 w-full rounded-xl border border-sky/20 px-3 py-2 font-normal" /></label>
     </div>
     <div className="mt-5 flex flex-wrap gap-2">
-      <Button disabled={busy === entry.id} onClick={() => update(entry.id, { adminDecision: entry.adminDecision ?? "", discountedPricing: entry.discountedPricing ?? "", eta: entry.eta ?? "", sendCustomerUpdate: Boolean(entry.discountedPricing?.trim() && entry.eta?.trim()) })}><Save className="h-4 w-4" /> {entry.discountedPricing?.trim() && entry.eta?.trim() ? "Save & Email Customer" : "Save Draft"}</Button>
-      <Button variant="outline" disabled={busy === entry.id || ["PENDING_SHIPMENT", "COMPLETE", "PURCHASED"].includes(entry.status)} onClick={() => update(entry.id, { status: "OPTED_OUT" })}><XCircle className="h-4 w-4" /> Opted Out</Button>
-      <Button variant="outline" disabled={busy === entry.id || (entry.status !== "AWAITING_PAYMENT" && entry.status !== "PURCHASED")} onClick={() => update(entry.id, { status: "PENDING_SHIPMENT", confirmPaymentReceived: true })}><Banknote className="h-4 w-4" /> Payment Received</Button>
-      <Button variant="outline" disabled={busy === entry.id || entry.status !== "PENDING_SHIPMENT"} onClick={() => update(entry.id, { status: "COMPLETE" })}><Truck className="h-4 w-4" /> Shipped</Button>
+      <Button disabled={busy === entry.id || Boolean(entry.orderId)} onClick={() => update(entry.id, { adminDecision: entry.adminDecision ?? "", discountedPricing: entry.discountedPricing ?? "", eta: entry.eta ?? "", sendCustomerUpdate: Boolean(entry.discountedPricing?.trim() && entry.eta?.trim()) })}><Save className="h-4 w-4" /> {entry.discountedPricing?.trim() && entry.eta?.trim() ? "Save & Email Customer" : "Save Draft"}</Button>
+      <Button variant="outline" disabled={busy === entry.id || Boolean(entry.orderId) || ["PENDING_SHIPMENT", "COMPLETE", "PURCHASED"].includes(entry.status)} onClick={() => update(entry.id, { status: "OPTED_OUT" })}><XCircle className="h-4 w-4" /> Opted Out</Button>
     </div>
     {message[entry.id] && <p className="mt-3 text-sm text-muted-foreground">{message[entry.id]}</p>}
   </article>)}</div>;

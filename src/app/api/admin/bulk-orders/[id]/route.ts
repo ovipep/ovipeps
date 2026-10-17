@@ -53,6 +53,9 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
     return Response.json({ error: "A paid or completed request cannot be opted out." }, { status: 409 });
   }
 
+  if (parsed.data.confirmPaymentReceived || parsed.data.status === "COMPLETE" || parsed.data.status === "PENDING_SHIPMENT" || parsed.data.status === "PURCHASED") return Response.json({error:"Confirm payment and shipping on the recorded shop order, after the customer confirms their address."},{status:409});
+  if (existing.orderId) return Response.json({error:"This request is linked to a shop order. Manage payment and shipping from Orders."},{status:409});
+  if (parsed.data.sendCustomerUpdate && (existing.purchaseIntentAt || existing.recapApprovedAt)) return Response.json({error:"A purchase response already exists. Prepare the itemized recap instead of sending another initial quote."},{status:409});
   const status = parsed.data.status ?? existing.status;
   const quoteIssuedAt = parsed.data.sendCustomerUpdate ? new Date() : existing.quoteIssuedAt;
   const quoteExpiresAt = parsed.data.sendCustomerUpdate

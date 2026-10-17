@@ -4,18 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run test:shipping && npm run test:affiliates && npm run test:order-emails && node scripts/apply-restock-migration.mjs",
+    "prebuild": "npm run test:shipping && npm run test:affiliates && npm run test:order-emails && npm run test:bulk-orders && node scripts/apply-restock-migration.mjs",
     "test:shipping": "node --import tsx --test scripts/order-shipping.test.ts",
     "test:affiliates": "node --import tsx --test scripts/affiliate-payments.test.ts scripts/affiliate-profile.test.ts",
     "test:order-emails": "node --import tsx --test scripts/order-email-video.test.ts",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && node --import tsx scripts/prepare-bulk-recap.mts && next build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test:bulk-orders": "node --import tsx --test scripts/bulk-checkout.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
@@ -29,6 +30,7 @@
     "lucide-react": "^1.30.0",
     "next": "^16.3.5",
     "next-auth": "^5.0.0-beta.32",
+    "pdf-lib": "1.17.1",
     "pg": "^8.23.0",
     "prisma": "^7.9.1",
     "react": "19.2.8",

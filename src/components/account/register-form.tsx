@@ -25,7 +25,7 @@ const registerSchema = z
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-export function RegisterForm() {
+export function RegisterForm({ callbackUrl = "/account/orders" }: { callbackUrl?: string }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [showOwnerReset, setShowOwnerReset] = useState(false);
@@ -63,7 +63,7 @@ export function RegisterForm() {
         throw new Error(body?.error ?? "Unable to create account. Please try again.");
       }
 
-      router.push("/account/login?registered=1");
+      router.push(`/account/login?registered=1&callbackUrl=${encodeURIComponent(callbackUrl)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     }
@@ -145,7 +145,7 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/account/login" className="font-medium text-accent hover:text-navy">
+        <Link href={`/account/login?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-accent hover:text-navy">
           Sign in
         </Link>
       </p>

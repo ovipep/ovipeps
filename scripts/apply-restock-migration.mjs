@@ -68,6 +68,9 @@ async function main() {
     );
     if (payoutEmailColumn.rowCount !== 1) throw new Error("Affiliate payout email column verification failed");
     console.log("Affiliate payout email column verified");
+    const bulkCheckoutSql = await readFile(new URL("../prisma/migrations/20261017150000_bulk_checkout_approval/migration.sql", import.meta.url), "utf8");
+    await client.query(bulkCheckoutSql);
+    console.log("Bulk checkout approval schema verified");
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [817_202_609]).catch(() => undefined);
     await client.end();

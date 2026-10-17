@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 
 export const BULK_ORDER_STATUSES = [
   "PENDING_DECISION",
+  "PENDING_REVIEW",
   "AWAITING_PAYMENT",
   "PENDING_SHIPMENT",
   "COMPLETE",
@@ -53,7 +54,18 @@ export function ensureBulkOrderSchema() {
           "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
-      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "customerReply" TEXT`);
+      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest"
+        ADD COLUMN IF NOT EXISTS "customerReply" TEXT,
+        ADD COLUMN IF NOT EXISTS "checkoutPlan" JSONB,
+        ADD COLUMN IF NOT EXISTS "recapDraft" JSONB,
+        ADD COLUMN IF NOT EXISTS "recapVersion" TEXT,
+        ADD COLUMN IF NOT EXISTS "recapApprovedAt" TIMESTAMP(3),
+        ADD COLUMN IF NOT EXISTS "recapSentAt" TIMESTAMP(3),
+        ADD COLUMN IF NOT EXISTS "recapEmailId" TEXT,
+        ADD COLUMN IF NOT EXISTS "recapError" TEXT,
+        ADD COLUMN IF NOT EXISTS "checkoutExpiresAt" TIMESTAMP(3),
+        ADD COLUMN IF NOT EXISTS "orderId" TEXT`);
+      await db.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "BulkOrderRequest_orderId_key" ON "BulkOrderRequest"("orderId")`);
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "decisionToken" TEXT`);
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "quoteIssuedAt" TIMESTAMP(3)`);
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "quoteExpiresAt" TIMESTAMP(3)`);
@@ -100,6 +112,7 @@ export function parseBulkOrderItems(value: unknown): BulkOrderItem[] {
 }
 
 export function formatBulkOrderStatus(status: string) {
+  if (status === "PENDING_REVIEW") return "Reply Received - Review Required";
   if (status === "AWAITING_PAYMENT") return "Awaiting E-Transfer";
   if (status === "PENDING_SHIPMENT") return "Pending Shipment";
   if (status === "COMPLETE") return "Complete";

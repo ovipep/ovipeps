@@ -6,14 +6,14 @@ import type { Prisma } from "../src/generated/prisma/client";
 import { updateShipment, OrderShippingError } from "../src/lib/order-shipping";
 import { ShipOrderButton } from "../src/components/admin/ship-order-button";
 
-function fixture(status = "PAYMENT_RECEIVED", trackingNumber: string | null = null) {
+function fixture(status = "PAYMENT_RECEIVED", trackingNumber: string | null = null, backorders = 0) {
   let order: Record<string, unknown> | null = {
     id: "order-test", status, trackingNumber, shippedAt: null, completedAt: null,
   };
   const shipments: Record<string, unknown>[] = [];
   const calls: string[] = [];
   const tx = {
-    $queryRaw: async () => { calls.push("lock"); return []; },
+    $queryRaw: async (query: TemplateStringsArray) => { if (query.join("").includes("COUNT(*)")) return [{ count: BigInt(backorders) }]; calls.push("lock"); return []; },
     order: {
       findUnique: async () => { calls.push("read"); return order ? { ...order } : null; },
       update: async ({ data }: { data: Record<string, unknown> }) => {
@@ -129,4 +129,13 @@ test("shipping form includes working native POST controls without JavaScript", (
   assert.match(html, /value="SAVED"/);
   assert.match(html, /<button(?=[^>]*type="submit")(?=[^>]*name="action")(?=[^>]*value="ship")[^>]*>/);
   assert.match(html, /value="save-tracking"/);
+});
+
+
+test("backordered orders cannot be completed but can retain partial tracking", async () => {
+  const f = fixture("PAYMENT_RECEIVED", null, 1);
+  await assert.rejects(() => updateShipment(f.tx, "order-test", "PARTIAL-TRACK", true), /backordered units/);
+  const order = await updateShipment(f.tx, "order-test", "PARTIAL-TRACK", false);
+  assert.equal(order.status, "PAYMENT_RECEIVED");
+  assert.equal(order.trackingNumber, "PARTIAL-TRACK");
 });

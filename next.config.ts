@@ -2,7 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
+    "/api/product-documents/*/guide.pdf": ["./public/documents/*.png"],
     "/api/orders": ["./src/assets/email-attachments/**/*.pdf"],
+    "/api/admin/bulk-orders/*/recap": ["./src/assets/email-attachments/**/*.pdf", "./public/documents/**/*", "./public/coas/**/*.pdf"],
+    "/api/bulk-orders/checkout": ["./src/assets/email-attachments/**/*.pdf", "./public/documents/**/*", "./public/coas/**/*.pdf"],
   },
   async headers() {
     const securityHeaders = [
@@ -51,6 +54,10 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "private, no-store, max-age=0" },
           { key: "Referrer-Policy", value: "no-referrer" },
         ],
+      },
+      {
+        source: "/bulk-order-checkout/:path*",
+        headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }, {key: "Referrer-Policy", value: "no-referrer"}],
       },
       {
         source: "/restock/manage",

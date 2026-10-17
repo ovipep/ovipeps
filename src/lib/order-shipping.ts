@@ -29,6 +29,10 @@ export async function updateShipment(
   const savedTrackingNumber = trackingNumber === undefined
     ? order.trackingNumber
     : trackingNumber.trim() || null;
+  if (markShipped && pending) {
+    const outstanding = await tx.$queryRaw<Array<{count:bigint}>>`SELECT COUNT(*) AS count FROM "OrderItem" WHERE "orderId"=${orderId} AND "reservedQuantity" IS NOT NULL AND "reservedQuantity" < quantity`;
+    if (Number(outstanding[0]?.count ?? 0) > 0) throw new OrderShippingError("This order has backordered units. Record partial tracking now; mark complete after all units are reserved and shipped.");
+  }
   const now = new Date();
   const updated = await tx.order.update({
     where: { id: orderId },

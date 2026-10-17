@@ -149,6 +149,15 @@ model BulkOrderRequest {
   items                  Json
   additionalContext      String?
   customerReply          String?
+  checkoutPlan           Json?
+  recapDraft             Json?
+  recapVersion           String?
+  recapApprovedAt        DateTime?
+  recapSentAt            DateTime?
+  recapEmailId           String?
+  recapError             String?
+  checkoutExpiresAt      DateTime?
+  orderId                String?   @unique
   status                 String    @default("PENDING_DECISION")
   adminDecision          String?
   discountedPricing      String?
@@ -257,6 +266,7 @@ model OrderItem {
   quantity    Int
   unitPrice   Float
   totalPrice  Float
+  reservedQuantity Int?
 
   order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product        @relation(fields: [productId], references: [id])

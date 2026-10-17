@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const requestedCallback = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = requestedCallback.startsWith("/") && !requestedCallback.startsWith("//") && !requestedCallback.includes("\\") ? requestedCallback : "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -76,6 +77,7 @@ export default function LoginForm() {
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? "Signing in…" : "Sign in"}
             </Button>
+            <p className="text-center text-sm">New customer? <Link href={`/account/register?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-sky underline">Create Account</Link></p>
             <p className="text-center text-sm"><Link href="/account/forgot-password" className="font-medium text-sky hover:underline">Forgot your password?</Link></p>
           </form>
         </CardContent>
