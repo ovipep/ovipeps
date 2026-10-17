@@ -1,15 +1,36 @@
 /** Optional one-time production recap task. Sending requires an explicit approve_send command. */
 import { z } from 'zod';
 import { db } from '../src/lib/db';
-import { prepareBulkRecap, approveAndSendBulkRecap } from '../src/lib/bulk-checkout';
+import { prepareBulkRecap, approveAndSendBulkRecap, reconcileApprovedExistingBulkOrder } from '../src/lib/bulk-checkout';
 
 async function main() {
   const raw=process.env.BULK_RECAP_PREPARE_REQUEST;
   if(!raw || process.env.VERCEL !== '1' || process.env.VERCEL_ENV !== 'production') return;
-  const command=z.object({action:z.enum(["prepare","approve_send"]).default("prepare"),replaceHeldDraft:z.boolean().optional(),supplementalDocumentKeys:z.array(z.enum(["peptide_reference"])).optional(),requestId:z.string().min(1),existingOrderNumber:z.string().min(1),items:z.array(z.object({slug:z.string(),size:z.string(),quantity:z.number().int().positive(),additionalQuantity:z.number().int().nonnegative().optional(),lineTotal:z.number().positive()})).min(1),shippingAmount:z.number().nonnegative(),taxAmount:z.number().nonnegative(),fulfillmentNote:z.string().min(1),allowBackorder:z.boolean()}).parse(JSON.parse(raw));
+  const command=z.object({action:z.enum(["prepare","approve_send","inspect_order","reconcile_order"]).default("prepare"),replaceHeldDraft:z.boolean().optional(),supplementalDocumentKeys:z.array(z.enum(["peptide_reference"])).optional(),requestId:z.string().min(1),existingOrderNumber:z.string().min(1),items:z.array(z.object({slug:z.string(),size:z.string(),quantity:z.number().int().positive(),additionalQuantity:z.number().int().nonnegative().optional(),lineTotal:z.number().positive()})).min(1),shippingAmount:z.number().nonnegative(),taxAmount:z.number().nonnegative(),fulfillmentNote:z.string().min(1),allowBackorder:z.boolean()}).parse(JSON.parse(raw));
   const request=await db.bulkOrderRequest.findUniqueOrThrow({where:{id:command.requestId}});
   const owner=await db.user.findFirst({where:{email:{equals:'ovipeps@gmail.com',mode:'insensitive'},role:'ADMIN'},select:{id:true}});
   if(!owner) throw new Error('Owner administrator is required for this recap task');
+  if (command.action === 'inspect_order' || command.action === 'reconcile_order') {
+    const plan=request.checkoutPlan as unknown as import('../src/lib/bulk-checkout-schema').BulkPlan | null;
+    if (!plan || !request.recapVersion || plan.existingOrderNumber !== command.existingOrderNumber || plan.items.length !== command.items.length) throw new Error('Saved recap does not match this order');
+    const total=Math.round((command.items.reduce((n,i)=>n+i.lineTotal,0)+command.shippingAmount+command.taxAmount)*100)/100;
+    if(plan.total !== total) throw new Error('Approved total mismatch');
+    for (const item of command.items) {
+      const line=plan.items.find(i=>i.productSlug===item.slug);
+      if (!line || line.quantity!==item.quantity || line.totalPrice!==item.lineTotal) throw new Error('Approved item mismatch');
+    }
+    const before=await db.order.findUniqueOrThrow({where:{orderNumber:command.existingOrderNumber},include:{items:true,payments:true}});
+    const {bulkAddressSchema}=await import('../src/lib/bulk-checkout-schema');
+    const describe=(order:typeof before)=>({orderNumber:order.orderNumber,status:order.status,total:order.total,hasAccount:!!order.userId,validStoredAddress:bulkAddressSchema.safeParse(order.shippingAddress).success,items:order.items.map(i=>({sku:i.sku,quantity:i.quantity,reserved:i.reservedQuantity??i.quantity})),payments:order.payments.map(p=>({status:p.status,amount:p.amount}))});
+    console.log('BULK_ORDER_BEFORE '+JSON.stringify({...describe(before),linked:request.orderId===before.id,approved:!!request.recapApprovedAt,sent:!!request.recapSentAt}));
+    if (command.action==='inspect_order') return;
+    const result=await reconcileApprovedExistingBulkOrder(request.id,request.recapVersion,owner.id);
+    const after=await db.order.findUniqueOrThrow({where:{id:result.order.id},include:{items:true,payments:true}});
+    const linked=await db.bulkOrderRequest.findUniqueOrThrow({where:{id:request.id}});
+    if(after.id!==before.id || after.total!==total || linked.orderId!==after.id) throw new Error('Order reconciliation verification failed');
+    console.log('BULK_ORDER_VERIFIED '+JSON.stringify({...describe(after),linked:true,changed:result.created,emailSent:false}));
+    return;
+  }
   if(command.action === 'approve_send') {
     if(request.recapSentAt) {console.log('Approved bulk recap already sent; duplicate send skipped.'); return;}
     const plan=request.checkoutPlan as unknown as import('../src/lib/bulk-checkout-schema').BulkPlan | null;

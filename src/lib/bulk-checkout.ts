@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ensureBulkOrderSchema } from "@/lib/bulk-orders";
 import {
   bulkTotals,
+  bulkAddressSchema,
   type BulkPlanInput,
   type BulkPlan,
   type BulkAddress,
@@ -218,7 +219,7 @@ export async function approveAndSendBulkRecap(
       idempotencyKey: `bulk-recap-${id}-${version}`,
     });
     if (!delivery.success) throw new Error(delivery.error);
-    return db.bulkOrderRequest.update({
+    const saved = await db.bulkOrderRequest.update({
       where: { id },
       data: {
         recapSentAt: new Date(),
@@ -226,6 +227,18 @@ export async function approveAndSendBulkRecap(
         recapError: null,
       },
     });
+    if (plan.existingOrderNumber) {
+      try {
+        await reconcileApprovedExistingBulkOrder(id, version, adminId);
+        return await db.bulkOrderRequest.findUniqueOrThrow({ where: { id } });
+      } catch (error) {
+        // Delivery already succeeded; never retry or label it as a failed email.
+        return await db.bulkOrderRequest.update({ where: { id }, data: {
+          recapError: `Recap sent. Existing order requires review: ${error instanceof BulkCheckoutError ? error.message : "Unable to apply the approved recap"}`,
+        } });
+      }
+    }
+    return saved;
   } catch (error) {
     await db.bulkOrderRequest.update({
       where: { id },
@@ -242,10 +255,13 @@ export async function approveAndSendBulkRecap(
 export async function recordBulkOrder(
   tx: Prisma.TransactionClient,
   token: string,
-  user: { id: string; email: string },
+  user: { id: string | null; email: string },
   address: BulkAddress,
   version: string,
+  administratorId?: string,
 ) {
+  if (!user.id && !administratorId) throw new BulkCheckoutError("Customer authentication is required", 403);
+  if (administratorId && !(await tx.user.findFirst({ where: { id: administratorId, role: "ADMIN" }, select: { id: true } }))) throw new BulkCheckoutError("Administrator authorization is required", 403);
   await tx.$queryRaw`SELECT id FROM "BulkOrderRequest" WHERE "decisionToken"=${token} FOR UPDATE`;
   const request = await tx.bulkOrderRequest.findUnique({
     where: { decisionToken: token },
@@ -279,6 +295,7 @@ export async function recordBulkOrder(
       "This recap is not approved, has changed, or has expired",
     );
   const plan = request.checkoutPlan as unknown as BulkPlan;
+  if (administratorId && !plan.existingOrderNumber) throw new BulkCheckoutError("An existing order is required for administrator reconciliation");
   const productIds = [...new Set(plan.items.map((i) => i.productId))].sort();
   // Inventory edits and reservation reconciliation acquire product locks in this order.
   for (const id of productIds)
@@ -300,6 +317,12 @@ export async function recordBulkOrder(
       throw new BulkCheckoutError(
         "The existing order is no longer eligible for reconciliation. Contact OVIpeps before paying.",
       );
+    if (administratorId) {
+      const savedAddress = bulkAddressSchema.safeParse(existing.shippingAddress);
+      if (!savedAddress.success) throw new BulkCheckoutError("The customer must provide a complete shipping address first");
+      address = savedAddress.data;
+      user = { id: existing.userId, email: existing.email };
+    }
     if (
       existing.items.some(
         (i) => !plan.items.some((p) => p.variantId === i.variantId),
@@ -410,7 +433,7 @@ export async function recordBulkOrder(
       },
       include: { items: true },
     });
-  await tx.address.create({
+  if (user.id && !administratorId) await tx.address.create({
     data: { ...address, userId: user.id, label: "Bulk order shipping" },
   });
   await tx.bulkOrderRequest.update({
@@ -419,7 +442,7 @@ export async function recordBulkOrder(
   });
   await tx.auditLog.create({
     data: {
-      userId: user.id,
+      userId: administratorId ?? user.id,
       action: existing ? "RECONCILE_BULK_ORDER" : "CREATE_BULK_ORDER",
       entity: "Order",
       entityId: order.id,
@@ -433,6 +456,19 @@ export async function recordBulkOrder(
     },
   });
   return { order, created: true };
+}
+
+/** Apply an approved recap to its original unpaid order using the address already supplied. No email is sent. */
+export async function reconcileApprovedExistingBulkOrder(id: string, version: string, administratorId: string) {
+  await ensureBulkOrderSchema();
+  const request = await db.bulkOrderRequest.findUniqueOrThrow({ where: { id } });
+  const plan = request.checkoutPlan as unknown as BulkPlan | null;
+  if (!plan?.existingOrderNumber || !request.decisionToken || request.recapVersion !== version)
+    throw new BulkCheckoutError("Review the current approved recap and existing order first");
+  const existing = await db.order.findUniqueOrThrow({ where: { orderNumber: plan.existingOrderNumber } });
+  const address = bulkAddressSchema.safeParse(existing.shippingAddress);
+  if (!address.success) throw new BulkCheckoutError("The customer must provide a complete shipping address first");
+  return db.$transaction(tx => recordBulkOrder(tx, request.decisionToken!, { id: existing.userId, email: existing.email }, address.data, version, administratorId));
 }
 
 export async function completeBulkCheckout(

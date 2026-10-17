@@ -85,6 +85,8 @@ function fixture() {
     id: "existing-1",
     orderNumber: "EXISTING-ORDER",
     email: user.email,
+    userId: null,
+    shippingAddress: address,
     createdAt: new Date(),
     status: "AWAITING_PAYMENT",
     items: [{ variantId: "cjc10", quantity: 3, reservedQuantity: null }],
@@ -99,6 +101,7 @@ function fixture() {
     updateCount = 0;
   const tx = {
     $queryRaw: async () => [],
+    user: { findFirst: async ({where}: any) => where.id === "admin-1" ? {id: "admin-1"} : null },
     bulkOrderRequest: {
       findUnique: async () => request,
       update: async ({ data }: any) => Object.assign(request, data),
@@ -259,4 +262,21 @@ test('additional vial display cannot equal or exceed the purchased quantity', ()
  const input={items:[{variantId:'cjc10',quantity:13,lineTotal:676,additionalQuantity:13}],shippingAmount:0,taxAmount:0,fulfillmentNote:'Ship after restock'};
  assert.equal(bulkPlanInputSchema.safeParse(input).success,false);
  input.items[0].additionalQuantity=3;assert.equal(bulkPlanInputSchema.safeParse(input).success,true);
+});
+
+test("administrator reconciles a guest order with its stored address and preserves reservations", async () => {
+  const f=fixture();
+  const r=await recordBulkOrder(f.tx,"token",{id:null,email:user.email},address,"version-1","admin-1");
+  assert.equal(r.order.userId,null);
+  assert.equal(r.order.total,1488.5);
+  assert.equal(r.order.items.find((i:any)=>i.variantId==="cjc10")?.reservedQuantity,3);
+  assert.equal(f.getCounts().addressCount,0);
+  await recordBulkOrder(f.tx,"token",{id:null,email:user.email},address,"version-1","admin-1");
+  assert.equal(f.getCounts().updateCount,1);
+});
+test("administrator cannot bypass a missing stored address or customer authentication", async () => {
+  const f=fixture();f.getOrder().shippingAddress={};
+  await assert.rejects(()=>recordBulkOrder(f.tx,"token",{id:null,email:user.email},address,"version-1","admin-1"),/complete shipping address/);
+  await assert.rejects(()=>recordBulkOrder(f.tx,"token",{id:null,email:user.email},address,"version-1"),/authentication/);
+  assert.equal(f.getCounts().updateCount,0);
 });
