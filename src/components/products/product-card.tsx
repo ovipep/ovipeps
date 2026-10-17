@@ -36,12 +36,13 @@ export function ProductCard({
   const inStock = isProductInStock(product.variants);
   const availableVariant = product.variants.find((variant) => variant.inStock);
   const hasMultipleVariants = product.variants.length > 1;
+  const hasSizeOptions = product.variants.length > 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    if (hasMultipleVariants && !onQuickView) return;
+    if (hasSizeOptions && !onQuickView) return;
     e.preventDefault();
     e.stopPropagation();
-    if (hasMultipleVariants && onQuickView) {
+    if (hasSizeOptions && onQuickView) {
       onQuickView(product);
       return;
     }
@@ -128,16 +129,16 @@ export function ProductCard({
             <button
               type="button"
               onClick={handleAddToCart}
-              disabled={!inStock && !hasMultipleVariants}
+              disabled={!hasSizeOptions}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold shadow-lg transition-all",
-                (inStock || hasMultipleVariants)
+                hasSizeOptions
                   ? "bg-gradient-to-r from-sky to-cyan text-white hover:from-sky-bright hover:to-cyan-bright hover:shadow-sky/30"
                   : "cursor-not-allowed bg-muted text-muted-foreground"
               )}
             >
               <ShoppingBag className="h-3.5 w-3.5" />
-              {hasMultipleVariants
+              {hasSizeOptions
                 ? "Choose Options"
                 : inStock ? "Add to Cart" : "Restocking"}
             </button>

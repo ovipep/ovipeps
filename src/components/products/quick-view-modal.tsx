@@ -146,7 +146,7 @@ export function QuickViewModal({
             </p>
 
             {/* Variant selector */}
-            {product.variants.length > 1 && (
+            {product.variants.length > 0 && (
               <div className="mt-5">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Select Size
