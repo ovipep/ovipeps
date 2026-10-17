@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ensureBulkOrderSchema } from "@/lib/bulk-orders";
-import type { BulkPlan } from "@/lib/bulk-checkout-schema";
+import { bulkAddressSchema, type BulkPlan } from "@/lib/bulk-checkout-schema";
 import { BulkAddressConfirmation } from "@/components/products/bulk-address-confirmation";
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -30,9 +30,12 @@ export default async function BulkCheckoutPage({
     request.email.toLowerCase() !== session.user.email.toLowerCase()
   )
     notFound();
+  let recordedAddress: ReturnType<typeof bulkAddressSchema.safeParse> | undefined;
   if (request.orderId) {
     const order = await db.order.findUnique({ where: { id: request.orderId } });
-    if (order) redirect(`/account/orders/${order.orderNumber}`);
+    if (order?.userId === session.user.id) redirect(`/account/orders/${order.orderNumber}`);
+    if (order?.userId || (order && order.email.toLowerCase() !== session.user.email.toLowerCase())) notFound();
+    recordedAddress = bulkAddressSchema.safeParse(order?.shippingAddress);
   }
   const clock = await db.$queryRaw<
     Array<{ now: Date }>
@@ -59,7 +62,7 @@ export default async function BulkCheckoutPage({
       </main>
     );
   const plan = request.checkoutPlan as unknown as BulkPlan;
-  const address = await db.address.findFirst({
+  const address = (recordedAddress?.success ? recordedAddress.data : null) ?? await db.address.findFirst({
     where: { userId: session.user.id },
     orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
   });

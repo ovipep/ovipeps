@@ -111,7 +111,7 @@ function fixture() {
       findUniqueOrThrow: async () => order,
       update: async ({ data }: any) => {
         updateCount++;
-        order = { ...order, ...data, items: data.items.create };
+        order = { ...order, ...data, items: data.items?.create ?? order.items };
         return order;
       },
     },
@@ -279,4 +279,13 @@ test("administrator cannot bypass a missing stored address or customer authentic
   await assert.rejects(()=>recordBulkOrder(f.tx,"token",{id:null,email:user.email},address,"version-1","admin-1"),/complete shipping address/);
   await assert.rejects(()=>recordBulkOrder(f.tx,"token",{id:null,email:user.email},address,"version-1"),/authentication/);
   assert.equal(f.getCounts().updateCount,0);
+});
+
+test("matching authenticated customer can claim a reconciled guest order without reserving again", async () => {
+ const f=fixture();
+ await recordBulkOrder(f.tx,"token",{id:null,email:user.email},address,"version-1","admin-1");
+ const stock=f.variants.bpc10.stockQuantity;
+ const r=await recordBulkOrder(f.tx,"token",user,address,"version-1");
+ assert.equal(r.created,false);assert.equal(r.order.userId,user.id);assert.equal(f.variants.bpc10.stockQuantity,stock);
+ await assert.rejects(()=>recordBulkOrder(f.tx,"token",{...user,id:"other-id"},address,"version-1"),/another account/);
 });

@@ -274,14 +274,22 @@ export async function recordBulkOrder(
       "This quote belongs to a different account",
       403,
     );
-  if (request.orderId)
-    return {
-      order: await tx.order.findUniqueOrThrow({
-        where: { id: request.orderId },
-        include: { items: true },
-      }),
-      created: false,
-    };
+  if (request.orderId) {
+    let order = await tx.order.findUniqueOrThrow({
+      where: { id: request.orderId }, include: { items: true },
+    });
+    if (!administratorId && !order.userId) {
+      if (!user.id || request.recapVersion !== version || !request.recapApprovedAt || !request.recapSentAt || order.email.toLowerCase() !== user.email.toLowerCase())
+        throw new BulkCheckoutError("Review the approved recap with the matching customer account", 403);
+      order = await tx.order.update({ where: { id: order.id }, data: {
+        userId: user.id,
+        ...(order.status === "AWAITING_PAYMENT" ? { shippingAddress: json({ ...address, deliveryMethod: "SHIPPING" }) } : {}),
+      }, include: { items: true } });
+      await tx.auditLog.create({ data: { userId: user.id, action: "CLAIM_BULK_ORDER", entity: "Order", entityId: order.id, details: JSON.stringify({ requestId: request.id, version }) } });
+    }
+    if (!administratorId && order.userId !== user.id) throw new BulkCheckoutError("This order belongs to another account", 403);
+    return { order, created: false };
+  }
   if (
     !request.recapApprovedAt ||
     !request.recapSentAt ||
