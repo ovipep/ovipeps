@@ -140,9 +140,7 @@ export function QuickViewModal({
             )}
 
             <p className="mt-4 text-2xl font-semibold text-navy-deep">
-              {!inStock
-                ? "Restocking"
-                : selectedVariant
+              {selectedVariant
                 ? formatCurrency(selectedVariant.price)
                 : formatCurrency(lowestPrice)}
             </p>
@@ -158,7 +156,7 @@ export function QuickViewModal({
                     <button
                       key={variant.id}
                       type="button"
-                      disabled={!variant.inStock}
+                      aria-pressed={selectedVariant?.id === variant.id}
                       onClick={() => setSelectedVariant(variant)}
                       className={cn(
                         "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
@@ -166,10 +164,10 @@ export function QuickViewModal({
                           ? "border-navy bg-navy text-primary-foreground"
                           : variant.inStock
                             ? "border-border bg-background text-foreground hover:border-accent/40"
-                            : "cursor-not-allowed border-border bg-muted text-muted-foreground line-through"
+                            : "border-border bg-muted text-muted-foreground hover:border-accent/40"
                       )}
                     >
-                      {variant.name}
+                      {variant.name}{!variant.inStock && <span className="ml-1 text-xs">(Restocking)</span>}
                     </button>
                   ))}
                 </div>

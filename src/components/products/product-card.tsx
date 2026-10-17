@@ -45,7 +45,7 @@ export function ProductCard({
       onQuickView(product);
       return;
     }
-    if (!defaultVariant || !inStock) return;
+    if (!defaultVariant || !defaultVariant.inStock) return;
     addItem({
       productId: product.id,
       variantId: defaultVariant.id,
@@ -128,20 +128,18 @@ export function ProductCard({
             <button
               type="button"
               onClick={handleAddToCart}
-              disabled={!inStock}
+              disabled={!inStock && !hasMultipleVariants}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold shadow-lg transition-all",
-                inStock
+                (inStock || hasMultipleVariants)
                   ? "bg-gradient-to-r from-sky to-cyan text-white hover:from-sky-bright hover:to-cyan-bright hover:shadow-sky/30"
                   : "cursor-not-allowed bg-muted text-muted-foreground"
               )}
             >
               <ShoppingBag className="h-3.5 w-3.5" />
-              {!inStock
-                ? "Restocking"
-                : hasMultipleVariants
-                  ? "Choose Options"
-                  : "Add to Cart"}
+              {hasMultipleVariants
+                ? "Choose Options"
+                : inStock ? "Add to Cart" : "Restocking"}
             </button>
           </div>
         </div>
@@ -153,6 +151,9 @@ export function ProductCard({
               {product.name}
             </h3>
           </Link>
+          <p className="text-sm text-muted-foreground" aria-label="Available vial sizes or packs">
+            {product.variants.map(variant => variant.name).join(" · ")}
+          </p>
           <div className="flex flex-wrap gap-2 pt-1">
             {getProductDocument(product.slug) && (
               <ProductDocumentPill productSlug={product.slug} />
