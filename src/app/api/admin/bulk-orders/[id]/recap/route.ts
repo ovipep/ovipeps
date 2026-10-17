@@ -22,6 +22,7 @@ export async function GET(
     return Response.json({ error: "Request not found" }, { status: 404 });
   const [variants, orders] = await Promise.all([
     db.productVariant.findMany({
+      where: { deletedAt: null },
       include: { product: { select: { name: true, slug: true } } },
       orderBy: { sku: "asc" },
     }),

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,7 @@ export function InventoryManager({ products }: { products: Product[] }) {
       const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Could not save changes");
-      setMessage("Saved. Shop inventory and pricing are now updated.");
+      setMessage(method === "DELETE" ? "Deleted. This row has been removed from inventory and the shop." : "Saved. Shop inventory and pricing are now updated.");
       router.refresh();
       return true;
     } catch (error) {
@@ -59,7 +59,7 @@ export function InventoryManager({ products }: { products: Product[] }) {
       </div>
       <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-sm">
         <thead><tr className="border-b border-border text-left text-muted-foreground"><th className="px-4 py-2">Size / pack</th><th className="px-4 py-2">SKU</th><th className="px-4 py-2">Price (CAD)</th><th className="px-4 py-2">Available units</th><th className="px-4 py-2">Status</th><th /></tr></thead>
-        <tbody>{product.variants.map((variant) => <VariantRow key={variant.id} variant={variant} busy={busy === variant.id} onSave={(body) => send(`/api/admin/variants/${variant.id}`, "PATCH", body, variant.id)} />)}</tbody>
+        <tbody>{product.variants.map((variant) => <VariantRow key={variant.id} variant={variant} productName={product.name} busy={busy !== null} onDelete={() => send(`/api/admin/variants/${variant.id}`, "DELETE", { confirmed: true, sku: variant.sku }, variant.id)} onSave={(body) => send(`/api/admin/variants/${variant.id}`, "PATCH", body, variant.id)} />)}</tbody>
       </table></div>
       <form className="grid gap-2 border-t border-border bg-muted/20 p-3 sm:grid-cols-5" onSubmit={async (event) => {
         event.preventDefault(); const data = new FormData(event.currentTarget);
@@ -73,9 +73,13 @@ export function InventoryManager({ products }: { products: Product[] }) {
   </div>;
 }
 
-function VariantRow({ variant, busy, onSave }: { variant: Variant; busy: boolean; onSave: (body: unknown) => void }) {
+function VariantRow({ variant, productName, busy, onSave, onDelete }: { variant: Variant; productName: string; busy: boolean; onSave: (body: unknown) => void; onDelete: () => void }) {
   const [size, setSize] = useState(variant.name); const [price, setPrice] = useState(String(variant.price)); const [stock, setStock] = useState(String(variant.stockQuantity)); const quantity = Number(stock);
   return <tr className={cn("border-b border-border/60", stockStyle(Number.isFinite(quantity) ? quantity : variant.stockQuantity))}>
-    <td className="px-4 py-3"><Input value={size} onChange={(e) => setSize(e.target.value)} /></td><td className="px-4 py-3 font-mono text-xs">{variant.sku}</td><td className="px-4 py-3"><Input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} /></td><td className="px-4 py-3"><Input type="number" min="0" step="1" value={stock} onChange={(e) => setStock(e.target.value)} /></td><td className="px-4 py-3 font-semibold">{quantity <= 0 ? "RESTOCKING" : quantity <= 4 ? "LOW STOCK" : "In stock"}</td><td className="px-4 py-3"><Button size="sm" disabled={busy} onClick={() => onSave({ size, price: Number(price), stockQuantity: Number(stock) })}><Save className="h-4 w-4" /> Save</Button></td>
+    <td className="px-4 py-3"><Input value={size} onChange={(e) => setSize(e.target.value)} /></td><td className="px-4 py-3 font-mono text-xs">{variant.sku}</td><td className="px-4 py-3"><Input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} /></td><td className="px-4 py-3"><Input type="number" min="0" step="1" value={stock} onChange={(e) => setStock(e.target.value)} /></td><td className="px-4 py-3 font-semibold">{quantity <= 0 ? "RESTOCKING" : quantity <= 4 ? "LOW STOCK" : "In stock"}</td><td className="px-4 py-3"><Button size="sm" disabled={busy} onClick={() => onSave({ size, price: Number(price), stockQuantity: Number(stock) })}><Save className="h-4 w-4" /> Save</Button><Button size="sm" variant="danger" disabled={busy} className="ml-2" aria-label={`Delete ${productName} ${variant.name}`} onClick={() => {
+      if (!window.confirm(`Delete ${productName} — ${variant.name} (${variant.sku})? This removes this size from inventory and the shop, including its ${variant.stockQuantity} available units.`)) return;
+      if (!window.confirm(`Are you sure you want to delete this permanently?\n\n${productName} — ${variant.name} (${variant.sku})\n\nThis cannot be undone from inventory. Past order records will be retained.`)) return;
+      onDelete();
+    }}><Trash2 className="h-4 w-4" /> Delete</Button></td>
   </tr>;
 }

@@ -92,6 +92,7 @@ enum ProductCategory {
 }
 
 model ProductVariant {
+  deletedAt DateTime?
   id             String   @id @default(cuid())
   productId      String
   name           String

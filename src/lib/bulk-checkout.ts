@@ -71,7 +71,7 @@ export async function prepareBulkRecap(
     );
 
   const variants = await db.productVariant.findMany({
-    where: { id: { in: input.items.map((i) => i.variantId) } },
+    where: { id: { in: input.items.map((i) => i.variantId) }, deletedAt: null },
     include: { product: true },
   });
   if (variants.length !== input.items.length)
@@ -356,7 +356,7 @@ export async function recordBulkOrder(
     const v = await tx.productVariant.findUnique({
       where: { id: line.variantId },
     });
-    if (!v || v.productId !== line.productId)
+    if (!v || v.deletedAt || v.productId !== line.productId)
       throw new BulkCheckoutError("A quoted vial size is no longer available");
     const alreadyReserved =
       existing?.items

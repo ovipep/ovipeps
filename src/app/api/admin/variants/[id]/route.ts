@@ -1,3 +1,5 @@
+import { db } from "@/lib/db";
+import { deleteInventoryVariant, InventoryDeletionError } from "@/lib/delete-inventory-variant";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
@@ -18,4 +20,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   revalidatePath("/shop");
   revalidatePath(`/shop/${variant.product.slug}`);
   return NextResponse.json(variant);
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
+  const body = await request.json().catch(() => null);
+  if (body?.confirmed !== true || typeof body.sku !== 'string' || !body.sku.trim())
+    return NextResponse.json({ error: 'Confirm permanent deletion of this inventory row first.' }, { status: 400 });
+  try {
+    const result = await db.$transaction(tx => deleteInventoryVariant(tx, id, body.sku, session.user.id));
+    revalidatePath('/admin/products');
+    revalidatePath('/shop');
+    revalidatePath(`/shop/${result.slug}`);
+    return NextResponse.json({ deleted: true });
+  } catch (error) {
+    if (error instanceof InventoryDeletionError) return NextResponse.json({ error: error.message }, { status: error.status });
+    console.error('Inventory row deletion failed', error);
+    return NextResponse.json({ error: 'Unable to delete this row. No deletion was saved. Please retry.' }, { status: 503 });
+  }
 }

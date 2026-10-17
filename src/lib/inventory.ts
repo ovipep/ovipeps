@@ -32,7 +32,7 @@ export async function updateVariantInventory(input: {
 }) {
   const result = await db.$transaction(async (tx) => {
     const existing = await tx.productVariant.findUnique({
-      where: { id: input.variantId },
+      where: { id: input.variantId, deletedAt: null },
       select: { productId: true, sku: true },
     });
     if (!existing) throw new Error("Product vial size not found");
@@ -42,7 +42,7 @@ export async function updateVariantInventory(input: {
 
     // Serialize inventory edits for every vial size belonging to this product.
     await tx.$queryRaw`SELECT id FROM "Product" WHERE id = ${existing.productId} FOR UPDATE`;
-    const previousVariant = await tx.productVariant.findUniqueOrThrow({ where: { id: input.variantId }, select: { stockQuantity: true } });
+    const previousVariant = await tx.productVariant.findUniqueOrThrow({ where: { id: input.variantId, deletedAt: null }, select: { stockQuantity: true } });
     const before = await tx.productVariant.aggregate({
       where: { productId: existing.productId },
       _sum: { stockQuantity: true },
@@ -123,7 +123,7 @@ export async function sendInventoryAlertsForVariants(variantIds: string[]) {
   if (!ids.length) return;
 
   const variants = await db.productVariant.findMany({
-    where: { id: { in: ids } },
+    where: { id: { in: ids }, deletedAt: null },
     include: { product: { select: { name: true } } },
   });
 
@@ -180,7 +180,7 @@ export async function sendInventoryAlertsForVariants(variantIds: string[]) {
 
 export async function reconcileInventoryAlerts() {
   const variants = await db.productVariant.findMany({
-    where: { stockQuantity: { lte: LOW_STOCK_THRESHOLD } },
+    where: { deletedAt: null, stockQuantity: { lte: LOW_STOCK_THRESHOLD } },
     select: { id: true },
   });
   await sendInventoryAlertsForVariants(variants.map((variant) => variant.id));

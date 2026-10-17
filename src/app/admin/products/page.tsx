@@ -8,7 +8,7 @@ export default async function AdminProductsPage() {
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: {
       id: true, name: true, slug: true, published: true,
-      variants: { orderBy: { sortOrder: "asc" }, select: { id: true, name: true, sku: true, price: true, stockQuantity: true } },
+      variants: { where: { deletedAt: null }, orderBy: { sortOrder: "asc" }, select: { id: true, name: true, sku: true, price: true, stockQuantity: true } },
     },
   });
   const inventoryProducts = products.flatMap((product) => {

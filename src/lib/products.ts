@@ -16,12 +16,12 @@ import {
 } from "@/types/product";
 
 const productCardInclude = {
-  variants: { orderBy: { sortOrder: "asc" as const } },
+  variants: { where: { deletedAt: null }, orderBy: { sortOrder: "asc" as const } },
   coaDocuments: { where: { published: true }, select: { id: true } },
 } satisfies Prisma.ProductInclude;
 
 const productDetailInclude = {
-  variants: { orderBy: { sortOrder: "asc" as const } },
+  variants: { where: { deletedAt: null }, orderBy: { sortOrder: "asc" as const } },
   batches: { orderBy: { createdAt: "desc" as const } },
   coaDocuments: {
     where: { published: true },
@@ -188,7 +188,7 @@ export function getProductCardData(product: ProductWithVariants): ProductCardDat
 }
 
 function buildWhereClause(filters: ProductQueryFilters): Prisma.ProductWhereInput {
-  const where: Prisma.ProductWhereInput = { published: true };
+  const where: Prisma.ProductWhereInput = { published: true, variants: { some: { deletedAt: null } } };
 
   if (filters.q?.trim()) {
     const q = filters.q.trim();
@@ -366,10 +366,11 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
   try {
     await syncAvailableProducts();
     const product = await db.product.findFirst({
-      where: { slug, published: true },
+      where: { slug },
       include: productDetailInclude,
     });
     if (product) {
+      if (!product.published || !product.variants.length) return null;
       return {
         ...product,
         name: getCatalogProductName(product.slug, product.name),
@@ -409,6 +410,7 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
     variants: fallback.variants.map((v, i) => ({
       id: v.id,
       productId: fallback.id,
+      deletedAt: null,
       name: v.name,
       sku: v.sku,
       price: applyCatalogVariantPolicy(
@@ -456,7 +458,7 @@ export async function getFeaturedProducts(limit = 8): Promise<ProductCardData[]>
   try {
     await syncAvailableProducts();
     const products = await db.product.findMany({
-      where: { published: true, featured: true },
+      where: { published: true, featured: true, variants: { some: { deletedAt: null } } },
       include: productCardInclude,
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       take: limit,
@@ -512,7 +514,7 @@ export async function getResearchCategories(): Promise<string[]> {
 export async function getProductPriceRange(): Promise<{ min: number; max: number }> {
   try {
     const variants = await db.productVariant.findMany({
-      where: { product: { published: true } },
+      where: { deletedAt: null, product: { published: true } },
       select: { sku: true, price: true, stockQuantity: true },
     });
     if (variants.length === 0) return { min: 0, max: 0 };

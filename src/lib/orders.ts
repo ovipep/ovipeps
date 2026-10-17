@@ -420,6 +420,7 @@ export async function createOrder(input: CreateOrderInput) {
     .filter((sku): sku is string => Boolean(sku));
   const variants = await db.productVariant.findMany({
     where: {
+      deletedAt: null,
       OR: [
         ...(variantIds.length ? [{ id: { in: variantIds } }] : []),
         ...(variantSkus.length ? [{ sku: { in: variantSkus } }] : []),
@@ -510,6 +511,7 @@ export async function createOrder(input: CreateOrderInput) {
       const reserved = await tx.productVariant.updateMany({
         where: {
           id: item.variantId,
+          deletedAt: null,
           stockQuantity: { gte: item.quantity },
         },
         data: { stockQuantity: { decrement: item.quantity } },

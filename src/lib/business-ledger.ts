@@ -17,7 +17,7 @@ export async function getBusinessLedger(from: Date, to: Date) {
       include: { items: true }, orderBy: { createdAt: "desc" },
     }),
     db.ledgerEntry.findMany({ where: { transactionAt: { gte: from, lte: to } }, orderBy: { transactionAt: "desc" } }),
-    db.productVariant.findMany({ include: { product: { select: { name: true } } }, orderBy: [{ product: { name: "asc" } }, { sortOrder: "asc" }] }),
+    db.productVariant.findMany({ where: { deletedAt: null }, include: { product: { select: { name: true } } }, orderBy: [{ product: { name: "asc" } }, { sortOrder: "asc" }] }),
     db.affiliatePayoutItem.findMany({
       where: { status: "PAID", paidAt: { gte: from, lte: to } },
       include: { payout: true, affiliate: { include: { user: { select: { firstName: true, lastName: true, email: true } } } } },

@@ -71,6 +71,8 @@ async function main() {
     const bulkCheckoutSql = await readFile(new URL("../prisma/migrations/20261017150000_bulk_checkout_approval/migration.sql", import.meta.url), "utf8");
     await client.query(bulkCheckoutSql);
     console.log("Bulk checkout approval schema verified");
+    await client.query('ALTER TABLE "ProductVariant" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3)');
+    console.log("Inventory row deletion schema verified");
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [817_202_609]).catch(() => undefined);
     await client.end();

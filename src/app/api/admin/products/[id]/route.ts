@@ -16,7 +16,7 @@ export async function PATCH(
       where: { id },
       select: {
         slug: true,
-        variants: { select: { price: true } },
+        variants: { where: { deletedAt: null }, select: { price: true } },
       },
     });
     if (!product) {
