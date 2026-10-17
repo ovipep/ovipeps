@@ -106,6 +106,7 @@ export async function prepareBulkRecap(
       variantName: v.name,
       sku: v.sku,
       quantity: i.quantity,
+      ...(i.additionalQuantity ? {additionalQuantity:i.additionalQuantity} : {}),
       unitPrice: i.lineTotal / i.quantity,
       totalPrice: i.lineTotal,
     };
@@ -116,7 +117,8 @@ export async function prepareBulkRecap(
     fulfillmentNote: input.fulfillmentNote,
     allowBackorder: input.allowBackorder,
     existingOrderNumber: input.existingOrderNumber || undefined,
-    documents: await collectBulkDocuments(items),
+    supplementalDocumentKeys: input.supplementalDocumentKeys ?? [],
+    documents: await collectBulkDocuments(items, input.supplementalDocumentKeys),
   };
   // Validate every required PDF before making this draft eligible for approval.
   await loadBulkAttachments(plan.documents);

@@ -247,3 +247,16 @@ test("product guides are real one-page PDFs with original proportions", async ()
   assert.equal(pdf.getPageCount(), 1);
   assert.ok(pdf.getPages()[0].getHeight() > pdf.getPages()[0].getWidth());
 });
+
+test('additional 3 CJC 10 mg vials appear separately without changing 13-vial order or total', () => {
+ const f=fixture();f.plan.items[2].additionalQuantity=3;
+ const email=buildBulkRecapEmail({...f.plan,firstName:'Research',reference:'EXISTING-ORDER',checkoutUrl:'https://example.test/checkout',etransferEmail:'payments@example.test',documents:[{label:'Peptide reference',filename:'peptide_reference.pdf'}]});
+ assert.match(email.text,/CJC\/Ipamorelin — 10mg × 10: \$520.00 CAD/);
+ assert.match(email.text,/Additional CJC\/Ipamorelin — 10mg × 3: \$156.00 CAD/);
+ assert.match(email.text,/TOTAL: \$1488.50 CAD/);assert.match(email.text,/peptide_reference.pdf/);assert.equal(f.plan.items[2].quantity,13);
+});
+test('additional vial display cannot equal or exceed the purchased quantity', () => {
+ const input={items:[{variantId:'cjc10',quantity:13,lineTotal:676,additionalQuantity:13}],shippingAmount:0,taxAmount:0,fulfillmentNote:'Ship after restock'};
+ assert.equal(bulkPlanInputSchema.safeParse(input).success,false);
+ input.items[0].additionalQuantity=3;assert.equal(bulkPlanInputSchema.safeParse(input).success,true);
+});

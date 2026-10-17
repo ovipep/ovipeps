@@ -66,8 +66,10 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
               items: plan.items.map((i) => ({
                 variantId: i.variantId,
                 quantity: i.quantity,
+                additionalQuantity: i.additionalQuantity,
                 lineTotal: i.totalPrice,
               })),
+              supplementalDocumentKeys: plan.supplementalDocumentKeys ?? [],
               shippingAmount: plan.shippingAmount,
               taxAmount: plan.taxAmount,
               fulfillmentNote: plan.fulfillmentNote,
@@ -244,6 +246,7 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
                     className="mt-2 w-full rounded border p-2 text-sm"
                   />
                 </label>
+                <label className="text-xs font-bold">Of the total, additional vials (optional)<input type="number" min="0" max={Math.max(0,line.quantity-1)} value={line.additionalQuantity ?? 0} onChange={e=>edit({...input,items:input.items.map((i,n)=>n===index?{...i,additionalQuantity:Number(e.target.value)}:i)})} className="mt-2 w-full rounded border p-2 text-sm" /></label>
                 <button
                   type="button"
                   onClick={() =>
@@ -347,6 +350,7 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
                 ))}
               </select>
             </label>
+            <label className="flex gap-2 text-sm"><input type="checkbox" checked={input.supplementalDocumentKeys?.includes("peptide_reference") ?? false} onChange={e=>edit({...input,supplementalDocumentKeys:e.target.checked?["peptide_reference"]:[]})} />Attach peptide_reference.pdf to this recap and its order confirmation.</label>
             <Button type="button" onClick={() => submit("prepare")}>
               Save draft — do not send
             </Button>

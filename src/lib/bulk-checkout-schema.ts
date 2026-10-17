@@ -6,6 +6,7 @@ export const bulkPlanInputSchema = z.object({
       z.object({
         variantId: z.string().min(1).max(128),
         quantity: z.number().int().min(1).max(1000),
+        additionalQuantity: z.number().int().min(0).max(999).optional(),
         lineTotal: z
           .number()
           .finite()
@@ -15,7 +16,7 @@ export const bulkPlanInputSchema = z.object({
             (n) => Math.abs(n * 100 - Math.round(n * 100)) < 0.00001,
             "Use at most two decimal places",
           ),
-      }),
+      }).refine(i => (i.additionalQuantity ?? 0) < i.quantity, "Additional vials must be fewer than the total vial count"),
     )
     .min(1)
     .max(50)
@@ -23,6 +24,7 @@ export const bulkPlanInputSchema = z.object({
       (items) => new Set(items.map((i) => i.variantId)).size === items.length,
       "Combine duplicate vial sizes into one line",
     ),
+  supplementalDocumentKeys: z.array(z.enum(["peptide_reference"])).optional(),
   shippingAmount: z.number().finite().min(0).max(10000),
   taxAmount: z.number().finite().min(0).max(10000).default(0),
   fulfillmentNote: z.string().trim().min(1).max(5000),
@@ -39,6 +41,7 @@ export interface BulkPlanLine {
   variantName: string;
   sku: string;
   quantity: number;
+  additionalQuantity?: number;
   unitPrice: number;
   totalPrice: number;
 }
@@ -51,6 +54,7 @@ export interface BulkPlan {
   fulfillmentNote: string;
   allowBackorder: boolean;
   existingOrderNumber?: string;
+  supplementalDocumentKeys?: ("peptide_reference")[];
   documents: { label: string; url: string; filename: string }[];
 }
 export const money = (n: number) =>

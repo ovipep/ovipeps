@@ -549,7 +549,7 @@ Request reference: ${input.requestId}`;
 }
 
 export function buildBulkRecapEmail(input: {
-  firstName: string; reference: string; items: {productName:string;variantName:string;quantity:number;totalPrice:number}[];
+  firstName: string; reference: string; items: {productName:string;variantName:string;quantity:number;totalPrice:number;additionalQuantity?:number}[];
   subtotal:number;shippingAmount:number;taxAmount:number;total:number;fulfillmentNote:string;
   checkoutUrl:string;etransferEmail:string;documents:{label:string;filename:string}[];placed?:boolean;existingOrderNumber?:string;
 }): EmailTemplate {
@@ -559,7 +559,12 @@ export function buildBulkRecapEmail(input: {
 
 ${input.placed ? 'Your bulk order is recorded in your OVIpeps account.' : input.existingOrderNumber ? `Thank you for your reply. Here is the revised itemized recap for your existing order ${input.existingOrderNumber}. This is one combined order.` : 'Thank you for your reply. Here is the itemized recap of your bulk order.'}
 
-${input.items.map(i=>`${i.productName} — ${i.variantName} × ${i.quantity}: ${price(i.totalPrice)}`).join('\n')}
+${input.items.flatMap(i=>{
+  const additional = i.additionalQuantity ?? 0;
+  if (!additional) return [`${i.productName} — ${i.variantName} × ${i.quantity}: ${price(i.totalPrice)}`];
+  const additionalPrice = Math.round(i.totalPrice / i.quantity * additional * 100) / 100;
+  return [`${i.productName} — ${i.variantName} × ${i.quantity - additional}: ${price(i.totalPrice - additionalPrice)}`, `Additional ${i.productName} — ${i.variantName} × ${additional}: ${price(additionalPrice)}`];
+}).join('\n')}
 
 Products: ${price(input.subtotal)}
 Shipping: ${price(input.shippingAmount)}

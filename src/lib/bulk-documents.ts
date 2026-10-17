@@ -11,6 +11,7 @@ import type { BulkPlanLine, BulkPlan } from "@/lib/bulk-checkout-schema";
 
 export async function collectBulkDocuments(
   items: BulkPlanLine[],
+  supplementalDocumentKeys: ("peptide_reference")[] = [],
 ): Promise<BulkPlan["documents"]> {
   const documents: BulkPlan["documents"] = [];
   const add = (
@@ -77,6 +78,7 @@ export async function collectBulkDocuments(
         coa.documentUrl,
         `${coa.product.name.replace(/[^a-z0-9-]/gi, "-")}-COA-${coa.id}.pdf`,
       );
+  if (supplementalDocumentKeys.includes("peptide_reference")) add("Peptide Protocol Reference", "/email-attachments/peptide_reference.pdf", "peptide_reference.pdf");
   return documents;
 }
 
