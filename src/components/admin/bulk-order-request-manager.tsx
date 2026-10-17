@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 interface Item { productName: string; kits: number; units: number }
 interface RequestRecord {
   id: string; firstName: string; lastName: string; email: string; items: Item[];
+  customerReply: string | null;
   additionalContext: string | null; status: string; adminDecision: string | null;
   discountedPricing: string | null; eta: string | null; paymentConfirmed: boolean;
   customerDecisionSentAt: string | null; createdAt: string; quoteExpiresAt: string | null;
@@ -62,6 +63,7 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
     {entry.purchaseOrderNumber && <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Purchase order number</p><p className="mt-1 text-lg font-bold text-emerald-950">{entry.purchaseOrderNumber}</p><p className="mt-1 text-xs text-emerald-800">Customer selected Purchase Now{entry.purchaseIntentAt ? ` on ${formatEasternDate(entry.purchaseIntentAt)} ET` : ""}. Watch for the matching e-transfer.</p></div>}
     <div className="mt-5 grid gap-3 sm:grid-cols-2">{entry.items.map((item, index) => <div key={`${item.productName}-${index}`} className="rounded-xl border border-sky/10 bg-sky/5 p-3"><p className="text-sm font-semibold text-navy-deep">{item.productName}</p><p className="mt-1 text-xs text-muted-foreground">{item.kits} kit{item.kits === 1 ? "" : "s"} · {item.units} units</p></div>)}</div>
     {entry.additionalContext && <div className="mt-4 rounded-xl bg-muted/60 p-4"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Additional Context/Information</p><p className="mt-2 whitespace-pre-wrap text-sm">{entry.additionalContext}</p></div>}
+    {entry.customerReply && <div className="mt-4 rounded-xl border border-sky/20 bg-sky/5 p-4"><p className="text-xs font-bold uppercase tracking-wider text-navy-deep">Customer reply with decision</p><p className="mt-2 whitespace-pre-wrap break-words text-sm">{entry.customerReply}</p></div>}
     <div className="mt-6 grid gap-4">
       <label className="text-sm font-semibold text-navy-deep">Discounted pricing<textarea value={entry.discountedPricing ?? ""} onChange={(event) => field(entry.id, "discountedPricing", event.target.value)} rows={3} className="mt-2 w-full rounded-xl border border-sky/20 px-3 py-2 font-normal" placeholder="Enter the discounted price breakdown for the request." /></label>
       <label className="text-sm font-semibold text-navy-deep">ETA<input value={entry.eta ?? ""} onChange={(event) => field(entry.id, "eta", event.target.value)} className="mt-2 h-10 w-full rounded-xl border border-sky/20 px-3 font-normal" placeholder="Example: 7–10 business days" /></label>

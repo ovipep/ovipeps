@@ -53,6 +53,7 @@ export function ensureBulkOrderSchema() {
           "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
+      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "customerReply" TEXT`);
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "decisionToken" TEXT`);
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "quoteIssuedAt" TIMESTAMP(3)`);
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "quoteExpiresAt" TIMESTAMP(3)`);

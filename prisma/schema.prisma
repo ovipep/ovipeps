@@ -148,6 +148,7 @@ model BulkOrderRequest {
   email                  String
   items                  Json
   additionalContext      String?
+  customerReply          String?
   status                 String    @default("PENDING_DECISION")
   adminDecision          String?
   discountedPricing      String?

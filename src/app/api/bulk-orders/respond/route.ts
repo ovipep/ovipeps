@@ -12,6 +12,7 @@ import {
 const responseSchema = z.object({
   token: z.string().length(64),
   action: z.enum(["purchase", "opt-out"]),
+  customerReply: z.string().trim().max(5000).optional(),
 });
 
 function createPurchaseOrderNumber() {
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     }
     await db.bulkOrderRequest.update({
       where: { id: bulkRequest.id },
-      data: { status: "OPTED_OUT", paymentConfirmed: false, paymentConfirmedAt: null },
+      data: { customerReply: parsed.data.customerReply || null, status: "OPTED_OUT", paymentConfirmed: false, paymentConfirmedAt: null },
     });
     return Response.json({ status: "OPTED_OUT" });
   }
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
   const updated = await db.bulkOrderRequest.update({
     where: { id: bulkRequest.id },
     data: {
+      customerReply: parsed.data.customerReply || null,
       status: "AWAITING_PAYMENT",
       purchaseOrderNumber,
       purchaseIntentAt: bulkRequest.purchaseIntentAt ?? new Date(),
