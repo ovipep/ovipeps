@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { getBusinessLedger } from "@/lib/business-ledger";
 import { formatCurrency } from "@/lib/utils";
-import { addLedgerEntry, updateLedgerEntry } from "./actions";
+import { addDonationPayout, addLedgerEntry, updateLedgerEntry } from "./actions";
 
 const dateText = (date: Date) => date.toISOString().slice(0, 10);
 
@@ -14,6 +14,16 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   const fromText = /^\d{4}-\d{2}-\d{2}$/.test(params.from ?? "") ? params.from! : dateText(fromDefault);
   const toText = /^\d{4}-\d{2}-\d{2}$/.test(params.to ?? "") ? params.to! : dateText(now);
   const { rows, variants } = await getBusinessLedger(new Date(`${fromText}T00:00:00.000Z`), new Date(`${toText}T23:59:59.999Z`));
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+  const { rows: monthRows } = await getBusinessLedger(monthStart, monthEnd);
+  const monthlyIncome = monthRows.reduce((sum, row) => sum + (row.type === "INCOME" ? row.merchandise + row.shipping : 0), 0);
+  const monthlyOperatingExpenses = monthRows.reduce((sum, row) => sum + (row.type === "EXPENSE" && row.category !== "Charitable Donations" ? row.expense : 0), 0);
+  const monthlyDonationPayouts = monthRows.filter((row) => row.category === "Charitable Donations").sort((a, b) => b.date.getTime() - a.date.getTime());
+  const monthlyNetIncome = monthlyIncome - monthlyOperatingExpenses;
+  const donationAllocation = Math.max(0, Math.round(monthlyNetIncome * 0.1 * 100) / 100);
+  const donationPaid = monthlyDonationPayouts.reduce((sum, row) => sum + row.expense, 0);
+  const donationDue = Math.max(0, Math.round((donationAllocation - donationPaid) * 100) / 100);
   const income = rows.reduce((sum, row) => sum + (row.type === "INCOME" ? row.merchandise + row.shipping : 0), 0);
   const tax = rows.reduce((sum, row) => sum + row.tax, 0);
   const expenses = rows.reduce((sum, row) => sum + row.expense, 0);
@@ -24,6 +34,24 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
     {params.updated === "1" && <div role="status" className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 font-medium text-green-800">Changes saved successfully.</div>}
     <form method="get" className="grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_1fr_auto]"><label className="text-sm font-medium">From<Input name="from" type="date" defaultValue={fromText}/></label><label className="text-sm font-medium">To<Input name="to" type="date" defaultValue={toText}/></label><Button type="submit" className="self-end">Run ledger</Button></form>
     <div className="grid gap-3 sm:grid-cols-4">{[["Income",income],["Tax collected",tax],["Expenses",expenses],["Net cash",income+tax-expenses]].map(([label,value])=><div key={String(label)} className="rounded-xl border bg-card p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="text-2xl font-semibold">{formatCurrency(Number(value))}</p></div>)}</div>
+    <section className="space-y-4 rounded-xl border border-green-300 bg-green-50/50 p-4">
+      <h2 className="font-semibold text-navy-deep">Monthly charity donation — {now.toLocaleDateString("en-CA", { month: "long", year: "numeric", timeZone: "UTC" })}</h2>
+      <p className="text-sm text-muted-foreground">Set aside 10% of this month’s income after operating expenses. Each payout is recorded below and reduces the amount due; the balance starts at $0 for each new calendar month.</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border bg-card p-3"><p className="text-xs text-muted-foreground">10% monthly allocation</p><p className="text-xl font-semibold">{formatCurrency(donationAllocation)}</p></div>
+        <div className="rounded-lg border bg-card p-3"><p className="text-xs text-muted-foreground">Paid out this month</p><p className="text-xl font-semibold">{formatCurrency(donationPaid)}</p></div>
+        <div className="rounded-lg border bg-card p-3"><p className="text-xs text-muted-foreground">Remaining to donate</p><p className="text-xl font-semibold text-green-800">{formatCurrency(donationDue)}</p></div>
+      </div>
+      <form action={addDonationPayout} className="grid gap-3 sm:grid-cols-[1fr_1.5fr_1fr_auto]">
+        <label className="space-y-1.5 text-sm font-medium">Payout date<Input name="payoutDate" type="date" defaultValue={dateText(now)} required /></label>
+        <label className="space-y-1.5 text-sm font-medium">Charity name<Input name="charityName" placeholder="Name of charity" maxLength={160} required /></label>
+        <label className="space-y-1.5 text-sm font-medium">Amount paid out (CAD)<Input name="amount" type="number" min="0.01" step="0.01" defaultValue={donationDue.toFixed(2)} required /></label>
+        <Button type="submit" className="self-end">Record payout</Button>
+      </form>
+      <div className="overflow-x-auto rounded-lg border bg-card">
+        <table className="w-full text-sm"><thead><tr className="border-b bg-muted/40 text-left"><th className="px-3 py-2">Payout date</th><th className="px-3 py-2">Charity</th><th className="px-3 py-2 text-right">Amount</th></tr></thead><tbody>{monthlyDonationPayouts.length ? monthlyDonationPayouts.map((row) => <tr key={row.id} className="border-b last:border-0"><td className="whitespace-nowrap px-3 py-2">{dateText(row.date)}</td><td className="px-3 py-2">{row.description.replace(/^Donation to /, "")}</td><td className="px-3 py-2 text-right">{formatCurrency(row.expense)}</td></tr>) : <tr><td colSpan={3} className="px-3 py-4 text-center text-muted-foreground">No charity payouts recorded this month.</td></tr>}</tbody></table>
+      </div>
+    </section>
     <details className="rounded-xl border bg-card p-4"><summary className="cursor-pointer font-semibold">Add income or expense</summary><p className="mt-3 text-sm text-muted-foreground">Enter the amount before tax and shipping, then record HST and shipping separately below.</p><form action={addLedgerEntry} className="mt-4 grid gap-4 sm:grid-cols-3">
       <label className="space-y-1.5 text-sm font-medium">Transaction date<Input name="transactionAt" type="date" required/></label>
       <label className="space-y-1.5 text-sm font-medium">Entry type<select name="entryType" className="block h-10 w-full rounded-md border bg-background px-3"><option value="EXPENSE">Expense</option><option value="INCOME">Income</option></select></label>

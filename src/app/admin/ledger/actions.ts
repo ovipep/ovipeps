@@ -55,3 +55,43 @@ export async function updateLedgerEntry(formData: FormData) {
   const range = from && to ? `&from=${from}&to=${to}` : "";
   redirect(`/admin/ledger?updated=1${range}`);
 }
+
+const donationSchema = z.object({
+  payoutDate: z.coerce.date(),
+  charityName: z.string().trim().min(1).max(160),
+  amount: z.coerce.number().positive().max(1_000_000_000),
+});
+
+export async function addDonationPayout(formData: FormData) {
+  const session = await requireAdmin();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  const input = donationSchema.parse(Object.fromEntries(formData));
+  const amount = Math.round(input.amount * 100) / 100;
+  await db.ledgerEntry.create({
+    data: {
+      transactionAt: input.payoutDate,
+      entryType: "EXPENSE",
+      category: "Charitable Donations",
+      description: `Donation to ${input.charityName}`,
+      amount,
+      currency: "CAD",
+      foreignAmount: amount,
+      fxRate: 1,
+      fxRateDate: input.payoutDate,
+      fxRateSource: "CAD",
+      taxAmount: 0,
+      shippingAmount: 0,
+      paymentMethod: "Donation payout",
+      createdBy: session.user.id,
+    },
+  });
+  await db.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CREATE_CHARITY_DONATION",
+      entity: "LedgerEntry",
+      details: JSON.stringify({ ...input, amount, category: "Charitable Donations" }),
+    },
+  });
+  revalidatePath("/admin/ledger");
+}
