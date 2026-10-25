@@ -19,6 +19,8 @@ import { generateOrderNumber } from "@/lib/utils";
 import { buildEmailTemplate, sendEmail } from "@/lib/emails";
 import {
   getOrderConfirmationAttachments,
+  isCjcIpamorelinOrderItem,
+  isMotscOrderItem,
   isRetatrutideOrderItem,
 } from "@/lib/order-email-attachments";
 import { deliverRestockEvent } from "@/lib/restock-notifications";
@@ -292,6 +294,8 @@ async function sendOrderConfirmationEmail(
   options: { resend?: boolean; customerName?: string } = {}
 ) {
   const includesRetatrutide = order.items.some(isRetatrutideOrderItem);
+  const includesCjcIpamorelin = order.items.some(isCjcIpamorelinOrderItem);
+  const includesMotsc = order.items.some(isMotscOrderItem);
   const [eTransferSetting, purchasedProducts] = await Promise.all([
     db.siteSetting.findUnique({ where: { key: "etransfer_email" } }),
     db.product.findMany({
@@ -301,7 +305,9 @@ async function sendOrderConfirmationEmail(
   ]);
   const includesPeptides = orderIncludesPeptides(purchasedProducts);
   const attachments = await getOrderConfirmationAttachments(
-    includesRetatrutide
+    includesRetatrutide,
+    includesCjcIpamorelin,
+    includesMotsc,
   );
   const resendWindow = Math.floor(Date.now() / (5 * 60 * 1000));
   const idempotencyKey = options.resend
@@ -332,12 +338,16 @@ async function sendOrderConfirmationEmail(
     emailId: result.id,
     attachmentCount: attachments?.length ?? 0,
     includesRetatrutide,
+    includesCjcIpamorelin,
+    includesMotsc,
     resend: options.resend ?? false,
   });
   return {
     id: result.id,
     attachmentCount: attachments?.length ?? 0,
     includesRetatrutide,
+    includesCjcIpamorelin,
+    includesMotsc,
   };
 }
 

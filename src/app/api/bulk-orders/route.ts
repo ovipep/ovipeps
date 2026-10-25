@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import type { Attachment } from "resend";
 import type { Prisma } from "@/generated/prisma/client";
 import { ensureBulkOrderSchema, type BulkOrderItem } from "@/lib/bulk-orders";
 import { db } from "@/lib/db";
@@ -8,6 +9,12 @@ import {
   buildBulkOrderReceivedEmail,
   sendEmail,
 } from "@/lib/emails";
+import {
+  getCjcIpamorelinAttachment,
+  getMotscAttachment,
+  isCjcIpamorelinProduct,
+  isMotscProduct,
+} from "@/lib/order-email-attachments";
 
 const requestSchema = z.object({
   firstName: z.string().trim().min(1).max(80),
@@ -50,6 +57,17 @@ export async function POST(request: Request) {
       units: item.kits * 10,
     };
   });
+  const attachments: Attachment[] = [];
+  if (items.some((item) =>
+    isCjcIpamorelinProduct({ slug: item.productSlug, name: item.productName }),
+  )) {
+    attachments.push(await getCjcIpamorelinAttachment());
+  }
+  if (items.some((item) =>
+    isMotscProduct({ slug: item.productSlug, name: item.productName }),
+  )) {
+    attachments.push(await getMotscAttachment());
+  }
 
   await ensureBulkOrderSchema();
   const id = randomUUID();
@@ -69,12 +87,12 @@ export async function POST(request: Request) {
     sendEmail(
       "ovipeps@gmail.com",
       buildBulkOrderAdminEmail({ ...parsed.data, requestId: id, items }),
-      { idempotencyKey: `bulk-admin-${id}` }
+      { attachments: attachments.length ? attachments : undefined, idempotencyKey: `bulk-admin-${id}` }
     ),
     sendEmail(
       parsed.data.email,
       buildBulkOrderReceivedEmail({ firstName: parsed.data.firstName, requestId: id, items }),
-      { idempotencyKey: `bulk-customer-${id}` }
+      { attachments: attachments.length ? attachments : undefined, idempotencyKey: `bulk-customer-${id}` }
     ),
   ]);
 

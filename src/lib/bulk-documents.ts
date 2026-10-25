@@ -8,6 +8,10 @@ import {
   PRODUCT_COA_DOCUMENTS,
 } from "@/lib/product-documents";
 import type { BulkPlanLine, BulkPlan } from "@/lib/bulk-checkout-schema";
+import {
+  isCjcIpamorelinProduct,
+  isMotscProduct,
+} from "@/lib/order-email-attachments";
 
 export async function collectBulkDocuments(
   items: BulkPlanLine[],
@@ -62,6 +66,23 @@ export async function collectBulkDocuments(
         "/email-attachments/OVIpeps-Retatrutide-Research-Handling-Guide.pdf",
       );
     }
+    if (
+      isCjcIpamorelinProduct({
+        slug: item.productSlug,
+        name: item.productName,
+      })
+    )
+      add(
+        "CJC-1295 + Ipamorelin protocol",
+        "/email-attachments/OVIpeps_CJC-1295_Ipamorelin_Protocol.pdf",
+        "OVIpeps_CJC-1295_Ipamorelin_Protocol.pdf",
+      );
+    if (isMotscProduct({ slug: item.productSlug, name: item.productName }))
+      add(
+        "MOTS-c mitochondrial peptide document",
+        "/email-attachments/OVIpeps_MOTS-c_Mitochondrial_Peptide.pdf",
+        "OVIpeps_MOTS-c_Mitochondrial_Peptide.pdf",
+      );
   }
   const coas = await db.coaDocument.findMany({
     where: {
