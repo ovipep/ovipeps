@@ -28,10 +28,28 @@ const MOTSC_PATH = path.join(
   "email-attachments",
   MOTSC_FILENAME,
 );
+const NAD_PLUS_FILENAME = "NAD+ (Nicotinamide Adenine Dinucleotide).pdf";
+const NAD_PLUS_PATH = path.join(
+  process.cwd(),
+  "src",
+  "assets",
+  "email-attachments",
+  NAD_PLUS_FILENAME,
+);
+const BPC157_FILENAME = "OVIpeps_BPC-157_Research_Guide.pdf";
+const BPC157_PATH = path.join(
+  process.cwd(),
+  "src",
+  "assets",
+  "email-attachments",
+  BPC157_FILENAME,
+);
 
 let retatrutideGuideContent: Promise<Buffer> | undefined;
 let cjcIpamorelinContent: Promise<Buffer> | undefined;
 let motscContent: Promise<Buffer> | undefined;
+let nadPlusContent: Promise<Buffer> | undefined;
+let bpc157Content: Promise<Buffer> | undefined;
 
 export function isCjcIpamorelinOrderItem(item: {
   productName: string;
@@ -61,6 +79,31 @@ export function isMotscOrderItem(item: { productName: string; sku: string }) {
 
 export function isMotscProduct(product: { slug: string; name: string }) {
   return /\bmots?[-\s]?c\b/i.test(`${product.slug} ${product.name}`);
+}
+
+export function isNadPlusOrderItem(item: { productName: string; sku: string }) {
+  return (
+    isNadPlusProduct({ name: item.productName, slug: "" }) ||
+    /^NAD(?:\+|PLUS|[-_]|$)/i.test(item.sku.trim())
+  );
+}
+
+export function isNadPlusProduct(product: { slug: string; name: string }) {
+  return (
+    product.slug.trim().toLowerCase() === "nad-plus" ||
+    /^nad(?:\s*\+|\s+plus)?(?:\s|$)/i.test(product.name.trim())
+  );
+}
+
+export function isBpc157OrderItem(item: { productName: string; sku: string }) {
+  return (
+    isBpc157Product({ name: item.productName, slug: "" }) ||
+    /^BPC[-_]?157(?:-|$)/i.test(item.sku.trim())
+  );
+}
+
+export function isBpc157Product(product: { slug: string; name: string }) {
+  return /\bbpc[-\s]?157\b/i.test(`${product.slug} ${product.name}`);
 }
 
 export function isRetatrutideProduct(product: {
@@ -107,12 +150,36 @@ async function getMotscContent() {
   return motscContent;
 }
 
+async function getNadPlusContent() {
+  nadPlusContent ??= readFile(NAD_PLUS_PATH).catch((error) => {
+    nadPlusContent = undefined;
+    throw error;
+  });
+  return nadPlusContent;
+}
+
+async function getBpc157Content() {
+  bpc157Content ??= readFile(BPC157_PATH).catch((error) => {
+    bpc157Content = undefined;
+    throw error;
+  });
+  return bpc157Content;
+}
+
 export async function getOrderConfirmationAttachments(
   includesRetatrutide: boolean,
   includesCjcIpamorelin = false,
   includesMotsc = false,
+  includesNadPlus = false,
+  includesBpc157 = false,
 ): Promise<Attachment[] | undefined> {
-  if (!includesRetatrutide && !includesCjcIpamorelin && !includesMotsc)
+  if (
+    !includesRetatrutide &&
+    !includesCjcIpamorelin &&
+    !includesMotsc &&
+    !includesNadPlus &&
+    !includesBpc157
+  )
     return undefined;
 
   const attachments: Attachment[] = [];
@@ -137,6 +204,20 @@ export async function getOrderConfirmationAttachments(
       contentType: "application/pdf",
     });
   }
+  if (includesNadPlus) {
+    attachments.push({
+      filename: NAD_PLUS_FILENAME,
+      content: await getNadPlusContent(),
+      contentType: "application/pdf",
+    });
+  }
+  if (includesBpc157) {
+    attachments.push({
+      filename: BPC157_FILENAME,
+      content: await getBpc157Content(),
+      contentType: "application/pdf",
+    });
+  }
   return attachments;
 }
 
@@ -152,6 +233,22 @@ export async function getMotscAttachment(): Promise<Attachment> {
   return {
     filename: MOTSC_FILENAME,
     content: await getMotscContent(),
+    contentType: "application/pdf",
+  };
+}
+
+export async function getNadPlusAttachment(): Promise<Attachment> {
+  return {
+    filename: NAD_PLUS_FILENAME,
+    content: await getNadPlusContent(),
+    contentType: "application/pdf",
+  };
+}
+
+export async function getBpc157Attachment(): Promise<Attachment> {
+  return {
+    filename: BPC157_FILENAME,
+    content: await getBpc157Content(),
     contentType: "application/pdf",
   };
 }

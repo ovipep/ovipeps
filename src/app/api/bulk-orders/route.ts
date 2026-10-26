@@ -10,9 +10,13 @@ import {
   sendEmail,
 } from "@/lib/emails";
 import {
+  getBpc157Attachment,
   getCjcIpamorelinAttachment,
+  getNadPlusAttachment,
   getMotscAttachment,
+  isBpc157Product,
   isCjcIpamorelinProduct,
+  isNadPlusProduct,
   isMotscProduct,
 } from "@/lib/order-email-attachments";
 
@@ -67,6 +71,16 @@ export async function POST(request: Request) {
     isMotscProduct({ slug: item.productSlug, name: item.productName }),
   )) {
     attachments.push(await getMotscAttachment());
+  }
+  if (items.some((item) =>
+    isNadPlusProduct({ slug: item.productSlug, name: item.productName }),
+  )) {
+    attachments.push(await getNadPlusAttachment());
+  }
+  if (items.some((item) =>
+    isBpc157Product({ slug: item.productSlug, name: item.productName }),
+  )) {
+    attachments.push(await getBpc157Attachment());
   }
 
   await ensureBulkOrderSchema();

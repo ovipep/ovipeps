@@ -9,7 +9,9 @@ import {
 } from "@/lib/product-documents";
 import type { BulkPlanLine, BulkPlan } from "@/lib/bulk-checkout-schema";
 import {
+  isBpc157Product,
   isCjcIpamorelinProduct,
+  isNadPlusProduct,
   isMotscProduct,
 } from "@/lib/order-email-attachments";
 
@@ -82,6 +84,18 @@ export async function collectBulkDocuments(
         "MOTS-c mitochondrial peptide document",
         "/email-attachments/OVIpeps_MOTS-c_Mitochondrial_Peptide.pdf",
         "OVIpeps_MOTS-c_Mitochondrial_Peptide.pdf",
+      );
+    if (isNadPlusProduct({ slug: item.productSlug, name: item.productName }))
+      add(
+        "NAD+ document",
+        "/email-attachments/NAD+ (Nicotinamide Adenine Dinucleotide).pdf",
+        "NAD+ (Nicotinamide Adenine Dinucleotide).pdf",
+      );
+    if (isBpc157Product({ slug: item.productSlug, name: item.productName }))
+      add(
+        "BPC-157 research guide",
+        "/email-attachments/OVIpeps_BPC-157_Research_Guide.pdf",
+        "OVIpeps_BPC-157_Research_Guide.pdf",
       );
   }
   const coas = await db.coaDocument.findMany({
