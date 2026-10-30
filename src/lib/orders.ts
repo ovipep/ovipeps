@@ -20,6 +20,7 @@ import { buildEmailTemplate, sendEmail } from "@/lib/emails";
 import {
   getOrderConfirmationAttachments,
   isBpc157OrderItem,
+  isGhkcOrderItem,
   isCjcIpamorelinOrderItem,
   isNadPlusOrderItem,
   isMotscOrderItem,
@@ -300,6 +301,7 @@ async function sendOrderConfirmationEmail(
   const includesMotsc = order.items.some(isMotscOrderItem);
   const includesNadPlus = order.items.some(isNadPlusOrderItem);
   const includesBpc157 = order.items.some(isBpc157OrderItem);
+  const includesGhkc = order.items.some(isGhkcOrderItem);
   const [eTransferSetting, purchasedProducts] = await Promise.all([
     db.siteSetting.findUnique({ where: { key: "etransfer_email" } }),
     db.product.findMany({
@@ -314,6 +316,7 @@ async function sendOrderConfirmationEmail(
     includesMotsc,
     includesNadPlus,
     includesBpc157,
+    includesGhkc,
   );
   const resendWindow = Math.floor(Date.now() / (5 * 60 * 1000));
   const idempotencyKey = options.resend
@@ -346,6 +349,7 @@ async function sendOrderConfirmationEmail(
     includesRetatrutide,
     includesCjcIpamorelin,
     includesMotsc,
+    includesGhkc,
     resend: options.resend ?? false,
   });
   return {
@@ -354,6 +358,7 @@ async function sendOrderConfirmationEmail(
     includesRetatrutide,
     includesCjcIpamorelin,
     includesMotsc,
+    includesGhkc,
   };
 }
 
