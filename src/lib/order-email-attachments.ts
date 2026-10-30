@@ -294,3 +294,11 @@ export async function getBpc157Attachment(): Promise<Attachment> {
     contentType: "application/pdf",
   };
 }
+
+export async function getGhkcAttachment(): Promise<Attachment> {
+  return {
+    filename: GHKCU_FILENAME,
+    content: await getGhkcContent(),
+    contentType: "application/pdf",
+  };
+}

@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { ensureBulkOrderSchema, isBulkOrderStatus, parseBulkOrderItems } from "@/lib/bulk-orders";
 import { db } from "@/lib/db";
 import { buildBulkOrderDecisionEmail, sendEmail } from "@/lib/emails";
+import { getGhkcAttachment, isGhkcProduct } from "@/lib/order-email-attachments";
 
 const updateSchema = z.object({
   adminDecision: z.string().trim().max(5000).optional(),
@@ -83,6 +84,12 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   });
 
   if (parsed.data.sendCustomerUpdate) {
+    const decisionItems = parseBulkOrderItems(updated.items);
+    const attachments = decisionItems.some((item) =>
+      isGhkcProduct({ slug: item.productSlug, name: item.productName }),
+    )
+      ? [await getGhkcAttachment()]
+      : undefined;
     const delivery = await sendEmail(
       updated.email,
       buildBulkOrderDecisionEmail({
@@ -91,11 +98,11 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
         discountedPricing: updated.discountedPricing!,
         eta: updated.eta!,
         adminDecision: updated.adminDecision,
-        items: parseBulkOrderItems(updated.items),
+        items: decisionItems,
         decisionUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ovipeps.ca"}/bulk-order-response/${updated.decisionToken}`,
         quoteExpiresAt: updated.quoteExpiresAt!,
       }),
-      { idempotencyKey: `bulk-decision-${updated.id}-${updated.decisionToken}` }
+      { attachments, idempotencyKey: `bulk-decision-${updated.id}-${updated.decisionToken}` }
     );
     if (!delivery.success) {
       return Response.json({ error: "The decision was saved, but the customer email could not be sent.", saved: true }, { status: 502 });

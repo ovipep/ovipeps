@@ -11,10 +11,12 @@ import {
 } from "@/lib/emails";
 import {
   getBpc157Attachment,
+  getGhkcAttachment,
   getCjcIpamorelinAttachment,
   getNadPlusAttachment,
   getMotscAttachment,
   isBpc157Product,
+  isGhkcProduct,
   isCjcIpamorelinProduct,
   isNadPlusProduct,
   isMotscProduct,
@@ -82,6 +84,12 @@ export async function POST(request: Request) {
   )) {
     attachments.push(await getBpc157Attachment());
   }
+  const customerAttachments = [...attachments];
+  if (items.some((item) =>
+    isGhkcProduct({ slug: item.productSlug, name: item.productName }),
+  )) {
+    customerAttachments.push(await getGhkcAttachment());
+  }
 
   await ensureBulkOrderSchema();
   const id = randomUUID();
@@ -106,7 +114,7 @@ export async function POST(request: Request) {
     sendEmail(
       parsed.data.email,
       buildBulkOrderReceivedEmail({ firstName: parsed.data.firstName, requestId: id, items }),
-      { attachments: attachments.length ? attachments : undefined, idempotencyKey: `bulk-customer-${id}` }
+      { attachments: customerAttachments.length ? customerAttachments : undefined, idempotencyKey: `bulk-customer-${id}` }
     ),
   ]);
 
