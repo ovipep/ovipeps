@@ -44,12 +44,21 @@ const BPC157_PATH = path.join(
   "email-attachments",
   BPC157_FILENAME,
 );
+const GHKCU_FILENAME = "GHK-Cu (Copper Peptide Complex) Peptide.pdf";
+const GHKCU_PATH = path.join(
+  process.cwd(),
+  "src",
+  "assets",
+  "email-attachments",
+  GHKCU_FILENAME,
+);
 
 let retatrutideGuideContent: Promise<Buffer> | undefined;
 let cjcIpamorelinContent: Promise<Buffer> | undefined;
 let motscContent: Promise<Buffer> | undefined;
 let nadPlusContent: Promise<Buffer> | undefined;
 let bpc157Content: Promise<Buffer> | undefined;
+let ghkCuContent: Promise<Buffer> | undefined;
 
 export function isCjcIpamorelinOrderItem(item: {
   productName: string;
@@ -104,6 +113,22 @@ export function isBpc157OrderItem(item: { productName: string; sku: string }) {
 
 export function isBpc157Product(product: { slug: string; name: string }) {
   return /\bbpc[-\s]?157\b/i.test(`${product.slug} ${product.name}`);
+}
+
+export function isGhkcOrderItem(item: { productName: string; sku: string }) {
+  return (
+    isGhkcProduct({ slug: "", name: item.productName }) ||
+    /^GHK[-_]?CU(?=$|[-_0-9])/i.test(item.sku.trim())
+  );
+}
+
+export function isGhkcProduct(product: { slug: string; name: string }) {
+  return (
+    product.slug.trim().toLowerCase() === "ghk-cu" ||
+    /^ghk[-\s]?cu(?:\s+\(copper peptide complex\)|\s+\d+(?:\.\d+)?\s*mg|\s*$)/i.test(
+      product.name.trim(),
+    )
+  );
 }
 
 export function isRetatrutideProduct(product: {
@@ -166,19 +191,29 @@ async function getBpc157Content() {
   return bpc157Content;
 }
 
+async function getGhkcContent() {
+  ghkCuContent ??= readFile(GHKCU_PATH).catch((error) => {
+    ghkCuContent = undefined;
+    throw error;
+  });
+  return ghkCuContent;
+}
+
 export async function getOrderConfirmationAttachments(
   includesRetatrutide: boolean,
   includesCjcIpamorelin = false,
   includesMotsc = false,
   includesNadPlus = false,
   includesBpc157 = false,
+  includesGhkc = false,
 ): Promise<Attachment[] | undefined> {
   if (
     !includesRetatrutide &&
     !includesCjcIpamorelin &&
     !includesMotsc &&
     !includesNadPlus &&
-    !includesBpc157
+    !includesBpc157 &&
+    !includesGhkc
   )
     return undefined;
 
@@ -215,6 +250,13 @@ export async function getOrderConfirmationAttachments(
     attachments.push({
       filename: BPC157_FILENAME,
       content: await getBpc157Content(),
+      contentType: "application/pdf",
+    });
+  }
+  if (includesGhkc) {
+    attachments.push({
+      filename: GHKCU_FILENAME,
+      content: await getGhkcContent(),
       contentType: "application/pdf",
     });
   }
