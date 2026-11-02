@@ -4,7 +4,11 @@ import { requireAdmin } from "@/lib/auth";
 import { ensureBulkOrderSchema, isBulkOrderStatus, parseBulkOrderItems } from "@/lib/bulk-orders";
 import { db } from "@/lib/db";
 import { buildBulkOrderDecisionEmail, sendEmail } from "@/lib/emails";
-import { getGhkcAttachment, isGhkcProduct } from "@/lib/order-email-attachments";
+import {
+  getGhkcAttachment,
+  getPeptideProtocolReferenceAttachment,
+  isGhkcProduct,
+} from "@/lib/order-email-attachments";
 
 const updateSchema = z.object({
   adminDecision: z.string().trim().max(5000).optional(),
@@ -85,11 +89,14 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
 
   if (parsed.data.sendCustomerUpdate) {
     const decisionItems = parseBulkOrderItems(updated.items);
-    const attachments = decisionItems.some((item) =>
-      isGhkcProduct({ slug: item.productSlug, name: item.productName }),
-    )
-      ? [await getGhkcAttachment()]
-      : undefined;
+    const attachments = [
+      await getPeptideProtocolReferenceAttachment(),
+      ...(decisionItems.some((item) =>
+        isGhkcProduct({ slug: item.productSlug, name: item.productName }),
+      )
+        ? [await getGhkcAttachment()]
+        : []),
+    ];
     const delivery = await sendEmail(
       updated.email,
       buildBulkOrderDecisionEmail({

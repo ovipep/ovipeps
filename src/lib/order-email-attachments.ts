@@ -52,6 +52,14 @@ const GHKCU_PATH = path.join(
   "email-attachments",
   GHKCU_FILENAME,
 );
+const PEPTIDE_REFERENCE_FILENAME = "peptide_reference.pdf";
+const PEPTIDE_REFERENCE_PATH = path.join(
+  process.cwd(),
+  "src",
+  "assets",
+  "email-attachments",
+  PEPTIDE_REFERENCE_FILENAME,
+);
 
 let retatrutideGuideContent: Promise<Buffer> | undefined;
 let cjcIpamorelinContent: Promise<Buffer> | undefined;
@@ -59,6 +67,7 @@ let motscContent: Promise<Buffer> | undefined;
 let nadPlusContent: Promise<Buffer> | undefined;
 let bpc157Content: Promise<Buffer> | undefined;
 let ghkCuContent: Promise<Buffer> | undefined;
+let peptideReferenceContent: Promise<Buffer> | undefined;
 
 export function isCjcIpamorelinOrderItem(item: {
   productName: string;
@@ -199,6 +208,22 @@ async function getGhkcContent() {
   return ghkCuContent;
 }
 
+async function getPeptideReferenceContent() {
+  peptideReferenceContent ??= readFile(PEPTIDE_REFERENCE_PATH).catch((error) => {
+    peptideReferenceContent = undefined;
+    throw error;
+  });
+  return peptideReferenceContent;
+}
+
+export async function getPeptideProtocolReferenceAttachment(): Promise<Attachment> {
+  return {
+    filename: PEPTIDE_REFERENCE_FILENAME,
+    content: await getPeptideReferenceContent(),
+    contentType: "application/pdf",
+  };
+}
+
 export async function getOrderConfirmationAttachments(
   includesRetatrutide: boolean,
   includesCjcIpamorelin = false,
@@ -206,18 +231,10 @@ export async function getOrderConfirmationAttachments(
   includesNadPlus = false,
   includesBpc157 = false,
   includesGhkc = false,
-): Promise<Attachment[] | undefined> {
-  if (
-    !includesRetatrutide &&
-    !includesCjcIpamorelin &&
-    !includesMotsc &&
-    !includesNadPlus &&
-    !includesBpc157 &&
-    !includesGhkc
-  )
-    return undefined;
-
-  const attachments: Attachment[] = [];
+): Promise<Attachment[]> {
+  const attachments: Attachment[] = [
+    await getPeptideProtocolReferenceAttachment(),
+  ];
   if (includesRetatrutide) {
     attachments.push({
       filename: RETATRUTIDE_GUIDE_FILENAME,

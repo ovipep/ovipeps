@@ -12,6 +12,7 @@ import {
 import {
   getBpc157Attachment,
   getGhkcAttachment,
+  getPeptideProtocolReferenceAttachment,
   getCjcIpamorelinAttachment,
   getNadPlusAttachment,
   getMotscAttachment,
@@ -63,7 +64,9 @@ export async function POST(request: Request) {
       units: item.kits * 10,
     };
   });
-  const attachments: Attachment[] = [];
+  const attachments: Attachment[] = [
+    await getPeptideProtocolReferenceAttachment(),
+  ];
   if (items.some((item) =>
     isCjcIpamorelinProduct({ slug: item.productSlug, name: item.productName }),
   )) {
