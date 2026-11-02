@@ -14,6 +14,7 @@ import {
   isCjcIpamorelinProduct,
   isNadPlusProduct,
   isMotscProduct,
+  getPeptideProtocolReferenceAttachment,
 } from "@/lib/order-email-attachments";
 
 export async function collectBulkDocuments(
@@ -29,6 +30,11 @@ export async function collectBulkDocuments(
     if (!documents.some((d) => d.url === url))
       documents.push({ label, url, filename });
   };
+  add(
+    "Peptide Protocol Reference",
+    "/email-attachments/peptide_reference.pdf",
+    "peptide_reference.pdf",
+  );
   if (items.some((i) => i.category !== "SUPPLY"))
     add("Reconstitution resources", "/documents/reconstitution-resources.pdf");
   const aliases: Record<string, string> = {
@@ -163,8 +169,11 @@ export async function loadBulkAttachments(
   documents: BulkPlan["documents"],
 ): Promise<Attachment[]> {
   let totalBytes = 0;
-  const attachments: Attachment[] = [];
+  const attachments: Attachment[] = [
+    await getPeptideProtocolReferenceAttachment(),
+  ];
   for (const doc of documents) {
+    if (doc.url === "/email-attachments/peptide_reference.pdf") continue;
     let content: Buffer;
     const generatedGuide = doc.url.match(
       /^\/api\/product-documents\/([^/]+)\/guide\.pdf$/,
