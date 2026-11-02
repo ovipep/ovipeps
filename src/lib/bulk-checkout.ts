@@ -120,7 +120,7 @@ export async function prepareBulkRecap(
     allowBackorder: input.allowBackorder,
     existingOrderNumber: input.existingOrderNumber || undefined,
     supplementalDocumentKeys: input.supplementalDocumentKeys ?? [],
-    documents: await collectBulkDocuments(items, input.supplementalDocumentKeys),
+    documents: await collectBulkDocuments(items),
   };
   // Validate every required PDF before making this draft eligible for approval.
   await loadBulkAttachments(plan.documents);
