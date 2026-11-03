@@ -19,6 +19,7 @@ import { generateOrderNumber } from "@/lib/utils";
 import { buildEmailTemplate, sendEmail } from "@/lib/emails";
 import {
   getOrderConfirmationAttachments,
+  isEpithalonOrderItem,
   isBpc157OrderItem,
   isGhkcOrderItem,
   isCjcIpamorelinOrderItem,
@@ -302,6 +303,7 @@ async function sendOrderConfirmationEmail(
   const includesNadPlus = order.items.some(isNadPlusOrderItem);
   const includesBpc157 = order.items.some(isBpc157OrderItem);
   const includesGhkc = order.items.some(isGhkcOrderItem);
+  const includesEpithalon = order.items.some(isEpithalonOrderItem);
   const [eTransferSetting, purchasedProducts] = await Promise.all([
     db.siteSetting.findUnique({ where: { key: "etransfer_email" } }),
     db.product.findMany({
@@ -317,6 +319,7 @@ async function sendOrderConfirmationEmail(
     includesNadPlus,
     includesBpc157,
     includesGhkc,
+    includesEpithalon,
   );
   const resendWindow = Math.floor(Date.now() / (5 * 60 * 1000));
   const idempotencyKey = options.resend

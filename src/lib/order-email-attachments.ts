@@ -52,6 +52,14 @@ const GHKCU_PATH = path.join(
   "email-attachments",
   GHKCU_FILENAME,
 );
+const EPITHALON_FILENAME = "Epithalon.pdf";
+const EPITHALON_PATH = path.join(
+  process.cwd(),
+  "src",
+  "assets",
+  "email-attachments",
+  EPITHALON_FILENAME,
+);
 const PEPTIDE_REFERENCE_FILENAME = "peptide_reference.pdf";
 const PEPTIDE_REFERENCE_PATH = path.join(
   process.cwd(),
@@ -67,6 +75,7 @@ let motscContent: Promise<Buffer> | undefined;
 let nadPlusContent: Promise<Buffer> | undefined;
 let bpc157Content: Promise<Buffer> | undefined;
 let ghkCuContent: Promise<Buffer> | undefined;
+let epithalonContent: Promise<Buffer> | undefined;
 let peptideReferenceContent: Promise<Buffer> | undefined;
 
 export function isCjcIpamorelinOrderItem(item: {
@@ -140,6 +149,22 @@ export function isGhkcProduct(product: { slug: string; name: string }) {
   );
 }
 
+export function isEpithalonOrderItem(item: { productName: string; sku: string }) {
+  return (
+    isEpithalonProduct({ slug: "", name: item.productName }) ||
+    /^EPITHALON(?=$|[-_0-9])/i.test(item.sku.trim())
+  );
+}
+
+export function isEpithalonProduct(product: { slug: string; name: string }) {
+  return (
+    product.slug.trim().toLowerCase() === "epithalon" ||
+    /^epithalon(?:\s*\(epitalon\))?(?:\s+\d+(?:\.\d+)?\s*mg|\s*$)/i.test(
+      product.name.trim(),
+    )
+  );
+}
+
 export function isRetatrutideProduct(product: {
   slug: string;
   name: string;
@@ -208,6 +233,14 @@ async function getGhkcContent() {
   return ghkCuContent;
 }
 
+async function getEpithalonContent() {
+  epithalonContent ??= readFile(EPITHALON_PATH).catch((error) => {
+    epithalonContent = undefined;
+    throw error;
+  });
+  return epithalonContent;
+}
+
 async function getPeptideReferenceContent() {
   peptideReferenceContent ??= readFile(PEPTIDE_REFERENCE_PATH).catch((error) => {
     peptideReferenceContent = undefined;
@@ -231,6 +264,7 @@ export async function getOrderConfirmationAttachments(
   includesNadPlus = false,
   includesBpc157 = false,
   includesGhkc = false,
+  includesEpithalon = false,
 ): Promise<Attachment[]> {
   const attachments: Attachment[] = [
     await getPeptideProtocolReferenceAttachment(),
@@ -277,6 +311,13 @@ export async function getOrderConfirmationAttachments(
       contentType: "application/pdf",
     });
   }
+  if (includesEpithalon) {
+    attachments.push({
+      filename: EPITHALON_FILENAME,
+      content: await getEpithalonContent(),
+      contentType: "application/pdf",
+    });
+  }
   return attachments;
 }
 
@@ -316,6 +357,14 @@ export async function getGhkcAttachment(): Promise<Attachment> {
   return {
     filename: GHKCU_FILENAME,
     content: await getGhkcContent(),
+    contentType: "application/pdf",
+  };
+}
+
+export async function getEpithalonAttachment(): Promise<Attachment> {
+  return {
+    filename: EPITHALON_FILENAME,
+    content: await getEpithalonContent(),
     contentType: "application/pdf",
   };
 }
