@@ -101,17 +101,21 @@ export function isCjcIpamorelinOrderItem(item: {
   sku: string;
 }) {
   return isCjcIpamorelinProduct({ name: item.productName, slug: "" }) ||
-    /^CJC\s*[-/]?\s*IPA(?:-|$)/i.test(item.sku.trim());
+    /^CJC\s*[-/]?\s*IPA(?:[-_]\d+(?:\.\d+)?(?:MG)?)?$/i.test(item.sku.trim());
 }
 
 export function isCjcIpamorelinProduct(product: {
   slug: string;
   name: string;
 }) {
-  const identifier = `${product.slug} ${product.name}`.toLowerCase();
+  const slug = product.slug.trim().toLowerCase();
   return (
-    identifier.includes("cjc") &&
-    (identifier.includes("ipamorelin") || /\bcjc\s*[-/]?\s*ipa\b/i.test(identifier))
+    slug === "cjc-ipamorelin" ||
+    slug === "cjc-1295-ipamorelin" ||
+    /^cjc(?:[-\s]?1295)?\s*(?:\+|\/|&|and)\s*ipamorelin(?:\s*\([^)]*\))?(?:\s+\d+(?:\.\d+)?\s*mg)?$/i.test(
+      product.name.trim(),
+    ) ||
+    /^cjc\s*[-/]?\s*ipa$/i.test(product.name.trim())
   );
 }
 
@@ -186,7 +190,7 @@ export function isEpithalonProduct(product: { slug: string; name: string }) {
 export function isSs31OrderItem(item: { productName: string; sku: string }) {
   return (
     isSs31Product({ slug: "", name: item.productName }) ||
-    /^SS[-_]?31(?=$|[-_0-9])/i.test(item.sku.trim())
+    /^SS[-_]?31(?:[-_]\d+(?:\.\d+)?(?:MG)?)?$/i.test(item.sku.trim())
   );
 }
 
@@ -202,7 +206,7 @@ export function isSs31Product(product: { slug: string; name: string }) {
 export function isDsipOrderItem(item: { productName: string; sku: string }) {
   return (
     isDsipProduct({ slug: "", name: item.productName }) ||
-    /^DSIP(?=$|[-_0-9])/i.test(item.sku.trim())
+    /^DSIP(?:[-_]\d+(?:\.\d+)?(?:MG)?)?$/i.test(item.sku.trim())
   );
 }
 
