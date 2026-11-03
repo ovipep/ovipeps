@@ -60,6 +60,22 @@ const EPITHALON_PATH = path.join(
   "email-attachments",
   EPITHALON_FILENAME,
 );
+const SS31_FILENAME = "SS-31.pdf";
+const SS31_PATH = path.join(
+  process.cwd(),
+  "src",
+  "assets",
+  "email-attachments",
+  SS31_FILENAME,
+);
+const DSIP_FILENAME = "DSIP.pdf";
+const DSIP_PATH = path.join(
+  process.cwd(),
+  "src",
+  "assets",
+  "email-attachments",
+  DSIP_FILENAME,
+);
 const PEPTIDE_REFERENCE_FILENAME = "peptide_reference.pdf";
 const PEPTIDE_REFERENCE_PATH = path.join(
   process.cwd(),
@@ -76,6 +92,8 @@ let nadPlusContent: Promise<Buffer> | undefined;
 let bpc157Content: Promise<Buffer> | undefined;
 let ghkCuContent: Promise<Buffer> | undefined;
 let epithalonContent: Promise<Buffer> | undefined;
+let ss31Content: Promise<Buffer> | undefined;
+let dsipContent: Promise<Buffer> | undefined;
 let peptideReferenceContent: Promise<Buffer> | undefined;
 
 export function isCjcIpamorelinOrderItem(item: {
@@ -165,6 +183,38 @@ export function isEpithalonProduct(product: { slug: string; name: string }) {
   );
 }
 
+export function isSs31OrderItem(item: { productName: string; sku: string }) {
+  return (
+    isSs31Product({ slug: "", name: item.productName }) ||
+    /^SS[-_]?31(?=$|[-_0-9])/i.test(item.sku.trim())
+  );
+}
+
+export function isSs31Product(product: { slug: string; name: string }) {
+  return (
+    ["ss-31", "ss31"].includes(product.slug.trim().toLowerCase()) ||
+    /^ss[-\\s]?31(?:\\s*\\([^)]*\\))?(?:\\s+\\d+(?:\\.\\d+)?\\s*mg)?$/i.test(
+      product.name.trim(),
+    )
+  );
+}
+
+export function isDsipOrderItem(item: { productName: string; sku: string }) {
+  return (
+    isDsipProduct({ slug: "", name: item.productName }) ||
+    /^DSIP(?=$|[-_0-9])/i.test(item.sku.trim())
+  );
+}
+
+export function isDsipProduct(product: { slug: string; name: string }) {
+  return (
+    product.slug.trim().toLowerCase() === "dsip" ||
+    /^dsip(?:\\s*\\(delta sleep inducing peptide\\))?(?:\\s+\\d+(?:\\.\\d+)?\\s*mg)?$/i.test(
+      product.name.trim(),
+    )
+  );
+}
+
 export function isRetatrutideProduct(product: {
   slug: string;
   name: string;
@@ -241,6 +291,22 @@ async function getEpithalonContent() {
   return epithalonContent;
 }
 
+async function getSs31Content() {
+  ss31Content ??= readFile(SS31_PATH).catch((error) => {
+    ss31Content = undefined;
+    throw error;
+  });
+  return ss31Content;
+}
+
+async function getDsipContent() {
+  dsipContent ??= readFile(DSIP_PATH).catch((error) => {
+    dsipContent = undefined;
+    throw error;
+  });
+  return dsipContent;
+}
+
 async function getPeptideReferenceContent() {
   peptideReferenceContent ??= readFile(PEPTIDE_REFERENCE_PATH).catch((error) => {
     peptideReferenceContent = undefined;
@@ -265,6 +331,8 @@ export async function getOrderConfirmationAttachments(
   includesBpc157 = false,
   includesGhkc = false,
   includesEpithalon = false,
+  includesSs31 = false,
+  includesDsip = false,
 ): Promise<Attachment[]> {
   const attachments: Attachment[] = [
     await getPeptideProtocolReferenceAttachment(),
@@ -318,6 +386,20 @@ export async function getOrderConfirmationAttachments(
       contentType: "application/pdf",
     });
   }
+  if (includesSs31) {
+    attachments.push({
+      filename: SS31_FILENAME,
+      content: await getSs31Content(),
+      contentType: "application/pdf",
+    });
+  }
+  if (includesDsip) {
+    attachments.push({
+      filename: DSIP_FILENAME,
+      content: await getDsipContent(),
+      contentType: "application/pdf",
+    });
+  }
   return attachments;
 }
 
@@ -365,6 +447,22 @@ export async function getEpithalonAttachment(): Promise<Attachment> {
   return {
     filename: EPITHALON_FILENAME,
     content: await getEpithalonContent(),
+    contentType: "application/pdf",
+  };
+}
+
+export async function getSs31Attachment(): Promise<Attachment> {
+  return {
+    filename: SS31_FILENAME,
+    content: await getSs31Content(),
+    contentType: "application/pdf",
+  };
+}
+
+export async function getDsipAttachment(): Promise<Attachment> {
+  return {
+    filename: DSIP_FILENAME,
+    content: await getDsipContent(),
     contentType: "application/pdf",
   };
 }

@@ -12,6 +12,8 @@ import {
   isBpc157Product,
   isGhkcProduct,
   isEpithalonProduct,
+  isSs31Product,
+  isDsipProduct,
   isCjcIpamorelinProduct,
   isNadPlusProduct,
   isMotscProduct,
@@ -116,6 +118,10 @@ export async function collectBulkDocuments(
         "/email-attachments/Epithalon.pdf",
         "Epithalon.pdf",
       );
+    if (isSs31Product({ slug: item.productSlug, name: item.productName }))
+      add("SS-31 guide", "/email-attachments/SS-31.pdf", "SS-31.pdf");
+    if (isDsipProduct({ slug: item.productSlug, name: item.productName }))
+      add("DSIP guide", "/email-attachments/DSIP.pdf", "DSIP.pdf");
   }
   const coas = await db.coaDocument.findMany({
     where: {
