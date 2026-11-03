@@ -193,7 +193,7 @@ export function isSs31OrderItem(item: { productName: string; sku: string }) {
 export function isSs31Product(product: { slug: string; name: string }) {
   return (
     ["ss-31", "ss31"].includes(product.slug.trim().toLowerCase()) ||
-    /^ss[-\\s]?31(?:\\s*\\([^)]*\\))?(?:\\s+\\d+(?:\\.\\d+)?\\s*mg)?$/i.test(
+    /^ss[-\s]?31(?:\s*\([^)]*\))?(?:\s+\d+(?:\.\d+)?\s*mg)?$/i.test(
       product.name.trim(),
     )
   );
@@ -209,7 +209,7 @@ export function isDsipOrderItem(item: { productName: string; sku: string }) {
 export function isDsipProduct(product: { slug: string; name: string }) {
   return (
     product.slug.trim().toLowerCase() === "dsip" ||
-    /^dsip(?:\\s*\\(delta sleep inducing peptide\\))?(?:\\s+\\d+(?:\\.\\d+)?\\s*mg)?$/i.test(
+    /^dsip(?:\s*\(delta sleep inducing peptide\))?(?:\s+\d+(?:\.\d+)?\s*mg)?$/i.test(
       product.name.trim(),
     )
   );
