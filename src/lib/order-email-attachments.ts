@@ -206,14 +206,14 @@ export function isSs31Product(product: { slug: string; name: string }) {
 export function isDsipOrderItem(item: { productName: string; sku: string }) {
   return (
     isDsipProduct({ slug: "", name: item.productName }) ||
-    /^DSIP(?:[-_]\d+(?:\.\d+)?(?:MG)?)?$/i.test(item.sku.trim())
+    /^(?:DSIP|DZIP)(?:[-_]\d+(?:\.\d+)?(?:MG)?)?$/i.test(item.sku.trim())
   );
 }
 
 export function isDsipProduct(product: { slug: string; name: string }) {
   return (
-    product.slug.trim().toLowerCase() === "dsip" ||
-    /^dsip(?:\s*\(delta sleep inducing peptide\))?(?:\s+\d+(?:\.\d+)?\s*mg)?$/i.test(
+    ["dsip", "dzip"].includes(product.slug.trim().toLowerCase()) ||
+    /^(?:dsip|dzip)(?:\s*\(delta sleep inducing peptide\))?(?:\s+\d+(?:\.\d+)?\s*mg)?$/i.test(
       product.name.trim(),
     )
   );
