@@ -13,6 +13,8 @@ import {
   getBpc157Attachment,
   getGhkcAttachment,
   getEpithalonAttachment,
+  getSs31Attachment,
+  getDsipAttachment,
   getPeptideProtocolReferenceAttachment,
   getCjcIpamorelinAttachment,
   getNadPlusAttachment,
@@ -20,6 +22,8 @@ import {
   isBpc157Product,
   isGhkcProduct,
   isEpithalonProduct,
+  isSs31Product,
+  isDsipProduct,
   isCjcIpamorelinProduct,
   isNadPlusProduct,
   isMotscProduct,
@@ -83,6 +87,16 @@ export async function POST(request: Request) {
     isNadPlusProduct({ slug: item.productSlug, name: item.productName }),
   )) {
     attachments.push(await getNadPlusAttachment());
+  }
+  if (items.some((item) =>
+    isSs31Product({ slug: item.productSlug, name: item.productName }),
+  )) {
+    attachments.push(await getSs31Attachment());
+  }
+  if (items.some((item) =>
+    isDsipProduct({ slug: item.productSlug, name: item.productName }),
+  )) {
+    attachments.push(await getDsipAttachment());
   }
   if (items.some((item) =>
     isBpc157Product({ slug: item.productSlug, name: item.productName }),

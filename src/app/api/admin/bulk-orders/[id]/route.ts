@@ -7,9 +7,15 @@ import { buildBulkOrderDecisionEmail, sendEmail } from "@/lib/emails";
 import {
   getGhkcAttachment,
   getEpithalonAttachment,
+  getCjcIpamorelinAttachment,
+  getSs31Attachment,
+  getDsipAttachment,
   getPeptideProtocolReferenceAttachment,
   isGhkcProduct,
   isEpithalonProduct,
+  isCjcIpamorelinProduct,
+  isSs31Product,
+  isDsipProduct,
 } from "@/lib/order-email-attachments";
 
 const updateSchema = z.object({
@@ -102,6 +108,21 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
         isEpithalonProduct({ slug: item.productSlug, name: item.productName }),
       )
         ? [await getEpithalonAttachment()]
+        : []),
+      ...(decisionItems.some((item) =>
+        isCjcIpamorelinProduct({ slug: item.productSlug, name: item.productName }),
+      )
+        ? [await getCjcIpamorelinAttachment()]
+        : []),
+      ...(decisionItems.some((item) =>
+        isSs31Product({ slug: item.productSlug, name: item.productName }),
+      )
+        ? [await getSs31Attachment()]
+        : []),
+      ...(decisionItems.some((item) =>
+        isDsipProduct({ slug: item.productSlug, name: item.productName }),
+      )
+        ? [await getDsipAttachment()]
         : []),
     ];
     const delivery = await sendEmail(
