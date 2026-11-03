@@ -12,12 +12,14 @@ import {
 import {
   getBpc157Attachment,
   getGhkcAttachment,
+  getEpithalonAttachment,
   getPeptideProtocolReferenceAttachment,
   getCjcIpamorelinAttachment,
   getNadPlusAttachment,
   getMotscAttachment,
   isBpc157Product,
   isGhkcProduct,
+  isEpithalonProduct,
   isCjcIpamorelinProduct,
   isNadPlusProduct,
   isMotscProduct,
@@ -92,6 +94,11 @@ export async function POST(request: Request) {
     isGhkcProduct({ slug: item.productSlug, name: item.productName }),
   )) {
     customerAttachments.push(await getGhkcAttachment());
+  }
+  if (items.some((item) =>
+    isEpithalonProduct({ slug: item.productSlug, name: item.productName }),
+  )) {
+    customerAttachments.push(await getEpithalonAttachment());
   }
 
   await ensureBulkOrderSchema();

@@ -6,8 +6,10 @@ import { db } from "@/lib/db";
 import { buildBulkOrderDecisionEmail, sendEmail } from "@/lib/emails";
 import {
   getGhkcAttachment,
+  getEpithalonAttachment,
   getPeptideProtocolReferenceAttachment,
   isGhkcProduct,
+  isEpithalonProduct,
 } from "@/lib/order-email-attachments";
 
 const updateSchema = z.object({
@@ -95,6 +97,11 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
         isGhkcProduct({ slug: item.productSlug, name: item.productName }),
       )
         ? [await getGhkcAttachment()]
+        : []),
+      ...(decisionItems.some((item) =>
+        isEpithalonProduct({ slug: item.productSlug, name: item.productName }),
+      )
+        ? [await getEpithalonAttachment()]
         : []),
     ];
     const delivery = await sendEmail(

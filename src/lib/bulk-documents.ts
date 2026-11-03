@@ -11,6 +11,7 @@ import type { BulkPlanLine, BulkPlan } from "@/lib/bulk-checkout-schema";
 import {
   isBpc157Product,
   isGhkcProduct,
+  isEpithalonProduct,
   isCjcIpamorelinProduct,
   isNadPlusProduct,
   isMotscProduct,
@@ -108,6 +109,12 @@ export async function collectBulkDocuments(
         "GHK-Cu copper peptide complex guide",
         "/email-attachments/GHK-Cu (Copper Peptide Complex) Peptide.pdf",
         "GHK-Cu (Copper Peptide Complex) Peptide.pdf",
+      );
+    if (isEpithalonProduct({ slug: item.productSlug, name: item.productName }))
+      add(
+        "Epithalon guide",
+        "/email-attachments/Epithalon.pdf",
+        "Epithalon.pdf",
       );
   }
   const coas = await db.coaDocument.findMany({
