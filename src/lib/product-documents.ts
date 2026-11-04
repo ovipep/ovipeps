@@ -108,6 +108,14 @@ export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
     label: "MOTS-C COA",
     url: "/coas/mots-c-coa-2026-08-23.pdf",
   },
+  "epithalon": {
+    label: "Epithalon COA",
+    url: "/coas/epithalon-msds.pdf",
+  },
+  "selank": {
+    label: "Selank COA",
+    url: "/coas/selank-msds.pdf",
+  },
 };
 
 export function getProductDocument(productSlug: string) {
