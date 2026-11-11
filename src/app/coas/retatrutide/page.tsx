@@ -8,10 +8,6 @@ export const metadata: Metadata = {
 
 const certificates = [
   {
-    label: "Reta 10 mg COA - Batch MSD-001-Oct-11-2026",
-    url: "/coas/retatrutide-10mg-coa-2026-11-11.pdf",
-  },
-  {
     label: "Reta 15 mg COA",
     url: "/coas/retatrutide-15mg-coa-2026-10-16.pdf",
   },
