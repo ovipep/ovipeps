@@ -15,6 +15,17 @@ import {
   type SortOption,
 } from "@/types/product";
 
+const PRODUCT_IMAGE_FALLBACKS: Record<string, string> = {
+  dsip: "/images/products/dsip.webp",
+  tirzepetide: "/images/products/tirzepetide.webp",
+  cagrilintide: "/images/products/cagrilintide.webp",
+  pinealon: "/images/products/pinealon.webp",
+};
+
+function getProductImageUrl(slug: string, imageUrl: string | null | undefined): string | null {
+  return imageUrl ?? PRODUCT_IMAGE_FALLBACKS[slug] ?? null;
+}
+
 const productCardInclude = {
   variants: { where: { deletedAt: null }, orderBy: { sortOrder: "asc" as const } },
   coaDocuments: { where: { published: true }, select: { id: true } },
@@ -177,7 +188,7 @@ export function getProductCardData(product: ProductWithVariants): ProductCardDat
     id: product.id,
     name: getCatalogProductName(product.slug, product.name),
     slug: product.slug,
-    imageUrl: product.imageUrl,
+    imageUrl: getProductImageUrl(product.slug, product.imageUrl),
     researchCategory: product.researchCategory,
     shortDescription: product.shortDescription,
     hasCoa: product.coaDocuments.length > 0,
@@ -273,6 +284,7 @@ function sortProducts(
 function mapFallbackProduct(product: ProductCardData): ProductCardData {
   return {
     ...product,
+    imageUrl: getProductImageUrl(product.slug, product.imageUrl),
     variants: product.variants.map((variant) => ({
       ...variant,
       ...applyCatalogVariantPolicy(
@@ -392,7 +404,7 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
     id: fallback.id,
     name: getCatalogProductName(fallback.slug, fallback.name),
     slug: fallback.slug,
-    imageUrl: fallback.imageUrl ?? null,
+    imageUrl: getProductImageUrl(fallback.slug, fallback.imageUrl),
     researchCategory: fallback.researchCategory ?? null,
     shortDescription: fallback.shortDescription ?? null,
     description: fallback.slug === "disposable-1ml-30g-half-inch-syringes-30-pack"
