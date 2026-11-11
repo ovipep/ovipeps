@@ -80,6 +80,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
 };
 
 export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
+  "dsip": {
+    label: "DSIP COA",
+    url: "/coas/dsip-5mg-coa-2026-11-11.png",
+  },
   "bpc-157": {
     label: "BPC-157 COA",
     url: "/coas/bpc-157-coa-2026-10-16.pdf",
