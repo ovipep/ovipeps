@@ -8,6 +8,10 @@ export const metadata: Metadata = {
 
 const certificates = [
   {
+    label: "Reta 10 mg COA — MSD-001",
+    url: "/coas/retatrutide-10mg-msd-001-2026-11-11.png",
+  },
+  {
     label: "Reta 15 mg COA",
     url: "/coas/retatrutide-15mg-coa-2026-10-16.pdf",
   },
@@ -22,7 +26,7 @@ export default function RetatrutideCoasPage() {
     <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="text-3xl font-bold text-navy-deep">Retatrutide COAs</h1>
       <p className="mt-3 text-muted-foreground">
-        Select a certificate of analysis. Each PDF opens in a new tab.
+        Select a certificate of analysis. Each certificate opens in a new tab.
       </p>
       <ul className="mt-8 grid gap-4 sm:grid-cols-2">
         {certificates.map((certificate) => (
