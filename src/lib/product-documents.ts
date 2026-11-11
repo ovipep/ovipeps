@@ -80,6 +80,10 @@ export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
 };
 
 export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
+  "tirzepetide": {
+    label: "Tirzepatide COA",
+    url: "/coas/tirzepatide-20mg-coa-2026-11-11.png",
+  },
   "dsip": {
     label: "DSIP COA",
     url: "/coas/dsip-5mg-coa-2026-11-11.png",
