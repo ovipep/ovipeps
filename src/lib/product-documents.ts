@@ -9,6 +9,14 @@ export interface ProductCoaDocument {
 }
 
 export const PRODUCT_DOCUMENTS: Record<string, ProductDocument> = {
+  "pinealon": {
+    label: "Pinealon Guide",
+    url: "/documents/pinealon-guide.jpg",
+  },
+  "cagrilintide": {
+    label: "Cagrilintide Guide",
+    url: "/documents/cagrilintide-guide.jpg",
+  },
   "tirzepetide": {
     label: "Tirzepatide Guide",
     url: "/documents/tirzepatide-guide.jpg",
