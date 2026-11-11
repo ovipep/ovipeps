@@ -23,7 +23,7 @@ const PRODUCT_IMAGE_FALLBACKS: Record<string, string> = {
 };
 
 function getProductImageUrl(slug: string, imageUrl: string | null | undefined): string | null {
-  return imageUrl ?? PRODUCT_IMAGE_FALLBACKS[slug] ?? null;
+  return imageUrl || PRODUCT_IMAGE_FALLBACKS[slug] || null;
 }
 
 const productCardInclude = {
