@@ -386,7 +386,7 @@ export async function getProductBySlug(slug: string): Promise<ProductDetail | nu
       return {
         ...product,
         name: getCatalogProductName(product.slug, product.name),
-        imageUrl: product.imageUrl,
+        imageUrl: getProductImageUrl(product.slug, product.imageUrl),
         variants: product.variants.map((v) => ({
           ...v,
           ...applyCatalogVariantPolicy(v.sku, v.price, v.stockQuantity),
