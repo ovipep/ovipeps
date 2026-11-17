@@ -44,7 +44,6 @@ export default function ForgotPasswordPage() {
                 name="email"
                 label="Email"
                 type="email"
-                defaultValue="ovipeps@gmail.com"
                 required
                 autoComplete="email"
               />

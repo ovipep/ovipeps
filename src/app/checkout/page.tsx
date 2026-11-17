@@ -43,8 +43,11 @@ export default async function CheckoutPage() {
             Checkout
           </h1>
           <p className="mt-3 text-muted-foreground">
-            Sign in or create an account to order. Add billing information to your account, then choose shipping or pickup. No
-            card numbers or payment credentials are collected or processed on this website.
+            An account is required so we can link the order to you and collect
+            the delivery address for shipped orders. Add billing information to
+            your account, then enter or confirm your shipping address and choose
+            shipping or pickup. No card numbers or payment credentials are
+            collected or processed on this website.
           </p>
         </div>
         <CheckoutForm
