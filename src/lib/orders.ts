@@ -1,5 +1,3 @@
-import { randomBytes } from "node:crypto";
-import bcrypt from "bcryptjs";
 import { orderIncludesPeptides } from "@/lib/order-email-video";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
@@ -19,7 +17,6 @@ import {
 } from "@/lib/catalog-status";
 import { generateOrderNumber } from "@/lib/utils";
 import { buildEmailTemplate, sendEmail } from "@/lib/emails";
-import { createPasswordResetToken } from "@/lib/password-reset";
 import {
   getOrderConfirmationAttachments,
   isEpithalonOrderItem,
@@ -57,11 +54,12 @@ export interface CreateOrderInput {
   email: string;
   deliveryMethod?: "SHIPPING" | "PICKUP";
   shippingAddress: ShippingAddress;
+  billingAddress: ShippingAddress;
   items: CreateOrderItem[];
   discountCode?: string | null;
   affiliateCode?: string | null;
   referralCode?: string | null;
-  userId?: string | null;
+  userId: string;
 }
 
 const FLAT_SHIPPING_RATE = 25;
@@ -435,6 +433,9 @@ async function calculateDiscount(
 }
 
 export async function createOrder(input: CreateOrderInput) {
+  if (!input.userId) {
+    throw new Error("Sign in or create an account before placing an order.");
+  }
   if (!input.items.length) {
     throw new Error("Cart is empty");
   }
@@ -539,10 +540,7 @@ export async function createOrder(input: CreateOrderInput) {
 
   const orderNumber = generateOrderNumber();
   const normalizedEmail = input.email.trim().toLowerCase();
-  const generatedPasswordHash = await bcrypt.hash(randomBytes(32).toString("base64url"), 12);
   const transactionResult = await db.$transaction(async (tx) => {
-    let accountSetupRequired = false;
-    let accountForSetup: { email: string; firstName: string | null; passwordHash: string } | null = null;
     for (const item of orderItems) {
       const reserved = await tx.productVariant.updateMany({
         where: {
@@ -573,31 +571,12 @@ export async function createOrder(input: CreateOrderInput) {
       });
     }
 
-    let customer = await tx.user.findUnique({ where: { email: normalizedEmail } });
+    const customer = await tx.user.findUnique({ where: { id: input.userId } });
     if (!customer) {
-      customer = await tx.user.create({
-        data: {
-          email: normalizedEmail,
-          passwordHash: generatedPasswordHash,
-          firstName: input.shippingAddress.firstName,
-          lastName: input.shippingAddress.lastName,
-          role: "CUSTOMER",
-        },
-      });
-      accountSetupRequired = true;
-    } else if (!customer.passwordHash) {
-      customer = await tx.user.update({
-        where: { id: customer.id },
-        data: {
-          passwordHash: generatedPasswordHash,
-          firstName: customer.firstName ?? input.shippingAddress.firstName,
-          lastName: customer.lastName ?? input.shippingAddress.lastName,
-        },
-      });
-      accountSetupRequired = true;
+      throw new Error("Sign in or create an account before placing an order.");
     }
-    if (accountSetupRequired) {
-      accountForSetup = { email: customer.email, firstName: customer.firstName, passwordHash: customer.passwordHash! };
+    if (customer.email.trim().toLowerCase() !== normalizedEmail) {
+      throw new Error("The signed-in account does not match this order.");
     }
 
     const created = await tx.order.create({
@@ -618,6 +597,9 @@ export async function createOrder(input: CreateOrderInput) {
         shippingAddress: {
           ...input.shippingAddress,
           deliveryMethod: input.deliveryMethod ?? "SHIPPING",
+        } as unknown as Prisma.InputJsonValue,
+        billingAddress: {
+          ...input.billingAddress,
         } as unknown as Prisma.InputJsonValue,
         items: {
           create: orderItems,
@@ -667,6 +649,28 @@ export async function createOrder(input: CreateOrderInput) {
       }
     }
 
+    const savedBillingAddress = await tx.address.findFirst({
+      where: { userId: customer.id, label: "Billing" },
+    });
+    const billingAddressData = {
+      firstName: input.billingAddress.firstName,
+      lastName: input.billingAddress.lastName,
+      address1: input.billingAddress.address1!,
+      address2: input.billingAddress.address2 ?? null,
+      city: input.billingAddress.city!,
+      province: input.billingAddress.province!,
+      postalCode: input.billingAddress.postalCode!,
+      country: input.billingAddress.country,
+      phone: input.billingAddress.phone ?? null,
+      label: "Billing",
+      isDefault: false,
+    };
+    if (savedBillingAddress) {
+      await tx.address.update({ where: { id: savedBillingAddress.id }, data: billingAddressData });
+    } else {
+      await tx.address.create({ data: { userId: customer.id, ...billingAddressData } });
+    }
+
     if (discountCode) {
       await tx.discountCode.update({
         where: { code: discountCode },
@@ -674,29 +678,9 @@ export async function createOrder(input: CreateOrderInput) {
       });
     }
 
-    return { order: created, accountForSetup };
+    return created;
   });
-  const order = transactionResult.order;
-
-  if (transactionResult.accountForSetup) {
-    const accountForSetup = transactionResult.accountForSetup;
-    try {
-      const token = createPasswordResetToken(accountForSetup.email, accountForSetup.passwordHash);
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ovipeps.ca";
-      const setupEmail = await buildEmailTemplate("password_reset", {
-        name: accountForSetup.firstName ?? "there",
-        resetUrl: `${baseUrl}/account/reset-password?token=${encodeURIComponent(token)}`,
-      });
-      const setupMessage = {
-        ...setupEmail,
-        subject: "Your OVIpeps account is ready — set your password",
-        text: `An OVIpeps account was created for you when you placed your order. Set your password using this secure link (valid for one hour):\n\n${baseUrl}/account/reset-password?token=${encodeURIComponent(token)}\n\nIf you did not place this order, contact OVIpeps.`,
-      };
-      await sendEmail(accountForSetup.email, setupMessage, { idempotencyKey: `account-setup-${order.id}` });
-    } catch (error) {
-      console.error("Customer account setup email failed", error);
-    }
-  }
+  const order = transactionResult;
 
   try {
     const { sendInventoryAlertsForVariants } = await import("@/lib/inventory");

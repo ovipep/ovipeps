@@ -95,7 +95,7 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
-        <Link href="/account/register" className="font-medium text-accent hover:text-navy">
+        <Link href={`/account/register?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="font-medium text-accent hover:text-navy">
           Create one
         </Link>
       </p>

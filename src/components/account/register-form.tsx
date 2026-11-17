@@ -17,6 +17,12 @@ const registerSchema = z
     email: z.string().trim().email("Please enter a valid email address").max(254),
     password: z.string().min(12, "Password must be at least 12 characters").max(128),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    billingAddress1: z.string().trim().min(1, "Billing street address is required").max(160),
+    billingAddress2: z.string().trim().max(160).optional(),
+    billingCity: z.string().trim().min(1, "Billing city is required").max(100),
+    billingProvince: z.string().trim().min(1, "Billing province is required").max(80),
+    billingPostalCode: z.string().trim().regex(/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/, "Enter a valid Canadian postal code"),
+    billingPhone: z.string().trim().max(40).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -51,6 +57,14 @@ export function RegisterForm({ callbackUrl = "/account/orders" }: { callbackUrl?
           lastName: data.lastName,
           email: data.email,
           password: data.password,
+          billingAddress: {
+            address1: data.billingAddress1,
+            address2: data.billingAddress2,
+            city: data.billingCity,
+            province: data.billingProvince,
+            postalCode: data.billingPostalCode,
+            phone: data.billingPhone,
+          },
         }),
       });
 
@@ -96,6 +110,55 @@ export function RegisterForm({ callbackUrl = "/account/orders" }: { callbackUrl?
         error={errors.email?.message}
         {...register("email")}
       />
+
+      <div className="space-y-4 rounded-xl border border-border p-4">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Billing Information</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Required to place orders and saved to your account.</p>
+        </div>
+        <Input
+          label="Street address"
+          autoComplete="billing address-line1"
+          error={errors.billingAddress1?.message}
+          {...register("billingAddress1")}
+        />
+        <Input
+          label="Apartment, suite, etc. (optional)"
+          autoComplete="billing address-line2"
+          error={errors.billingAddress2?.message}
+          {...register("billingAddress2")}
+        />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Input
+            label="City"
+            autoComplete="billing address-level2"
+            error={errors.billingCity?.message}
+            {...register("billingCity")}
+          />
+          <Input
+            label="Province"
+            autoComplete="billing address-level1"
+            error={errors.billingProvince?.message}
+            {...register("billingProvince")}
+          />
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Input
+            label="Postal code"
+            autoComplete="billing postal-code"
+            placeholder="A1A 1A1"
+            error={errors.billingPostalCode?.message}
+            {...register("billingPostalCode")}
+          />
+          <Input
+            label="Phone (optional)"
+            type="tel"
+            autoComplete="billing tel"
+            error={errors.billingPhone?.message}
+            {...register("billingPhone")}
+          />
+        </div>
+      </div>
 
       <Input
         label="Password"
