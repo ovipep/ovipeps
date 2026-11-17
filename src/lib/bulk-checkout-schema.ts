@@ -31,6 +31,7 @@ export const bulkPlanInputSchema = z.object({
   fulfillmentNote: z.string().trim().min(1).max(5000),
   allowBackorder: z.boolean().default(true),
   existingOrderNumber: z.string().trim().max(100).optional(),
+  addressSourceOrderNumber: z.string().trim().max(100).optional(),
 });
 export type BulkPlanInput = z.infer<typeof bulkPlanInputSchema>;
 export interface BulkPlanLine {
@@ -56,6 +57,7 @@ export interface BulkPlan {
   fulfillmentNote: string;
   allowBackorder: boolean;
   existingOrderNumber?: string;
+  addressSourceOrderNumber?: string;
   supplementalDocumentKeys?: ("peptide_reference")[];
   documents: { label: string; url: string; filename: string }[];
 }

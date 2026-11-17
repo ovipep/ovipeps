@@ -96,6 +96,19 @@ export async function prepareBulkRecap(
         "That order is already linked to a bulk request",
       );
   }
+  if (input.addressSourceOrderNumber) {
+    const sourceOrder = await db.order.findFirst({
+      where: {
+        orderNumber: input.addressSourceOrderNumber,
+        email: { equals: request.email, mode: "insensitive" },
+        status: { notIn: ["CANCELLED", "REFUNDED"] },
+      },
+      select: { shippingAddress: true },
+    });
+    if (!sourceOrder || !bulkAddressSchema.safeParse(sourceOrder.shippingAddress).success) {
+      throw new BulkCheckoutError("Choose a prior order with a complete shipping address belonging to this customer.", 400);
+    }
+  }
   const items = input.items.map((i) => {
     const v = variants.find((v) => v.id === i.variantId)!;
     return {
@@ -119,6 +132,7 @@ export async function prepareBulkRecap(
     fulfillmentNote: input.fulfillmentNote,
     allowBackorder: input.allowBackorder,
     existingOrderNumber: input.existingOrderNumber || undefined,
+    addressSourceOrderNumber: input.addressSourceOrderNumber || undefined,
     supplementalDocumentKeys: input.supplementalDocumentKeys ?? [],
     documents: await collectBulkDocuments(items),
   };

@@ -20,7 +20,7 @@ export async function GET(
   const request = await db.bulkOrderRequest.findUnique({ where: { id } });
   if (!request)
     return Response.json({ error: "Request not found" }, { status: 404 });
-  const [variants, orders] = await Promise.all([
+  const [variants, orders, addressOrders] = await Promise.all([
     db.productVariant.findMany({
       where: { deletedAt: null },
       include: { product: { select: { name: true, slug: true } } },
@@ -35,9 +35,18 @@ export async function GET(
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+    db.order.findMany({
+      where: {
+        email: { equals: request.email, mode: "insensitive" },
+        status: { notIn: ["CANCELLED", "REFUNDED"] },
+      },
+      select: { orderNumber: true, status: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
   ]);
   return Response.json(
-    { request, variants, orders },
+    { request, variants, orders, addressOrders },
     { headers: { "Cache-Control": "private, no-store" } },
   );
 }

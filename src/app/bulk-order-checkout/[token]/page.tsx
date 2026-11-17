@@ -62,10 +62,23 @@ export default async function BulkCheckoutPage({
       </main>
     );
   const plan = request.checkoutPlan as unknown as BulkPlan;
-  const address = (recordedAddress?.success ? recordedAddress.data : null) ?? await db.address.findFirst({
-    where: { userId: session.user.id },
-    orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
-  });
+  const addressSourceOrder = plan.addressSourceOrderNumber
+    ? await db.order.findFirst({
+        where: {
+          orderNumber: plan.addressSourceOrderNumber,
+          email: { equals: request.email, mode: "insensitive" },
+          status: { notIn: ["CANCELLED", "REFUNDED"] },
+        },
+        select: { shippingAddress: true },
+      })
+    : null;
+  const selectedSavedAddress = bulkAddressSchema.safeParse(addressSourceOrder?.shippingAddress);
+  const address = (recordedAddress?.success ? recordedAddress.data : null)
+    ?? (selectedSavedAddress.success ? selectedSavedAddress.data : null)
+    ?? await db.address.findFirst({
+      where: { userId: session.user.id },
+      orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
+    });
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-12">
       <h1 className="text-3xl font-bold text-navy-deep">

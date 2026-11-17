@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+import bcrypt from "bcryptjs";
 import { orderIncludesPeptides } from "@/lib/order-email-video";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
@@ -17,6 +19,7 @@ import {
 } from "@/lib/catalog-status";
 import { generateOrderNumber } from "@/lib/utils";
 import { buildEmailTemplate, sendEmail } from "@/lib/emails";
+import { createPasswordResetToken } from "@/lib/password-reset";
 import {
   getOrderConfirmationAttachments,
   isEpithalonOrderItem,
@@ -535,8 +538,11 @@ export async function createOrder(input: CreateOrderInput) {
     100;
 
   const orderNumber = generateOrderNumber();
-
-  const order = await db.$transaction(async (tx) => {
+  const normalizedEmail = input.email.trim().toLowerCase();
+  const generatedPasswordHash = await bcrypt.hash(randomBytes(32).toString("base64url"), 12);
+  const transactionResult = await db.$transaction(async (tx) => {
+    let accountSetupRequired = false;
+    let accountForSetup: { email: string; firstName: string | null; passwordHash: string } | null = null;
     for (const item of orderItems) {
       const reserved = await tx.productVariant.updateMany({
         where: {
@@ -567,11 +573,38 @@ export async function createOrder(input: CreateOrderInput) {
       });
     }
 
+    let customer = await tx.user.findUnique({ where: { email: normalizedEmail } });
+    if (!customer) {
+      customer = await tx.user.create({
+        data: {
+          email: normalizedEmail,
+          passwordHash: generatedPasswordHash,
+          firstName: input.shippingAddress.firstName,
+          lastName: input.shippingAddress.lastName,
+          role: "CUSTOMER",
+        },
+      });
+      accountSetupRequired = true;
+    } else if (!customer.passwordHash) {
+      customer = await tx.user.update({
+        where: { id: customer.id },
+        data: {
+          passwordHash: generatedPasswordHash,
+          firstName: customer.firstName ?? input.shippingAddress.firstName,
+          lastName: customer.lastName ?? input.shippingAddress.lastName,
+        },
+      });
+      accountSetupRequired = true;
+    }
+    if (accountSetupRequired) {
+      accountForSetup = { email: customer.email, firstName: customer.firstName, passwordHash: customer.passwordHash! };
+    }
+
     const created = await tx.order.create({
       data: {
         orderNumber,
-        userId: input.userId ?? undefined,
-        email: input.email.trim().toLowerCase(),
+        userId: customer.id,
+        email: normalizedEmail,
         status: "AWAITING_PAYMENT",
         paymentMethod: "INTERAC_E_TRANSFER",
         subtotal,
@@ -596,6 +629,44 @@ export async function createOrder(input: CreateOrderInput) {
       },
     });
 
+    if (input.deliveryMethod !== "PICKUP") {
+      await tx.address.updateMany({
+        where: { userId: customer.id, isDefault: true },
+        data: { isDefault: false },
+      });
+      const savedAddress = await tx.address.findFirst({
+        where: {
+          userId: customer.id,
+          firstName: input.shippingAddress.firstName,
+          lastName: input.shippingAddress.lastName,
+          address1: input.shippingAddress.address1!,
+          address2: input.shippingAddress.address2 ?? null,
+          city: input.shippingAddress.city!,
+          province: input.shippingAddress.province!,
+          postalCode: input.shippingAddress.postalCode!,
+          country: input.shippingAddress.country,
+        },
+      });
+      if (savedAddress) {
+        await tx.address.update({ where: { id: savedAddress.id }, data: { phone: input.shippingAddress.phone ?? null, isDefault: true, label: "Shipping" } });
+      } else {
+        await tx.address.create({ data: {
+          userId: customer.id,
+          firstName: input.shippingAddress.firstName,
+          lastName: input.shippingAddress.lastName,
+          address1: input.shippingAddress.address1!,
+          address2: input.shippingAddress.address2,
+          city: input.shippingAddress.city!,
+          province: input.shippingAddress.province!,
+          postalCode: input.shippingAddress.postalCode!,
+          country: input.shippingAddress.country,
+          phone: input.shippingAddress.phone,
+          label: "Shipping",
+          isDefault: true,
+        } });
+      }
+    }
+
     if (discountCode) {
       await tx.discountCode.update({
         where: { code: discountCode },
@@ -603,8 +674,29 @@ export async function createOrder(input: CreateOrderInput) {
       });
     }
 
-    return created;
+    return { order: created, accountForSetup };
   });
+  const order = transactionResult.order;
+
+  if (transactionResult.accountForSetup) {
+    const accountForSetup = transactionResult.accountForSetup;
+    try {
+      const token = createPasswordResetToken(accountForSetup.email, accountForSetup.passwordHash);
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ovipeps.ca";
+      const setupEmail = await buildEmailTemplate("password_reset", {
+        name: accountForSetup.firstName ?? "there",
+        resetUrl: `${baseUrl}/account/reset-password?token=${encodeURIComponent(token)}`,
+      });
+      const setupMessage = {
+        ...setupEmail,
+        subject: "Your OVIpeps account is ready — set your password",
+        text: `An OVIpeps account was created for you when you placed your order. Set your password using this secure link (valid for one hour):\n\n${baseUrl}/account/reset-password?token=${encodeURIComponent(token)}\n\nIf you did not place this order, contact OVIpeps.`,
+      };
+      await sendEmail(accountForSetup.email, setupMessage, { idempotencyKey: `account-setup-${order.id}` });
+    } catch (error) {
+      console.error("Customer account setup email failed", error);
+    }
+  }
 
   try {
     const { sendInventoryAlertsForVariants } = await import("@/lib/inventory");
