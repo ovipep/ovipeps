@@ -289,9 +289,9 @@ export async function sendEmail(
           from,
           replyTo: process.env.RESEND_REPLY_TO ?? OWNER_EMAIL,
           to: recipient,
-          // Every external/customer message is copied to the owner. Avoid a
-          // duplicate when the owner is already the primary recipient.
-          cc: isOwnerRecipient(recipient) ? undefined : OWNER_EMAIL,
+          // Send the owner a hidden copy of each external/customer message.
+          // Avoid a duplicate when the owner is already the primary recipient.
+          bcc: isOwnerRecipient(recipient) ? undefined : OWNER_EMAIL,
           subject: template.subject,
           html: template.html,
           text: template.text,
