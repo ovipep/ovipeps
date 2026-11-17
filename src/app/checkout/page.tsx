@@ -51,8 +51,26 @@ export default async function CheckoutPage() {
           email={user.email}
           firstName={user.firstName ?? ""}
           lastName={user.lastName ?? ""}
-          billingAddress={billingAddress}
-          shippingAddress={shippingAddress}
+          billingAddress={billingAddress ? {
+            firstName: billingAddress.firstName,
+            lastName: billingAddress.lastName,
+            address1: billingAddress.address1,
+            address2: billingAddress.address2,
+            city: billingAddress.city,
+            province: billingAddress.province,
+            postalCode: billingAddress.postalCode,
+            phone: billingAddress.phone,
+          } : null}
+          shippingAddress={shippingAddress ? {
+            firstName: shippingAddress.firstName,
+            lastName: shippingAddress.lastName,
+            address1: shippingAddress.address1,
+            address2: shippingAddress.address2,
+            city: shippingAddress.city,
+            province: shippingAddress.province,
+            postalCode: shippingAddress.postalCode,
+            phone: shippingAddress.phone,
+          } : null}
         />
       </div>
     </div>
