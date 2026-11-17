@@ -27,6 +27,18 @@ function label(status: string) {
   return "Pending Decision";
 }
 
+function isAwaitingMailingConfirmation(entry: Pick<RequestRecord, "purchaseIntentAt" | "orderId" | "status">) {
+  return Boolean(entry.purchaseIntentAt) &&
+    !entry.orderId &&
+    !["OPTED_OUT", "AWAITING_PAYMENT", "PENDING_SHIPMENT", "COMPLETE", "CANCELLED"].includes(entry.status);
+}
+
+function requestLabel(entry: RequestRecord) {
+  return isAwaitingMailingConfirmation(entry)
+    ? "Purchase Selected — Awaiting Mailing Confirmation"
+    : label(entry.status);
+}
+
 function formatEasternDate(value: string) {
   return new Date(value).toLocaleString("en-CA", {
     timeZone: "America/Toronto",
@@ -59,12 +71,12 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
 
   if (!requests.length) return <div className="rounded-2xl border border-dashed border-sky/20 p-12 text-center text-sm text-muted-foreground">No bulk order requests have been submitted yet.</div>;
 
-  return <div className="space-y-6">{requests.map((entry) => <article key={entry.id} className={`rounded-2xl border bg-white p-5 shadow-sm sm:p-6 ${entry.status === "AWAITING_PAYMENT" ? "border-emerald-500 ring-2 ring-emerald-200" : entry.status === "PENDING_SHIPMENT" ? "border-blue-500 ring-2 ring-blue-200" : entry.status === "COMPLETE" ? "border-red-500 ring-2 ring-red-200" : "border-sky/15"}`}>
+  return <div className="space-y-6">{requests.map((entry) => <article key={entry.id} className={`rounded-2xl border bg-white p-5 shadow-sm sm:p-6 ${isAwaitingMailingConfirmation(entry) ? "border-indigo-500 ring-2 ring-indigo-200" : entry.status === "AWAITING_PAYMENT" ? "border-emerald-500 ring-2 ring-emerald-200" : entry.status === "PENDING_SHIPMENT" ? "border-blue-500 ring-2 ring-blue-200" : entry.status === "COMPLETE" ? "border-red-500 ring-2 ring-red-200" : "border-sky/15"}`}>
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div><h2 className="text-lg font-semibold text-navy-deep">{entry.firstName} {entry.lastName}</h2><a href={`mailto:${entry.email}`} className="mt-1 inline-flex items-center gap-1.5 text-sm text-sky hover:underline"><Mail className="h-3.5 w-3.5" />{entry.email}</a><p className="mt-1 text-xs text-muted-foreground">Submitted {formatEasternDate(entry.createdAt)} ET · {entry.id}</p></div>
-      <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${entry.status === "AWAITING_PAYMENT" ? "bg-emerald-100 text-emerald-800" : entry.status === "PENDING_SHIPMENT" || entry.status === "PURCHASED" ? "bg-blue-100 text-blue-800" : entry.status === "COMPLETE" ? "bg-red-100 text-red-800" : entry.status === "OPTED_OUT" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}><Clock3 className="h-3.5 w-3.5" />{label(entry.status)}</span>
+      <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${isAwaitingMailingConfirmation(entry) ? "bg-indigo-100 text-indigo-800" : entry.status === "AWAITING_PAYMENT" ? "bg-emerald-100 text-emerald-800" : entry.status === "PENDING_SHIPMENT" || entry.status === "PURCHASED" ? "bg-blue-100 text-blue-800" : entry.status === "COMPLETE" ? "bg-red-100 text-red-800" : entry.status === "OPTED_OUT" ? "bg-slate-200 text-slate-700" : "bg-amber-100 text-amber-800"}`}><Clock3 className="h-3.5 w-3.5" />{requestLabel(entry)}</span>
     </div>
-    {entry.purchaseOrderNumber && <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Purchase order number</p><p className="mt-1 text-lg font-bold text-emerald-950">{entry.purchaseOrderNumber}</p><p className="mt-1 text-xs text-emerald-800">Customer selected Purchase Now{entry.purchaseIntentAt ? ` on ${formatEasternDate(entry.purchaseIntentAt)} ET` : ""}. Watch for the matching e-transfer.</p></div>}
+    {entry.purchaseOrderNumber && <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Purchase order number</p><p className="mt-1 text-lg font-bold text-emerald-950">{entry.purchaseOrderNumber}</p><p className="mt-1 text-xs text-emerald-800">Customer selected Purchase Now{entry.purchaseIntentAt ? ` on ${formatEasternDate(entry.purchaseIntentAt)} ET` : ""}.{isAwaitingMailingConfirmation(entry) ? " Waiting for mailing confirmation; no shop order or payment request has been created yet." : " Watch for the matching e-transfer."}</p></div>}
     <div className="mt-5 grid gap-3 sm:grid-cols-2">{entry.items.map((item, index) => <div key={`${item.productName}-${index}`} className="rounded-xl border border-sky/10 bg-sky/5 p-3"><p className="text-sm font-semibold text-navy-deep">{item.productName}</p><p className="mt-1 text-xs text-muted-foreground">{item.kits} kit{item.kits === 1 ? "" : "s"} · {item.units} units</p></div>)}</div>
     {entry.additionalContext && <div className="mt-4 rounded-xl bg-muted/60 p-4"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Additional Context/Information</p><p className="mt-2 whitespace-pre-wrap text-sm">{entry.additionalContext}</p></div>}
     {entry.customerReply && <div className="mt-4 rounded-xl border border-sky/20 bg-sky/5 p-4"><p className="text-xs font-bold uppercase tracking-wider text-navy-deep">Customer reply with decision</p><p className="mt-2 whitespace-pre-wrap break-words text-sm">{entry.customerReply}</p></div>}
