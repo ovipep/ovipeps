@@ -540,10 +540,9 @@ export async function createOrder(input: CreateOrderInput) {
   const orderNumber = generateOrderNumber();
   const normalizedEmail = input.email.trim().toLowerCase();
   const generatedPasswordHash = await bcrypt.hash(randomBytes(32).toString("base64url"), 12);
-  let accountSetupRequired = false;
-  let accountForSetup: { id: string; email: string; firstName: string | null; passwordHash: string } | null = null;
-
-  const order = await db.$transaction(async (tx) => {
+  const transactionResult = await db.$transaction(async (tx) => {
+    let accountSetupRequired = false;
+    let accountForSetup: { email: string; firstName: string | null; passwordHash: string } | null = null;
     for (const item of orderItems) {
       const reserved = await tx.productVariant.updateMany({
         where: {
@@ -598,7 +597,7 @@ export async function createOrder(input: CreateOrderInput) {
       accountSetupRequired = true;
     }
     if (accountSetupRequired) {
-      accountForSetup = { id: customer.id, email: customer.email, firstName: customer.firstName, passwordHash: customer.passwordHash! };
+      accountForSetup = { email: customer.email, firstName: customer.firstName, passwordHash: customer.passwordHash! };
     }
 
     const created = await tx.order.create({
@@ -675,10 +674,12 @@ export async function createOrder(input: CreateOrderInput) {
       });
     }
 
-    return created;
+    return { order: created, accountForSetup };
   });
+  const order = transactionResult.order;
 
-  if (accountSetupRequired && accountForSetup) {
+  if (transactionResult.accountForSetup) {
+    const accountForSetup = transactionResult.accountForSetup;
     try {
       const token = createPasswordResetToken(accountForSetup.email, accountForSetup.passwordHash);
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.ovipeps.ca";
