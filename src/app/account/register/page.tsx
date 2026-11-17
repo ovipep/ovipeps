@@ -15,7 +15,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
       <PageHero
         eyebrow="Account"
         title="Create Account"
-        description="Create an account with billing information to place orders, save addresses, and track your order history."
+        description="An account is required so we can link your order to you and collect the delivery address for shipped orders. Add your billing information here, then enter or confirm your shipping address at checkout."
       />
 
       <div className="mx-auto max-w-md px-4 py-12 sm:px-6">
