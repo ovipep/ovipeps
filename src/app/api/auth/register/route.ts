@@ -14,7 +14,7 @@ const registerSchema = z.object({
     address2: z.string().trim().max(160).optional(),
     city: z.string().trim().min(1, "Billing city is required").max(100),
     province: z.string().trim().min(1, "Billing province is required").max(80),
-    postalCode: z.string().trim().regex(/^[A-Za-z]\\d[A-Za-z][ -]?\\d[A-Za-z]\\d$/, "Enter a valid Canadian postal code"),
+    postalCode: z.string().trim().regex(/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/, "Enter a valid Canadian postal code"),
     phone: z.string().trim().max(40).optional(),
   }),
 });
