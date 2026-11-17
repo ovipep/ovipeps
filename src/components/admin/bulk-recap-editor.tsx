@@ -33,6 +33,7 @@ interface Detail {
     total: number;
     items: { productName: string; quantity: number }[];
   }[];
+  addressOrders: { orderNumber: string; status: string; createdAt: string }[];
 }
 export function BulkRecapEditor({ requestId }: { requestId: string }) {
   const [detail, setDetail] = useState<Detail | null>(null),
@@ -76,6 +77,7 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
               fulfillmentNote: plan.fulfillmentNote,
               allowBackorder: plan.allowBackorder,
               existingOrderNumber: plan.existingOrderNumber ?? "",
+              addressSourceOrderNumber: plan.addressSourceOrderNumber ?? "",
             }
           : {
               items: d.request.items.map(
@@ -100,6 +102,7 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
               fulfillmentNote: "",
               allowBackorder: true,
               existingOrderNumber: "",
+              addressSourceOrderNumber: "",
             },
       );
     } catch (e) {
@@ -354,6 +357,22 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="block text-sm font-semibold">
+              Reuse a shipping address from a prior order
+              <select
+                value={input.addressSourceOrderNumber ?? ""}
+                onChange={(e) => edit({ ...input, addressSourceOrderNumber: e.target.value })}
+                className="mt-2 w-full rounded border p-2 font-normal"
+              >
+                <option value="">Use the customer’s saved account address or let them enter one</option>
+                {detail.addressOrders.map((o) => (
+                  <option key={o.orderNumber} value={o.orderNumber}>
+                    {o.orderNumber} — {o.status} — {new Date(o.createdAt).toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs font-normal text-muted-foreground">The customer will see this address prefilled and must confirm or edit it before the bulk order is recorded.</span>
             </label>
             <label className="flex gap-2 text-sm"><input type="checkbox" checked={input.supplementalDocumentKeys?.includes("peptide_reference") ?? false} onChange={e=>edit({...input,supplementalDocumentKeys:e.target.checked?["peptide_reference"]:[]})} />Attach peptide_reference.pdf to this recap and its order confirmation.</label>
             <Button type="button" onClick={() => submit("prepare")}>
