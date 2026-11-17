@@ -44,7 +44,7 @@ export default async function CheckoutPage() {
           </h1>
           <p className="mt-3 text-muted-foreground">
             Sign in or create an account to order. Add billing information to your account, then choose shipping or pickup. No
-            card payment information is collected or processed on this website.
+            card numbers or payment credentials are collected or processed on this website.
           </p>
         </div>
         <CheckoutForm
