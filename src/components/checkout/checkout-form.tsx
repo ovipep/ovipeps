@@ -47,6 +47,15 @@ const FLAT_SHIPPING_RATE = 25;
 const checkoutSchema = z.object({
   deliveryMethod: z.enum(["SHIPPING", "PICKUP"]),
   email: z.string().email("Enter a valid email address"),
+  billingSameAsShipping: z.boolean(),
+  billingFirstName: z.string().trim().min(1, "Billing first name is required"),
+  billingLastName: z.string().trim().min(1, "Billing last name is required"),
+  billingAddress1: z.string().trim().optional(),
+  billingAddress2: z.string().trim().optional(),
+  billingCity: z.string().trim().optional(),
+  billingProvince: z.string().trim().optional(),
+  billingPostalCode: z.string().trim().optional(),
+  billingPhone: z.string().trim().optional(),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   address1: z.string().optional(),
@@ -60,16 +69,42 @@ const checkoutSchema = z.object({
     message: "Please agree to the Terms of Service to continue",
   }),
 }).superRefine((values, ctx) => {
-  if (values.deliveryMethod !== "SHIPPING") return;
-  if (!values.address1?.trim()) ctx.addIssue({ code: "custom", path: ["address1"], message: "Street address is required" });
-  if (!values.city?.trim()) ctx.addIssue({ code: "custom", path: ["city"], message: "City is required" });
-  if (!CANADIAN_PROVINCES.some((p) => p.value === values.province)) ctx.addIssue({ code: "custom", path: ["province"], message: "Select a province" });
-  if (!/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(values.postalCode ?? "")) ctx.addIssue({ code: "custom", path: ["postalCode"], message: "Enter a valid Canadian postal code" });
+  if (values.deliveryMethod === "SHIPPING") {
+    if (!values.address1?.trim()) ctx.addIssue({ code: "custom", path: ["address1"], message: "Street address is required" });
+    if (!values.city?.trim()) ctx.addIssue({ code: "custom", path: ["city"], message: "City is required" });
+    if (!CANADIAN_PROVINCES.some((p) => p.value === values.province)) ctx.addIssue({ code: "custom", path: ["province"], message: "Select a province" });
+    if (!/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(values.postalCode ?? "")) ctx.addIssue({ code: "custom", path: ["postalCode"], message: "Enter a valid Canadian postal code" });
+  }
+  if (!(values.deliveryMethod === "SHIPPING" && values.billingSameAsShipping)) {
+    if (!values.billingAddress1?.trim()) ctx.addIssue({ code: "custom", path: ["billingAddress1"], message: "Billing street address is required" });
+    if (!values.billingCity?.trim()) ctx.addIssue({ code: "custom", path: ["billingCity"], message: "Billing city is required" });
+    if (!CANADIAN_PROVINCES.some((p) => p.value === values.billingProvince)) ctx.addIssue({ code: "custom", path: ["billingProvince"], message: "Select a billing province" });
+    if (!/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(values.billingPostalCode ?? "")) ctx.addIssue({ code: "custom", path: ["billingPostalCode"], message: "Enter a valid Canadian postal code" });
+  }
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
-export function CheckoutForm() {
+interface AccountAddress {
+  firstName: string;
+  lastName: string;
+  address1: string;
+  address2: string | null;
+  city: string;
+  province: string;
+  postalCode: string;
+  phone: string | null;
+}
+
+interface CheckoutFormProps {
+  email: string;
+  firstName: string;
+  lastName: string;
+  billingAddress: AccountAddress | null;
+  shippingAddress: AccountAddress | null;
+}
+
+export function CheckoutForm({ email, firstName, lastName, billingAddress, shippingAddress }: CheckoutFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -94,6 +129,24 @@ export function CheckoutForm() {
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       deliveryMethod: "SHIPPING",
+      email,
+      firstName: shippingAddress?.firstName ?? firstName,
+      lastName: shippingAddress?.lastName ?? lastName,
+      address1: shippingAddress?.address1 ?? "",
+      address2: shippingAddress?.address2 ?? "",
+      city: shippingAddress?.city ?? "",
+      province: shippingAddress?.province ?? "",
+      postalCode: shippingAddress?.postalCode ?? "",
+      phone: shippingAddress?.phone ?? "",
+      billingSameAsShipping: false,
+      billingFirstName: billingAddress?.firstName ?? firstName,
+      billingLastName: billingAddress?.lastName ?? lastName,
+      billingAddress1: billingAddress?.address1 ?? "",
+      billingAddress2: billingAddress?.address2 ?? "",
+      billingCity: billingAddress?.city ?? "",
+      billingProvince: billingAddress?.province ?? "",
+      billingPostalCode: billingAddress?.postalCode ?? "",
+      billingPhone: billingAddress?.phone ?? "",
       affiliateCode: affiliateCode ?? "",
       termsAccepted: false,
     },
@@ -172,8 +225,30 @@ export function CheckoutForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: values.email,
           deliveryMethod: values.deliveryMethod,
+          billingAddress: values.deliveryMethod === "SHIPPING" && values.billingSameAsShipping
+            ? {
+                firstName: values.firstName,
+                lastName: values.lastName,
+                address1: values.address1,
+                address2: values.address2 || undefined,
+                city: values.city,
+                province: values.province,
+                postalCode: values.postalCode?.toUpperCase(),
+                country: "CA",
+                phone: values.phone || undefined,
+              }
+            : {
+                firstName: values.billingFirstName,
+                lastName: values.billingLastName,
+                address1: values.billingAddress1,
+                address2: values.billingAddress2 || undefined,
+                city: values.billingCity,
+                province: values.billingProvince,
+                postalCode: values.billingPostalCode?.toUpperCase(),
+                country: "CA",
+                phone: values.billingPhone || undefined,
+              },
           shippingAddress: {
             firstName: values.firstName,
             lastName: values.lastName,
@@ -322,6 +397,7 @@ export function CheckoutForm() {
               type="email"
               autoComplete="email"
               error={errors.email?.message}
+              readOnly
               {...register("email")}
             />
           </CardContent>
@@ -414,6 +490,45 @@ export function CheckoutForm() {
               />
             </div>
             </>}
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-sky/15 shadow-sm">
+          <CardHeader>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-teal">Account Details</p>
+              <CardTitle>Billing Information</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">Saved to your account for future orders.</p>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {deliveryMethod === "SHIPPING" && (
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" {...register("billingSameAsShipping")} />
+                Billing address is the same as shipping
+              </label>
+            )}
+            {!(deliveryMethod === "SHIPPING" && watch("billingSameAsShipping")) && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input label="Billing first name" autoComplete="billing given-name" error={errors.billingFirstName?.message} {...register("billingFirstName")} />
+                  <Input label="Billing last name" autoComplete="billing family-name" error={errors.billingLastName?.message} {...register("billingLastName")} />
+                </div>
+                <Input label="Billing street address" autoComplete="billing address-line1" error={errors.billingAddress1?.message} {...register("billingAddress1")} />
+                <Input label="Apartment, suite, etc. (optional)" autoComplete="billing address-line2" error={errors.billingAddress2?.message} {...register("billingAddress2")} />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input label="Billing city" autoComplete="billing address-level2" error={errors.billingCity?.message} {...register("billingCity")} />
+                  <Select label="Billing province" autoComplete="billing address-level1" error={errors.billingProvince?.message} defaultValue="" {...register("billingProvince")}>
+                    <option value="" disabled>Select province</option>
+                    {CANADIAN_PROVINCES.map((province) => <option key={province.value} value={province.value}>{province.label}</option>)}
+                  </Select>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input label="Billing postal code" autoComplete="billing postal-code" placeholder="A1A 1A1" error={errors.billingPostalCode?.message} {...register("billingPostalCode")} />
+                  <Input label="Billing phone (optional)" type="tel" autoComplete="billing tel" error={errors.billingPhone?.message} {...register("billingPhone")} />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
