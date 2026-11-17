@@ -460,7 +460,6 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
                 label="Province"
                 autoComplete="address-level1"
                 error={errors.province?.message}
-                defaultValue=""
                 {...register("province")}
               >
                 <option value="" disabled>
@@ -518,7 +517,7 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
                 <Input label="Apartment, suite, etc. (optional)" autoComplete="billing address-line2" error={errors.billingAddress2?.message} {...register("billingAddress2")} />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input label="Billing city" autoComplete="billing address-level2" error={errors.billingCity?.message} {...register("billingCity")} />
-                  <Select label="Billing province" autoComplete="billing address-level1" error={errors.billingProvince?.message} defaultValue="" {...register("billingProvince")}>
+                  <Select label="Billing province" autoComplete="billing address-level1" error={errors.billingProvince?.message} {...register("billingProvince")}>
                     <option value="" disabled>Select province</option>
                     {CANADIAN_PROVINCES.map((province) => <option key={province.value} value={province.value}>{province.label}</option>)}
                   </Select>
@@ -562,7 +561,7 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
                 </p>
                 <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-sky">
                   <FileCheck2 className="h-3.5 w-3.5" />
-                  No payment information is required to submit
+                  Billing address required; no card details collected
                 </p>
               </div>
             </div>
