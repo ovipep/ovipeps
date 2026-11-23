@@ -27,7 +27,7 @@ const updateSchema = z.object({
   discountedPricing: z.string().trim().max(5000).optional(),
   eta: z.string().trim().max(500).optional(),
   status: z.string().optional(),
-  manualAction: z.enum(["customer_approved", "paid", "shipped"]).optional(),
+  manualAction: z.enum(["customer_approved", "paid", "shipped", "reconcile_products"]).optional(),
   confirmPaymentReceived: z.boolean().optional(),
   sendCustomerUpdate: z.boolean().optional(),
   shipmentTrackingNumber: z.string().trim().max(100).optional(),
@@ -192,6 +192,155 @@ async function createPaidBulkOrder(requestId: string, adminId: string) {
   }, { maxWait: 10000, timeout: 20000 });
 }
 
+async function reconcilePaidBulkOrder(requestId: string, adminId: string) {
+  return db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "BulkOrderRequest" WHERE id=${requestId} FOR UPDATE`;
+    const current = await tx.bulkOrderRequest.findUniqueOrThrow({ where: { id: requestId } });
+    if (!current.paymentConfirmed) throw new Error("Only a bulk request already marked paid can be reconciled.");
+    if (!current.orderId) throw new Error("This paid request has no linked shop order. Use Create Missing Sales Order first.");
+
+    const plan = current.checkoutPlan as unknown as BulkPlan | null;
+    if (!plan?.items?.length) throw new Error("The saved itemized order details are missing. Review the bulk order before reconciling.");
+    const itemTotal = plan.items.reduce((sum, item) => sum + item.totalPrice, 0);
+    if (
+      !Number.isFinite(plan.subtotal) ||
+      !Number.isFinite(plan.shippingAmount) ||
+      !Number.isFinite(plan.taxAmount) ||
+      !Number.isFinite(plan.total) ||
+      Math.abs(itemTotal - plan.subtotal) > 0.01 ||
+      Math.abs(itemTotal + plan.shippingAmount + plan.taxAmount - plan.total) > 0.01 ||
+      plan.items.some((item) =>
+        !item.productId || !item.variantId || !item.productName || !item.variantName ||
+        !Number.isInteger(item.quantity) || item.quantity < 1 ||
+        !Number.isFinite(item.unitPrice) || !Number.isFinite(item.totalPrice)
+      )
+    ) {
+      throw new Error("The saved order details are incomplete or inconsistent. Review the bulk order before reconciling.");
+    }
+
+    const order = await tx.order.findUnique({
+      where: { id: current.orderId },
+      include: { items: true },
+    });
+    if (!order) throw new Error("The linked shop order could not be found.");
+    if (order.email.toLowerCase() !== current.email.toLowerCase()) {
+      throw new Error("The linked shop order does not match this bulk-order customer.");
+    }
+    if (!["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED", "COMPLETED"].includes(order.status)) {
+      throw new Error("The linked shop order is not in a paid status.");
+    }
+    if (Math.abs(order.total - plan.total) > 0.01) {
+      throw new Error("The saved bulk total does not match the paid order total. Review the order before changing its sales lines.");
+    }
+
+    const variantIds = [...new Set(plan.items.map((item) => item.variantId))];
+    const variants = await tx.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      select: { id: true, productId: true },
+    });
+    if (variants.length !== variantIds.length || plan.items.some((item) =>
+      variants.find((variant) => variant.id === item.variantId)?.productId !== item.productId
+    )) {
+      throw new Error("One or more saved items no longer match the catalog. Review the bulk order before reconciling.");
+    }
+
+    const sortItems = <T extends {
+      productId: string; variantId: string; productName: string; variantName: string;
+      sku: string; quantity: number; unitPrice: number; totalPrice: number;
+    }>(items: T[]) => [...items].sort((a, b) =>
+      a.productId.localeCompare(b.productId) || a.variantId.localeCompare(b.variantId)
+    );
+    const existingLines = order.items.map((item) => ({
+      productId: item.productId,
+      variantId: item.variantId,
+      productName: item.productName,
+      variantName: item.variantName,
+      sku: item.sku,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+    }));
+    const plannedLines = plan.items.map((item) => ({
+      productId: item.productId,
+      variantId: item.variantId,
+      productName: item.productName,
+      variantName: item.variantName,
+      sku: item.sku,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice,
+    }));
+    const linesAlreadyMatch = JSON.stringify(sortItems(existingLines)) === JSON.stringify(sortItems(plannedLines));
+    const paidAt = order.paidAt ?? current.paymentConfirmedAt;
+    const totalsAlreadyMatch =
+      Math.abs(order.subtotal - plan.subtotal) <= 0.01 &&
+      Math.abs(order.discountAmount) <= 0.01 &&
+      Math.abs(order.shippingAmount - plan.shippingAmount) <= 0.01 &&
+      Math.abs(order.taxAmount - plan.taxAmount) <= 0.01 &&
+      Math.abs(order.total - plan.total) <= 0.01 &&
+      Boolean(order.paidAt);
+    if (linesAlreadyMatch && totalsAlreadyMatch) {
+      return {
+        orderId: order.id, orderNumber: order.orderNumber, changed: false,
+        itemCount: plan.items.length,
+        units: plan.items.reduce((sum, item) => sum + item.quantity, 0),
+        productSales: plan.subtotal,
+      };
+    }
+
+    await tx.orderItem.deleteMany({ where: { orderId: order.id } });
+    await tx.orderItem.createMany({
+      data: plan.items.map((item) => ({
+        orderId: order.id,
+        productId: item.productId,
+        variantId: item.variantId,
+        productName: item.productName,
+        variantName: item.variantName,
+        sku: item.sku,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        reservedQuantity: 0,
+      })),
+    });
+    await tx.order.update({
+      where: { id: order.id },
+      data: {
+        subtotal: plan.subtotal,
+        discountAmount: 0,
+        shippingAmount: plan.shippingAmount,
+        taxAmount: plan.taxAmount,
+        total: plan.total,
+        ...(paidAt ? { paidAt } : {}),
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "RECONCILE_PAID_BULK_ORDER_ITEMS",
+        entity: "Order",
+        entityId: order.id,
+        details: JSON.stringify({
+          requestId,
+          purchaseOrderNumber: current.purchaseOrderNumber,
+          orderNumber: order.orderNumber,
+          itemCount: plan.items.length,
+          units: plan.items.reduce((sum, item) => sum + item.quantity, 0),
+          productSales: plan.subtotal,
+          inventoryChanged: false,
+          emailSent: false,
+        }),
+      },
+    });
+    return {
+      orderId: order.id, orderNumber: order.orderNumber, changed: true,
+      itemCount: plan.items.length,
+      units: plan.items.reduce((sum, item) => sum + item.quantity, 0),
+      productSales: plan.subtotal,
+    };
+  }, { maxWait: 10000, timeout: 20000 });
+}
+
 export async function PATCH(request: Request, context: RouteContext<"/api/admin/bulk-orders/[id]">) {
   const session = await requireAdmin();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -244,6 +393,16 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
       },
     });
     return Response.json({ request: updated });
+  }
+
+  if (parsed.data.manualAction === "reconcile_products") {
+    if (!existing.orderId) return Response.json({ error: "This request has no linked shop order. Use Create Missing Sales Order first." }, { status: 409 });
+    try {
+      const result = await reconcilePaidBulkOrder(id, session.user.id);
+      return Response.json(result);
+    } catch (error) {
+      return Response.json({ error: error instanceof Error ? error.message : "Could not reconcile paid-order sales items." }, { status: 409 });
+    }
   }
 
   if (parsed.data.manualAction) {
