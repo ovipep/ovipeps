@@ -45,7 +45,13 @@ export async function POST(
     if (body.trackingNumber !== undefined && body.trackingNumber !== null && typeof body.trackingNumber !== "string") {
       return reply({ error: "Tracking number must be text." }, 400);
     }
-    if (body.allowBackordered !== undefined && typeof body.allowBackordered !== "boolean") {
+    const allowBackordered = isForm
+      ? body.allowBackordered === "true"
+      : body.allowBackordered === true;
+    if (
+      body.allowBackordered !== undefined &&
+      !(isForm ? body.allowBackordered === "true" : typeof body.allowBackordered === "boolean")
+    ) {
       return reply({ error: "Backorder override must be true or false." }, 400);
     }
     const trackingNumber = typeof body.trackingNumber === "string"
@@ -56,7 +62,7 @@ export async function POST(
     }
     const order = action === "save-tracking"
       ? await saveOrderTracking(id, trackingNumber!)
-      : await completeShipment(id, trackingNumber, { allowBackordered: body.allowBackordered === true });
+      : await completeShipment(id, trackingNumber, { allowBackordered });
 
     revalidatePath(`/admin/orders/${id}`);
     revalidatePath("/admin/orders");
