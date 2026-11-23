@@ -4,16 +4,20 @@ import { db } from "@/lib/db";
 
 export const PAID_ORDER_STATUSES = ["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED", "COMPLETED"] as const;
 
+export function paidOrderDateFilter(from: Date, to: Date): Prisma.OrderWhereInput {
+  return {
+    status: { in: [...PAID_ORDER_STATUSES] },
+    OR: [
+      { paidAt: { gte: from, lte: to } },
+      { paidAt: null, createdAt: { gte: from, lte: to } },
+    ],
+  };
+}
+
 export async function getBusinessLedger(from: Date, to: Date) {
   const [orders, manualEntries, variants, affiliatePayments] = await Promise.all([
     db.order.findMany({
-      where: {
-        status: { in: [...PAID_ORDER_STATUSES] },
-        OR: [
-          { paidAt: { gte: from, lte: to } },
-          { paidAt: null, createdAt: { gte: from, lte: to } },
-        ],
-      },
+      where: paidOrderDateFilter(from, to),
       include: { items: true }, orderBy: { createdAt: "desc" },
     }),
     db.ledgerEntry.findMany({ where: { transactionAt: { gte: from, lte: to } }, orderBy: { transactionAt: "desc" } }),
