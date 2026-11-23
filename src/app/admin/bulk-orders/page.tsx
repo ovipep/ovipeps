@@ -20,6 +20,8 @@ export default async function AdminBulkOrdersPage() {
       quoteExpiresAt: entry.quoteExpiresAt?.toISOString() ?? null,
       purchaseOrderNumber: entry.purchaseOrderNumber,
       purchaseIntentAt: entry.purchaseIntentAt?.toISOString() ?? null,
+      shipmentTrackingNumber: entry.shipmentTrackingNumber,
+      shipmentCarrier: entry.shipmentCarrier,
       createdAt: entry.createdAt.toISOString(),
     }))} />
   </div>;
