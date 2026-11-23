@@ -59,12 +59,12 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
       const response = await fetch(`/api/admin/bulk-orders/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to save changes.");
-      setRequests((current) => current.map((entry) => entry.id === id ? { ...entry, ...result.request, createdAt: new Date(result.request.createdAt).toISOString(), customerDecisionSentAt: result.request.customerDecisionSentAt ? new Date(result.request.customerDecisionSentAt).toISOString() : null } : entry));
+      setRequests((current) => current.map((entry) => entry.id === id ? { ...entry, ...result.request, orderNumber: result.orderNumber ?? entry.orderNumber, createdAt: new Date(result.request.createdAt).toISOString(), customerDecisionSentAt: result.request.customerDecisionSentAt ? new Date(result.request.customerDecisionSentAt).toISOString() : null } : entry));
       const manualAction = payload.manualAction;
       const successMessage = manualAction === "customer_approved"
         ? "Customer approval recorded. No email was sent and inventory was not changed."
         : manualAction === "paid"
-          ? "Marked paid. No email was sent and inventory was not changed."
+          ? "Marked paid and created a linked shop order. No email was sent and inventory was not changed."
           : manualAction === "shipped"
             ? "Marked shipped. No email was sent and inventory was not changed."
             : payload.sendCustomerUpdate

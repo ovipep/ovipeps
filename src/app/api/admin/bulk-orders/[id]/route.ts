@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { randomBytes } from "node:crypto";
+import type { Prisma } from "@/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth";
 import { ensureBulkOrderSchema, isBulkOrderStatus, parseBulkOrderItems } from "@/lib/bulk-orders";
+import { bulkAddressSchema, type BulkPlan } from "@/lib/bulk-checkout-schema";
 import { db } from "@/lib/db";
 import { buildBulkOrderDecisionEmail, sendEmail } from "@/lib/emails";
+import { generateOrderNumber } from "@/lib/utils";
 import {
   getGhkcAttachment,
   getEpithalonAttachment,
@@ -27,6 +30,148 @@ const updateSchema = z.object({
   confirmPaymentReceived: z.boolean().optional(),
   sendCustomerUpdate: z.boolean().optional(),
 });
+
+async function createPaidBulkOrder(requestId: string, adminId: string) {
+  return db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "BulkOrderRequest" WHERE id=${requestId} FOR UPDATE`;
+    const current = await tx.bulkOrderRequest.findUniqueOrThrow({ where: { id: requestId } });
+    if (current.orderId) throw new Error("This request already has a linked shop order.");
+    if (!["PURCHASED", "AWAITING_PAYMENT"].includes(current.status)) {
+      throw new Error("Record customer approval before marking this request paid.");
+    }
+
+    const plan = current.checkoutPlan as unknown as BulkPlan | null;
+    if (!plan?.items?.length) {
+      throw new Error("Prepare and save the itemized order details before marking this request paid.");
+    }
+    const itemTotal = plan.items.reduce((sum, item) => sum + item.totalPrice, 0);
+    if (
+      !Number.isFinite(plan.subtotal) ||
+      !Number.isFinite(plan.shippingAmount) ||
+      !Number.isFinite(plan.taxAmount) ||
+      !Number.isFinite(plan.total) ||
+      Math.abs(itemTotal - plan.subtotal) > 0.01 ||
+      Math.abs(itemTotal + plan.shippingAmount + plan.taxAmount - plan.total) > 0.01 ||
+      plan.items.some((item) => !Number.isInteger(item.quantity) || item.quantity < 1 || !Number.isFinite(item.unitPrice) || !Number.isFinite(item.totalPrice))
+    ) {
+      throw new Error("The saved order details are incomplete or inconsistent. Review the bulk order before marking it paid.");
+    }
+
+    const variantIds = [...new Set(plan.items.map((item) => item.variantId))];
+    const variants = await tx.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      select: { id: true, productId: true },
+    });
+    if (variants.length !== variantIds.length || plan.items.some((item) => variants.find((variant) => variant.id === item.variantId)?.productId !== item.productId)) {
+      throw new Error("One or more saved order items no longer match the catalog. Review the bulk order before marking it paid.");
+    }
+
+    const customer = await tx.user.findFirst({
+      where: { email: { equals: current.email, mode: "insensitive" } },
+      select: { id: true },
+    });
+    let address: unknown = null;
+    let addressUserId: string | null = customer?.id ?? null;
+
+    if (plan.addressSourceOrderNumber) {
+      const sourceOrder = await tx.order.findUnique({
+        where: { orderNumber: plan.addressSourceOrderNumber },
+        select: { email: true, userId: true, shippingAddress: true, status: true },
+      });
+      if (!sourceOrder || sourceOrder.email.toLowerCase() !== current.email.toLowerCase() || ["CANCELLED", "REFUNDED"].includes(sourceOrder.status)) {
+        throw new Error("The selected shipping address could not be verified for this customer.");
+      }
+      address = sourceOrder.shippingAddress;
+      addressUserId = customer?.id ?? sourceOrder.userId;
+    } else if (customer) {
+      const savedAddress = await tx.address.findFirst({
+        where: { userId: customer.id },
+        orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
+      });
+      if (savedAddress) address = savedAddress;
+    }
+
+    if (!bulkAddressSchema.safeParse(address).success) {
+      const priorOrders = await tx.order.findMany({
+        where: { email: { equals: current.email, mode: "insensitive" }, status: { notIn: ["CANCELLED", "REFUNDED"] } },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: { userId: true, shippingAddress: true },
+      });
+      const priorOrder = priorOrders.find((order) => bulkAddressSchema.safeParse(order.shippingAddress).success);
+      if (priorOrder) {
+        address = priorOrder.shippingAddress;
+        addressUserId = customer?.id ?? priorOrder.userId;
+      }
+    }
+
+    const parsedAddress = bulkAddressSchema.safeParse(address);
+    if (!parsedAddress.success) {
+      throw new Error("A confirmed shipping address is required before this paid request can become a shop order.");
+    }
+
+    const now = new Date();
+    const order = await tx.order.create({
+      data: {
+        orderNumber: generateOrderNumber(),
+        userId: addressUserId,
+        email: current.email.toLowerCase(),
+        status: "PAYMENT_RECEIVED",
+        paymentMethod: "INTERAC_E_TRANSFER",
+        subtotal: plan.subtotal,
+        discountAmount: 0,
+        shippingAmount: plan.shippingAmount,
+        taxAmount: plan.taxAmount,
+        total: plan.total,
+        paidAt: now,
+        shippingAddress: { ...parsedAddress.data, deliveryMethod: "SHIPPING" } as Prisma.InputJsonValue,
+        notes: `Bulk request ${current.purchaseOrderNumber ?? current.id}. ${plan.fulfillmentNote}\nCustomer decision: ${current.customerReply ?? "Recorded by administrator"}`,
+        items: {
+          create: plan.items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            productName: item.productName,
+            variantName: item.variantName,
+            sku: item.sku,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice,
+            reservedQuantity: 0,
+          })),
+        },
+        payments: {
+          create: {
+            amount: plan.total,
+            method: "INTERAC_E_TRANSFER",
+            status: "CONFIRMED",
+            confirmedAt: now,
+            confirmedBy: adminId,
+            notes: "Bulk request marked paid by administrator; inventory was not changed.",
+          },
+        },
+      },
+    });
+    const updated = await tx.bulkOrderRequest.update({
+      where: { id: requestId },
+      data: {
+        orderId: order.id,
+        status: "PENDING_SHIPMENT",
+        paymentConfirmed: true,
+        paymentConfirmedAt: current.paymentConfirmedAt ?? now,
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "CREATE_PAID_BULK_ORDER",
+        entity: "Order",
+        entityId: order.id,
+        details: JSON.stringify({ requestId, orderNumber: order.orderNumber, total: order.total, inventoryChanged: false, emailSent: false }),
+      },
+    });
+    return { request: updated, orderNumber: order.orderNumber };
+  }, { maxWait: 10000, timeout: 20000 });
+}
 
 export async function PATCH(request: Request, context: RouteContext<"/api/admin/bulk-orders/[id]">) {
   const session = await requireAdmin();
@@ -65,7 +210,12 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
       data = { status: "PURCHASED", purchaseIntentAt: existing.purchaseIntentAt ?? now };
     } else if (parsed.data.manualAction === "paid") {
       if (!["PURCHASED", "AWAITING_PAYMENT"].includes(existing.status)) return Response.json({ error: "Record customer approval before marking this request paid." }, { status: 409 });
-      data = { status: "PENDING_SHIPMENT", paymentConfirmed: true, paymentConfirmedAt: existing.paymentConfirmedAt ?? now };
+      try {
+        const result = await createPaidBulkOrder(id, session.user.id);
+        return Response.json(result);
+      } catch (error) {
+        return Response.json({ error: error instanceof Error ? error.message : "Could not create the paid shop order." }, { status: 409 });
+      }
     } else {
       if (existing.status !== "PENDING_SHIPMENT") return Response.json({ error: "Mark the request paid before marking it shipped." }, { status: 409 });
       data = { status: "COMPLETE" };
