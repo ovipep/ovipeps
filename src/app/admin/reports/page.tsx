@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
 import { businessDateRange, businessDateText } from "@/lib/business-dates";
 import { paidOrderDateFilter } from "@/lib/business-ledger";
+import type { BulkPlan } from "@/lib/bulk-checkout-schema";
 
 function dateValue(date: Date) { return businessDateText(date); }
 
@@ -16,15 +17,47 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const toText = /^\d{4}-\d{2}-\d{2}$/.test(params.to ?? "") ? params.to! : todayText;
   const { from, to } = businessDateRange(fromText, toText);
 
-  const items = await db.orderItem.findMany({
-    where: { order: paidOrderDateFilter(from, to) },
-    select: { productId: true, productName: true, variantName: true, quantity: true, totalPrice: true, orderId: true },
-  });
+  const [items, paidBulkRequests] = await Promise.all([
+    db.orderItem.findMany({
+      where: { order: paidOrderDateFilter(from, to) },
+      select: { productId: true, productName: true, variantName: true, quantity: true, totalPrice: true, orderId: true },
+    }),
+    db.bulkOrderRequest.findMany({
+      where: {
+        paymentConfirmed: true,
+        orderId: null,
+        OR: [
+          { paymentConfirmedAt: { gte: from, lte: to } },
+          { paymentConfirmedAt: null, createdAt: { gte: from, lte: to } },
+        ],
+      },
+      select: { id: true, checkoutPlan: true },
+    }),
+  ]);
   const rows = new Map<string, { product: string; vial: string; units: number; sales: number; orders: Set<string> }>();
   for (const item of items) {
     const key = `${item.productId}:${item.variantName}`;
     const row = rows.get(key) ?? { product: item.productName, vial: item.variantName, units: 0, sales: 0, orders: new Set<string>() };
     row.units += item.quantity; row.sales += item.totalPrice; row.orders.add(item.orderId); rows.set(key, row);
+  }
+  // Count paid bulk requests that have no shop order yet. Once a request is linked,
+  // its OrderItem rows above become the sole source, preventing double counting.
+  for (const request of paidBulkRequests) {
+    const plan = request.checkoutPlan as unknown as BulkPlan | null;
+    if (!plan || !Array.isArray(plan.items)) continue;
+    for (const item of plan.items) {
+      if (
+        !item || typeof item.productId !== "string" || typeof item.productName !== "string" ||
+        typeof item.variantName !== "string" || !Number.isInteger(item.quantity) ||
+        !Number.isFinite(item.totalPrice)
+      ) continue;
+      const key = `${item.productId}:${item.variantName}`;
+      const row = rows.get(key) ?? { product: item.productName, vial: item.variantName, units: 0, sales: 0, orders: new Set<string>() };
+      row.units += item.quantity;
+      row.sales += item.totalPrice;
+      row.orders.add(`bulk-${request.id}`);
+      rows.set(key, row);
+    }
   }
   const report = [...rows.values()].sort((a, b) => b.sales - a.sales);
   const totalSales = report.reduce((sum, row) => sum + row.sales, 0);
@@ -47,6 +80,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     <div className="overflow-hidden rounded-xl border border-border bg-card"><table className="w-full text-sm"><thead><tr className="border-b border-border bg-muted/40 text-left"><th className="px-4 py-3">Rank</th><th className="px-4 py-3">Product</th><th className="px-4 py-3">Vial size</th><th className="px-4 py-3 text-right">Vials sold</th><th className="px-4 py-3 text-right">Orders</th><th className="px-4 py-3 text-right">Sales</th></tr></thead><tbody>
       {report.length ? report.map((row, index) => <tr key={`${row.product}-${row.vial}`} className="border-b border-border/60"><td className="px-4 py-3">#{index + 1}</td><td className="px-4 py-3 font-medium">{row.product}</td><td className="px-4 py-3">{row.vial}</td><td className="px-4 py-3 text-right">{row.units}</td><td className="px-4 py-3 text-right">{row.orders.size}</td><td className="px-4 py-3 text-right font-semibold">{formatCurrency(row.sales)}</td></tr>) : <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No product sales in this date range.</td></tr>}
     </tbody></table></div>
-    <p className="text-xs text-muted-foreground">Product sales exclude shipping and exclude cancelled/refunded orders. Amounts are gross item sales before order-level discounts.</p>
+    <p className="text-xs text-muted-foreground">Product sales exclude shipping and cancelled/refunded orders. Paid bulk requests without a linked shop order use their saved itemization; once linked, shop order items are used instead.</p>
   </div>;
 }
