@@ -34,6 +34,15 @@ export async function updateShipment(
     const outstanding = await tx.$queryRaw<Array<{count:bigint}>>`SELECT COUNT(*) AS count FROM "OrderItem" WHERE "orderId"=${orderId} AND "reservedQuantity" IS NOT NULL AND "reservedQuantity" < quantity`;
     if (Number(outstanding[0]?.count ?? 0) > 0) throw new OrderShippingError("This order has backordered units. Record partial tracking now; mark complete after all units are reserved and shipped.");
   }
+  if (markShipped && pending && allowBackordered) {
+    const linkedBulkRequest = await tx.bulkOrderRequest.findFirst({
+      where: { orderId },
+      select: { id: true },
+    });
+    if (!linkedBulkRequest) {
+      throw new OrderShippingError("Manual fulfillment override is available only for linked bulk orders.");
+    }
+  }
   const now = new Date();
   const updated = await tx.order.update({
     where: { id: orderId },
