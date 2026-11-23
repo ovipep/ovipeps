@@ -137,10 +137,10 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
     </div>
     {!entry.orderId && <div className="mt-5 rounded-xl border border-sky/15 bg-slate-50 p-4">
       <p className="text-sm font-semibold text-navy-deep">Manual order status</p>
-      <p className="mt-1 text-xs text-muted-foreground">Use these controls when approval or payment was confirmed outside the website. They update this request only; they do not send emails or change inventory.</p>
+      <p className="mt-1 text-xs text-muted-foreground">Record approval or payment confirmed outside the website. Marking paid creates a linked sales order for the ledger; no email is sent and inventory is not changed.</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="outline" disabled={busy === entry.id || ["PURCHASED", "AWAITING_PAYMENT", "PENDING_SHIPMENT", "COMPLETE"].includes(entry.status)} onClick={() => update(entry.id, { manualAction: "customer_approved" })}><BadgeCheck className="h-4 w-4" /> Customer Approved</Button>
-        <Button variant="outline" disabled={busy === entry.id || !["PURCHASED", "AWAITING_PAYMENT"].includes(entry.status)} onClick={() => update(entry.id, { manualAction: "paid" })}><BadgeCheck className="h-4 w-4" /> Mark Paid</Button>
+        <Button variant="outline" disabled={busy === entry.id || (!["PURCHASED", "AWAITING_PAYMENT"].includes(entry.status) && !(entry.status === "COMPLETE" && entry.paymentConfirmed))} onClick={() => update(entry.id, { manualAction: "paid" })}><BadgeCheck className="h-4 w-4" /> {entry.status === "COMPLETE" && entry.paymentConfirmed ? "Create Missing Sales Order" : "Mark Paid"}</Button>
         <Button variant="outline" disabled={busy === entry.id || entry.status !== "PENDING_SHIPMENT"} onClick={() => update(entry.id, { manualAction: "shipped" })}><PackageCheck className="h-4 w-4" /> Mark Shipped</Button>
       </div>
     </div>}
