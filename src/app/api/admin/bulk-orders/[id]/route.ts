@@ -23,12 +23,14 @@ const updateSchema = z.object({
   discountedPricing: z.string().trim().max(5000).optional(),
   eta: z.string().trim().max(500).optional(),
   status: z.string().optional(),
+  manualAction: z.enum(["customer_approved", "paid", "shipped"]).optional(),
   confirmPaymentReceived: z.boolean().optional(),
   sendCustomerUpdate: z.boolean().optional(),
 });
 
 export async function PATCH(request: Request, context: RouteContext<"/api/admin/bulk-orders/[id]">) {
-  if (!await requireAdmin()) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAdmin();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await context.params;
   const parsed = updateSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request update." }, { status: 400 });
@@ -49,6 +51,38 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   const existing = await db.bulkOrderRequest.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "Request not found." }, { status: 404 });
 
+  if (parsed.data.manualAction) {
+    if (existing.orderId) return Response.json({ error: "This request has a linked shop order. Use its linked-order actions." }, { status: 409 });
+    const now = new Date();
+    let data: {
+      status: "PURCHASED" | "PENDING_SHIPMENT" | "COMPLETE";
+      purchaseIntentAt?: Date;
+      paymentConfirmed?: boolean;
+      paymentConfirmedAt?: Date;
+    };
+    if (parsed.data.manualAction === "customer_approved") {
+      if (existing.status === "COMPLETE") return Response.json({ error: "A completed request cannot be reopened here." }, { status: 409 });
+      data = { status: "PURCHASED", purchaseIntentAt: existing.purchaseIntentAt ?? now };
+    } else if (parsed.data.manualAction === "paid") {
+      if (!["PURCHASED", "AWAITING_PAYMENT"].includes(existing.status)) return Response.json({ error: "Record customer approval before marking this request paid." }, { status: 409 });
+      data = { status: "PENDING_SHIPMENT", paymentConfirmed: true, paymentConfirmedAt: existing.paymentConfirmedAt ?? now };
+    } else {
+      if (existing.status !== "PENDING_SHIPMENT") return Response.json({ error: "Mark the request paid before marking it shipped." }, { status: 409 });
+      data = { status: "COMPLETE" };
+    }
+    const updated = await db.bulkOrderRequest.update({ where: { id }, data });
+    await db.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: `BULK_ORDER_MANUAL_${parsed.data.manualAction.toUpperCase()}`,
+        entity: "BulkOrderRequest",
+        entityId: id,
+        details: JSON.stringify({ inventoryChanged: false, emailSent: false }),
+      },
+    });
+    return Response.json({ request: updated });
+  }
+
   if (
     parsed.data.status === "PENDING_SHIPMENT" &&
     existing.status !== "AWAITING_PAYMENT" &&
@@ -68,7 +102,7 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
 
   if (parsed.data.confirmPaymentReceived || parsed.data.status === "COMPLETE" || parsed.data.status === "PENDING_SHIPMENT" || parsed.data.status === "PURCHASED") return Response.json({error:"Confirm payment and shipping on the recorded shop order, after the customer confirms their address."},{status:409});
   if (existing.orderId) return Response.json({error:"This request is linked to a shop order. Manage payment and shipping from Orders."},{status:409});
-  if (parsed.data.sendCustomerUpdate && (existing.purchaseIntentAt || existing.recapApprovedAt)) return Response.json({error:"A purchase response already exists. Prepare the itemized recap instead of sending another initial quote."},{status:409});
+  if (parsed.data.sendCustomerUpdate && (existing.purchaseIntentAt || existing.recapApprovedAt)) return Response.json({error:"A purchase response already exists. Update and resend the itemized recap instead."},{status:409});
   const status = parsed.data.status ?? existing.status;
   const quoteIssuedAt = parsed.data.sendCustomerUpdate ? new Date() : existing.quoteIssuedAt;
   const quoteExpiresAt = parsed.data.sendCustomerUpdate

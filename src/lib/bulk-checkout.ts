@@ -138,7 +138,9 @@ export async function prepareBulkRecap(
   };
   // Validate every required PDF before making this draft eligible for approval.
   await loadBulkAttachments(plan.documents);
-  const token = request.decisionToken ?? randomBytes(32).toString("hex");
+  const token = request.recapSentAt || request.recapApprovedAt
+    ? randomBytes(32).toString("hex")
+    : request.decisionToken ?? randomBytes(32).toString("hex");
   const draft = await makeRecap(
     request.firstName,
     plan.existingOrderNumber ?? request.purchaseOrderNumber ?? request.id,
@@ -151,9 +153,9 @@ export async function prepareBulkRecap(
     const current = await tx.bulkOrderRequest.findUniqueOrThrow({
       where: { id },
     });
-    if (current.orderId || current.recapApprovedAt || current.recapSentAt)
+    if (current.orderId)
       throw new BulkCheckoutError(
-        "An approved recap cannot be replaced; contact the customer before changing it",
+        "An order is already recorded for this request. Edit the linked order from Orders.",
       );
     const updated = await tx.bulkOrderRequest.update({
       where: { id },

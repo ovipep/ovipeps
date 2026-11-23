@@ -15,6 +15,7 @@ export default async function AdminBulkOrdersPage() {
       items: parseBulkOrderItems(entry.items), additionalContext: entry.additionalContext, customerReply: entry.customerReply, orderId: entry.orderId, orderNumber: orders.find(o=>o.id===entry.orderId)?.orderNumber ?? null,
       status: (()=>{const status=orders.find(o=>o.id===entry.orderId)?.status; return status === "COMPLETED" || status === "SHIPPED" ? "COMPLETE" : status === "PAYMENT_RECEIVED" || status === "PROCESSING" ? "PENDING_SHIPMENT" : status === "CANCELLED" ? "CANCELLED" : entry.status;})(), adminDecision: entry.adminDecision, discountedPricing: entry.discountedPricing,
       eta: entry.eta, paymentConfirmed: entry.paymentConfirmed,
+      recapSentAt: entry.recapSentAt?.toISOString() ?? null,
       customerDecisionSentAt: entry.customerDecisionSentAt?.toISOString() ?? null,
       quoteExpiresAt: entry.quoteExpiresAt?.toISOString() ?? null,
       purchaseOrderNumber: entry.purchaseOrderNumber,

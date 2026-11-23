@@ -35,7 +35,7 @@ interface Detail {
   }[];
   addressOrders: { orderNumber: string; status: string; createdAt: string }[];
 }
-export function BulkRecapEditor({ requestId }: { requestId: string }) {
+export function BulkRecapEditor({ requestId, hasSentRecap = false }: { requestId: string; hasSentRecap?: boolean }) {
   const [detail, setDetail] = useState<Detail | null>(null),
     [input, setInput] = useState<BulkPlanInput | null>(null);
   const [open, setOpen] = useState(false),
@@ -151,9 +151,7 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
       setBusy(false);
     }
   }
-  const locked = Boolean(
-    detail?.request.recapApprovedAt || detail?.request.orderId,
-  );
+  const locked = Boolean(detail?.request.orderId);
   return (
     <section className="mt-5 border-t pt-5">
       <Button type="button" variant="outline" onClick={load} disabled={busy}>
@@ -161,7 +159,9 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
           ? "Loading…"
           : open
             ? "Hide order recap"
-            : "Prepare / Review order recap"}
+            : detail?.request.recapSentAt || hasSentRecap
+              ? "Edit / resend updated order"
+              : "Prepare / Review order recap"}
       </Button>
       {error && (
         <p role="alert" className="mt-3 text-sm text-red-700">
@@ -171,9 +171,10 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
       {open && detail && input && (
         <div className="mt-5 space-y-5">
           <p className="rounded-xl bg-amber-50 p-4 text-sm">
-            Drafts are held for approval. Saving a draft sends nothing. Customer
-            comments must be reflected in the exact vial sizes, quantities, and
-            prices below.
+            Drafts are held for approval. Saving a draft sends nothing. When an
+            earlier recap was sent, saving a revised draft invalidates its old
+            checkout link. Customer comments must be reflected in the exact vial
+            sizes, quantities, and prices below.
           </p>
           {detail.request.customerReply && (
             <p className="whitespace-pre-wrap rounded-xl bg-sky/5 p-4 text-sm">
@@ -425,7 +426,7 @@ export function BulkRecapEditor({ requestId }: { requestId: string }) {
                     disabled={!approved || dirty || busy}
                     onClick={() => submit("approve_send")}
                   >
-                    {busy ? "Sending…" : "Approve & send this recap"}
+                    {busy ? "Sending…" : detail.request.recapSentAt ? "Approve & resend updated order" : "Approve & send this recap"}
                   </Button>
                   {dirty && (
                     <p className="text-sm text-amber-800">

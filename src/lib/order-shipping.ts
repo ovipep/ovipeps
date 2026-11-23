@@ -12,6 +12,7 @@ export async function updateShipment(
   orderId: string,
   trackingNumber: string | undefined,
   markShipped: boolean,
+  allowBackordered = false,
 ) {
   if (trackingNumber !== undefined && trackingNumber.trim().length > 100) {
     throw new OrderShippingError("Tracking number must be 100 characters or fewer", 400);
@@ -29,7 +30,7 @@ export async function updateShipment(
   const savedTrackingNumber = trackingNumber === undefined
     ? order.trackingNumber
     : trackingNumber.trim() || null;
-  if (markShipped && pending) {
+  if (markShipped && pending && !allowBackordered) {
     const outstanding = await tx.$queryRaw<Array<{count:bigint}>>`SELECT COUNT(*) AS count FROM "OrderItem" WHERE "orderId"=${orderId} AND "reservedQuantity" IS NOT NULL AND "reservedQuantity" < quantity`;
     if (Number(outstanding[0]?.count ?? 0) > 0) throw new OrderShippingError("This order has backordered units. Record partial tracking now; mark complete after all units are reserved and shipped.");
   }
@@ -58,9 +59,13 @@ export async function updateShipment(
   return updated;
 }
 
-export async function completeShipment(orderId: string, trackingNumber?: string) {
+export async function completeShipment(
+  orderId: string,
+  trackingNumber?: string,
+  options: { allowBackordered?: boolean } = {},
+) {
   return db.$transaction(
-    (tx) => updateShipment(tx, orderId, trackingNumber, true),
+    (tx) => updateShipment(tx, orderId, trackingNumber, true, options.allowBackordered === true),
     { maxWait: 10_000, timeout: 15_000 },
   );
 }
