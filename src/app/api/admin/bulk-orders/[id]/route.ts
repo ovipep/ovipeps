@@ -7,6 +7,7 @@ import { bulkAddressSchema, type BulkPlan } from "@/lib/bulk-checkout-schema";
 import { db } from "@/lib/db";
 import { buildBulkOrderDecisionEmail, sendEmail } from "@/lib/emails";
 import { generateOrderNumber } from "@/lib/utils";
+import { saveOrderTracking } from "@/lib/order-shipping";
 import {
   getGhkcAttachment,
   getEpithalonAttachment,
@@ -29,6 +30,8 @@ const updateSchema = z.object({
   manualAction: z.enum(["customer_approved", "paid", "shipped"]).optional(),
   confirmPaymentReceived: z.boolean().optional(),
   sendCustomerUpdate: z.boolean().optional(),
+  shipmentTrackingNumber: z.string().trim().max(100).optional(),
+  shipmentCarrier: z.string().trim().max(100).optional(),
 });
 
 async function createPaidBulkOrder(requestId: string, adminId: string) {
@@ -195,6 +198,37 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   await ensureBulkOrderSchema();
   const existing = await db.bulkOrderRequest.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "Request not found." }, { status: 404 });
+
+  if (parsed.data.shipmentTrackingNumber !== undefined || parsed.data.shipmentCarrier !== undefined) {
+    if (!["PENDING_SHIPMENT", "COMPLETE"].includes(existing.status)) {
+      return Response.json({ error: "Record payment before adding shipment tracking details." }, { status: 409 });
+    }
+    const trackingNumber = parsed.data.shipmentTrackingNumber ?? existing.shipmentTrackingNumber ?? "";
+    if (existing.orderId && parsed.data.shipmentTrackingNumber !== undefined && trackingNumber) {
+      try {
+        await saveOrderTracking(existing.orderId, trackingNumber);
+      } catch (error) {
+        return Response.json({ error: error instanceof Error ? error.message : "Could not save tracking on the linked order." }, { status: 409 });
+      }
+    }
+    const updated = await db.bulkOrderRequest.update({
+      where: { id },
+      data: {
+        ...(parsed.data.shipmentTrackingNumber !== undefined ? { shipmentTrackingNumber: trackingNumber || null } : {}),
+        ...(parsed.data.shipmentCarrier !== undefined ? { shipmentCarrier: parsed.data.shipmentCarrier || null } : {}),
+      },
+    });
+    await db.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "BULK_ORDER_TRACKING_SAVED",
+        entity: "BulkOrderRequest",
+        entityId: id,
+        details: JSON.stringify({ trackingNumber: updated.shipmentTrackingNumber, carrier: updated.shipmentCarrier, emailSent: false, inventoryChanged: false }),
+      },
+    });
+    return Response.json({ request: updated });
+  }
 
   if (parsed.data.manualAction) {
     if (existing.orderId) return Response.json({ error: "This request has a linked shop order. Use its linked-order actions." }, { status: 409 });
