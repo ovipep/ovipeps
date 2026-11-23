@@ -97,6 +97,7 @@ export default async function AdminOrderDetailPage({
               orderId={order.id}
               initialTrackingNumber={order.trackingNumber ?? ""}
               canShip={order.status !== "COMPLETED"}
+              manualFulfillment={order.notes?.includes("Manual fulfillment") ?? false}
             />
           </CardContent>
         </Card>
