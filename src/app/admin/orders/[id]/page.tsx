@@ -41,6 +41,10 @@ export default async function AdminOrderDetailPage({
   if (!order) {
     notFound();
   }
+  const linkedBulkRequest = await db.bulkOrderRequest.findFirst({
+    where: { orderId: id },
+    select: { id: true },
+  });
 
   const address = order.shippingAddress as ShippingAddress | null;
 
@@ -97,7 +101,7 @@ export default async function AdminOrderDetailPage({
               orderId={order.id}
               initialTrackingNumber={order.trackingNumber ?? ""}
               canShip={order.status !== "COMPLETED"}
-              manualFulfillment={order.notes?.includes("Manual fulfillment") ?? false}
+              manualFulfillment={Boolean(linkedBulkRequest)}
             />
           </CardContent>
         </Card>
