@@ -39,7 +39,8 @@ async function createPaidBulkOrder(requestId: string, adminId: string) {
     await tx.$queryRaw`SELECT id FROM "BulkOrderRequest" WHERE id=${requestId} FOR UPDATE`;
     const current = await tx.bulkOrderRequest.findUniqueOrThrow({ where: { id: requestId } });
     if (current.orderId) throw new Error("This request already has a linked shop order.");
-    if (!["PURCHASED", "AWAITING_PAYMENT"].includes(current.status)) {
+    const isCompletedBackfill = current.status === "COMPLETE" && current.paymentConfirmed;
+    if (!isCompletedBackfill && !["PURCHASED", "AWAITING_PAYMENT"].includes(current.status)) {
       throw new Error("Record customer approval before marking this request paid.");
     }
 
@@ -114,19 +115,25 @@ async function createPaidBulkOrder(requestId: string, adminId: string) {
     }
 
     const now = new Date();
+    const wasAlreadyShipped = current.status === "COMPLETE";
+    const paidAt = current.paymentConfirmedAt ?? now;
     const order = await tx.order.create({
       data: {
         orderNumber: generateOrderNumber(),
         userId: addressUserId,
         email: current.email.toLowerCase(),
-        status: "PAYMENT_RECEIVED",
+        status: wasAlreadyShipped ? "COMPLETED" : "PAYMENT_RECEIVED",
         paymentMethod: "INTERAC_E_TRANSFER",
         subtotal: plan.subtotal,
         discountAmount: 0,
         shippingAmount: plan.shippingAmount,
         taxAmount: plan.taxAmount,
         total: plan.total,
-        paidAt: now,
+        paidAt,
+        ...(wasAlreadyShipped ? {
+          trackingNumber: current.shipmentTrackingNumber,
+          trackingCarrier: current.shipmentCarrier,
+        } : {}),
         shippingAddress: { ...parsedAddress.data, deliveryMethod: "SHIPPING" } as Prisma.InputJsonValue,
         notes: `Bulk request ${current.purchaseOrderNumber ?? current.id}. ${plan.fulfillmentNote}\nCustomer decision: ${current.customerReply ?? "Recorded by administrator"}`,
         items: {
@@ -147,20 +154,29 @@ async function createPaidBulkOrder(requestId: string, adminId: string) {
             amount: plan.total,
             method: "INTERAC_E_TRANSFER",
             status: "CONFIRMED",
-            confirmedAt: now,
+            confirmedAt: paidAt,
             confirmedBy: adminId,
             notes: "Bulk request marked paid by administrator; inventory was not changed.",
           },
         },
+        ...(wasAlreadyShipped ? {
+          shipments: {
+            create: {
+              carrier: current.shipmentCarrier,
+              trackingNumber: current.shipmentTrackingNumber,
+              status: "shipped",
+            },
+          },
+        } : {}),
       },
     });
     const updated = await tx.bulkOrderRequest.update({
       where: { id: requestId },
       data: {
         orderId: order.id,
-        status: "PENDING_SHIPMENT",
+        status: wasAlreadyShipped ? "COMPLETE" : "PENDING_SHIPMENT",
         paymentConfirmed: true,
-        paymentConfirmedAt: current.paymentConfirmedAt ?? now,
+        paymentConfirmedAt: paidAt,
       },
     });
     await tx.auditLog.create({
@@ -243,7 +259,8 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
       if (existing.status === "COMPLETE") return Response.json({ error: "A completed request cannot be reopened here." }, { status: 409 });
       data = { status: "PURCHASED", purchaseIntentAt: existing.purchaseIntentAt ?? now };
     } else if (parsed.data.manualAction === "paid") {
-      if (!["PURCHASED", "AWAITING_PAYMENT"].includes(existing.status)) return Response.json({ error: "Record customer approval before marking this request paid." }, { status: 409 });
+      const canBackfillCompleted = existing.status === "COMPLETE" && existing.paymentConfirmed;
+      if (!canBackfillCompleted && !["PURCHASED", "AWAITING_PAYMENT"].includes(existing.status)) return Response.json({ error: "Record customer approval before marking this request paid." }, { status: 409 });
       try {
         const result = await createPaidBulkOrder(id, session.user.id);
         return Response.json(result);
