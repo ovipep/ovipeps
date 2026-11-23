@@ -168,6 +168,8 @@ model BulkOrderRequest {
   quoteExpiresAt         DateTime?
   purchaseOrderNumber    String?   @unique
   purchaseIntentAt       DateTime?
+  shipmentTrackingNumber String?
+  shipmentCarrier        String?
   paymentConfirmed       Boolean   @default(false)
   paymentConfirmedAt     DateTime?
   customerDecisionSentAt DateTime?
