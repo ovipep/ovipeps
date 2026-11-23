@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
 import { businessDateRange, businessDateText } from "@/lib/business-dates";
+import { paidOrderDateFilter } from "@/lib/business-ledger";
 
 function dateValue(date: Date) { return businessDateText(date); }
 
@@ -16,7 +17,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const { from, to } = businessDateRange(fromText, toText);
 
   const items = await db.orderItem.findMany({
-    where: { order: { createdAt: { gte: from, lte: to }, status: { notIn: ["CANCELLED", "REFUNDED"] } } },
+    where: { order: paidOrderDateFilter(from, to) },
     select: { productId: true, productName: true, variantName: true, quantity: true, totalPrice: true, orderId: true },
   });
   const rows = new Map<string, { product: string; vial: string; units: number; sales: number; orders: Set<string> }>();
