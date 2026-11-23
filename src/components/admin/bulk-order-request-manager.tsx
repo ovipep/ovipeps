@@ -15,6 +15,7 @@ interface RequestRecord {
   discountedPricing: string | null; eta: string | null; paymentConfirmed: boolean;
   customerDecisionSentAt: string | null; recapSentAt: string | null; createdAt: string; quoteExpiresAt: string | null;
   purchaseOrderNumber: string | null; purchaseIntentAt: string | null;
+  shipmentTrackingNumber: string | null; shipmentCarrier: string | null;
 }
 
 function label(status: string) {
@@ -51,7 +52,8 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
   const [requests, setRequests] = useState(initialRequests);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<Record<string, string>>({});
-  const [trackingNumbers, setTrackingNumbers] = useState<Record<string, string>>({});
+  const [trackingNumbers, setTrackingNumbers] = useState<Record<string, string>>(() => Object.fromEntries(initialRequests.map((entry) => [entry.id, entry.shipmentTrackingNumber ?? ""])));
+  const [trackingCarriers, setTrackingCarriers] = useState<Record<string, string>>(() => Object.fromEntries(initialRequests.map((entry) => [entry.id, entry.shipmentCarrier ?? ""])));
 
   async function update(id: string, payload: Record<string, unknown>) {
     setBusy(id); setMessage((current) => ({ ...current, [id]: "" }));
@@ -149,7 +151,15 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
         <Button variant="outline" disabled={busy === entry.id || entry.status !== "PENDING_SHIPMENT"} onClick={() => orderAction(entry, "shipped")}><PackageCheck className="h-4 w-4" /> Mark Shipped</Button>
         <Button variant="outline" disabled={busy === entry.id} onClick={() => orderAction(entry, "resend")}><RefreshCw className="h-4 w-4" /> Resend Order</Button>
       </div>
-      {entry.status === "PENDING_SHIPMENT" && <><label className="mt-3 block max-w-sm text-xs font-semibold text-muted-foreground">Tracking number (optional)<input value={trackingNumbers[entry.id] ?? ""} onChange={(event) => setTrackingNumbers((current) => ({ ...current, [entry.id]: event.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-sky/20 bg-white px-3 text-sm font-normal text-foreground" placeholder="Enter tracking number before marking shipped" /></label><p className="mt-2 text-xs text-muted-foreground">Marking shipped records fulfillment manually and does not change inventory.</p></>}
+
+    </div>}
+    {["PENDING_SHIPMENT", "COMPLETE"].includes(entry.status) && <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
+      <p className="text-sm font-semibold text-navy-deep">Shipment details</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <label className="text-xs font-semibold text-muted-foreground">Tracking number<input value={trackingNumbers[entry.id] ?? ""} onChange={(event) => setTrackingNumbers((current) => ({ ...current, [entry.id]: event.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-sky/20 bg-white px-3 text-sm font-normal text-foreground" placeholder="Enter tracking number" /></label>
+        <label className="text-xs font-semibold text-muted-foreground">Shipping carrier (optional)<input value={trackingCarriers[entry.id] ?? ""} onChange={(event) => setTrackingCarriers((current) => ({ ...current, [entry.id]: event.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-sky/20 bg-white px-3 text-sm font-normal text-foreground" placeholder="Canada Post, UPS, etc." /></label>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-3"><Button variant="outline" disabled={busy === entry.id} onClick={() => update(entry.id, { shipmentTrackingNumber: trackingNumbers[entry.id] ?? "", shipmentCarrier: trackingCarriers[entry.id] ?? "" })}><Save className="h-4 w-4" /> Save Shipment Details</Button><span className="text-xs text-muted-foreground">Saving tracking does not send email or change inventory.</span></div>
     </div>}
     {message[entry.id] && <p className="mt-3 text-sm text-muted-foreground">{message[entry.id]}</p>}
   </article>)}</div>;
