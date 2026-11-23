@@ -71,6 +71,7 @@ export function ensureBulkOrderSchema() {
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "quoteExpiresAt" TIMESTAMP(3)`);
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "purchaseOrderNumber" TEXT`);
       await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest" ADD COLUMN IF NOT EXISTS "purchaseIntentAt" TIMESTAMP(3)`);
+      await db.$executeRawUnsafe(`ALTER TABLE "BulkOrderRequest"\n        ADD COLUMN IF NOT EXISTS "shipmentTrackingNumber" TEXT,\n        ADD COLUMN IF NOT EXISTS "shipmentCarrier" TEXT`);
       await db.$executeRawUnsafe(
         `CREATE INDEX IF NOT EXISTS "BulkOrderRequest_status_createdAt_idx" ON "BulkOrderRequest"("status", "createdAt")`
       );
