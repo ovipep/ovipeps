@@ -3,17 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { db } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
+import { businessDateRange, businessDateText } from "@/lib/business-dates";
 
-function dateValue(date: Date) { return date.toISOString().slice(0, 10); }
+function dateValue(date: Date) { return businessDateText(date); }
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
   const params = await searchParams;
   const now = new Date();
-  const defaultFrom = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const fromText = /^\d{4}-\d{2}-\d{2}$/.test(params.from ?? "") ? params.from! : dateValue(defaultFrom);
-  const toText = /^\d{4}-\d{2}-\d{2}$/.test(params.to ?? "") ? params.to! : dateValue(now);
-  const from = new Date(`${fromText}T00:00:00.000Z`);
-  const to = new Date(`${toText}T23:59:59.999Z`);
+  const todayText = dateValue(now);
+  const fromText = /^\d{4}-\d{2}-\d{2}$/.test(params.from ?? "") ? params.from! : `${todayText.slice(0, 7)}-01`;
+  const toText = /^\d{4}-\d{2}-\d{2}$/.test(params.to ?? "") ? params.to! : todayText;
+  const { from, to } = businessDateRange(fromText, toText);
 
   const items = await db.orderItem.findMany({
     where: { order: { createdAt: { gte: from, lte: to }, status: { notIn: ["CANCELLED", "REFUNDED"] } } },

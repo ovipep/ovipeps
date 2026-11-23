@@ -2,20 +2,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { getBusinessLedger } from "@/lib/business-ledger";
+import { businessDateRange, businessDateText } from "@/lib/business-dates";
 import { formatCurrency } from "@/lib/utils";
 import { addDonationPayout, addLedgerEntry, updateLedgerEntry } from "./actions";
 
-const dateText = (date: Date) => date.toISOString().slice(0, 10);
+const dateText = businessDateText;
 
 export default async function LedgerPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; edit?: string; updated?: string }> }) {
   const params = await searchParams;
   const now = new Date();
-  const fromDefault = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-  const fromText = /^\d{4}-\d{2}-\d{2}$/.test(params.from ?? "") ? params.from! : dateText(fromDefault);
-  const toText = /^\d{4}-\d{2}-\d{2}$/.test(params.to ?? "") ? params.to! : dateText(now);
-  const { rows, variants } = await getBusinessLedger(new Date(`${fromText}T00:00:00.000Z`), new Date(`${toText}T23:59:59.999Z`));
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+  const todayText = dateText(now);
+  const fromText = /^\d{4}-\d{2}-\d{2}$/.test(params.from ?? "") ? params.from! : `${todayText.slice(0, 4)}-01-01`;
+  const toText = /^\d{4}-\d{2}-\d{2}$/.test(params.to ?? "") ? params.to! : todayText;
+  const { from, to } = businessDateRange(fromText, toText);
+  const { rows, variants } = await getBusinessLedger(from, to);
+  const monthStartText = `${todayText.slice(0, 7)}-01`;
+  const [monthYear, monthNumber] = todayText.slice(0, 7).split("-").map(Number);
+  const monthLastDay = new Date(Date.UTC(monthYear, monthNumber, 0)).getUTCDate();
+  const { from: monthStart, to: monthEnd } = businessDateRange(monthStartText, `${todayText.slice(0, 7)}-${String(monthLastDay).padStart(2, "0")}`);
   const { rows: monthRows } = await getBusinessLedger(monthStart, monthEnd);
   const monthlyIncome = monthRows.reduce((sum, row) => sum + (row.type === "INCOME" ? row.merchandise + row.shipping : 0), 0);
   const monthlyOperatingExpenses = monthRows.reduce((sum, row) => sum + (row.type === "EXPENSE" && row.category !== "Charitable Donations" ? row.expense : 0), 0);
@@ -35,7 +39,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
     <form method="get" className="grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_1fr_auto]"><label className="text-sm font-medium">From<Input name="from" type="date" defaultValue={fromText}/></label><label className="text-sm font-medium">To<Input name="to" type="date" defaultValue={toText}/></label><Button type="submit" className="self-end">Run ledger</Button></form>
     <div className="grid gap-3 sm:grid-cols-4">{[["Income",income],["Tax collected",tax],["Expenses",expenses],["Net cash",income+tax-expenses]].map(([label,value])=><div key={String(label)} className="rounded-xl border bg-card p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="text-2xl font-semibold">{formatCurrency(Number(value))}</p></div>)}</div>
     <section className="space-y-4 rounded-xl border border-green-300 bg-green-50/50 p-4">
-      <h2 className="font-semibold text-navy-deep">Monthly charity donation — {now.toLocaleDateString("en-CA", { month: "long", year: "numeric", timeZone: "UTC" })}</h2>
+      <h2 className="font-semibold text-navy-deep">Monthly charity donation — {now.toLocaleDateString("en-CA", { month: "long", year: "numeric", timeZone: "America/Toronto" })}</h2>
       <p className="text-sm text-muted-foreground">Set aside 10% of this month’s income after operating expenses. Each payout is recorded below and reduces the amount due; the balance starts at $0 for each new calendar month.</p>
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-lg border bg-card p-3"><p className="text-xs text-muted-foreground">10% monthly allocation</p><p className="text-xl font-semibold">{formatCurrency(donationAllocation)}</p></div>
