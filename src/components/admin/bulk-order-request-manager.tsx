@@ -108,6 +108,34 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
     }
   }
 
+  async function reconcileProductSales(entry: RequestRecord) {
+    setBusy(entry.id);
+    setMessage((current) => ({ ...current, [entry.id]: "" }));
+    try {
+      const response = await fetch(`/api/admin/bulk-orders/${entry.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ manualAction: "reconcile_products" }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to reconcile the paid order's product lines.");
+      const amount = Number(result.productSales ?? 0).toFixed(2);
+      setMessage((current) => ({
+        ...current,
+        [entry.id]: result.changed
+          ? `Product sales updated from the saved paid request: ${result.units} units across ${result.itemCount} lines (${amount}). No email was sent and inventory was not changed.`
+          : `Product sales already match the saved paid request: ${result.units} units across ${result.itemCount} lines (${amount}). No email was sent and inventory was not changed.`,
+      }));
+    } catch (error) {
+      setMessage((current) => ({
+        ...current,
+        [entry.id]: error instanceof Error ? error.message : "Unable to reconcile the paid order's product lines.",
+      }));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   function field(id: string, key: "adminDecision" | "discountedPricing" | "eta", value: string) {
     setRequests((current) => current.map((entry) => entry.id === id ? { ...entry, [key]: value } : entry));
   }
@@ -146,7 +174,9 @@ export function BulkOrderRequestManager({ initialRequests }: { initialRequests: 
     </div>}
     {entry.orderId && <div className="mt-5 rounded-xl border border-sky/15 bg-slate-50 p-4">
       <p className="text-sm font-semibold text-navy-deep">Linked order actions</p>
+      <p className="mt-1 text-xs text-muted-foreground">Reconcile product sales from the saved bulk request when needed. This updates the linked paid order only; no email is sent and inventory is not changed.</p>
       <div className="mt-3 flex flex-wrap gap-2">
+        <Button variant="outline" disabled={busy === entry.id || !entry.paymentConfirmed} onClick={() => reconcileProductSales(entry)}><RefreshCw className="h-4 w-4" /> Reconcile Sales Items</Button>
         <Button variant="outline" disabled={busy === entry.id || entry.status !== "AWAITING_PAYMENT"} onClick={() => orderAction(entry, "paid")}><BadgeCheck className="h-4 w-4" /> Mark Paid</Button>
         <Button variant="outline" disabled={busy === entry.id || entry.status !== "PENDING_SHIPMENT"} onClick={() => orderAction(entry, "shipped")}><PackageCheck className="h-4 w-4" /> Mark Shipped</Button>
         <Button variant="outline" disabled={busy === entry.id} onClick={() => orderAction(entry, "resend")}><RefreshCw className="h-4 w-4" /> Resend Order</Button>
