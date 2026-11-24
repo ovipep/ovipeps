@@ -30,6 +30,7 @@ import {
   isRetatrutideOrderItem,
 } from "@/lib/order-email-attachments";
 import { deliverRestockEvent } from "@/lib/restock-notifications";
+import { getBlackFridayOffer } from "@/lib/black-friday-sale";
 
 export interface ShippingAddress {
   firstName: string;
@@ -519,20 +520,50 @@ export async function createOrder(input: CreateOrderInput) {
     throw new Error("Affiliate code not found or inactive");
   }
 
-  const promotion = await calculateDiscount(
-    input.discountCode,
-    subtotal
+  const saleItems = orderItems.filter(
+    (item) =>
+      variantsById.get(item.variantId)?.product.category === "RESEARCH_PEPTIDE"
   );
+  const saleVialCount = saleItems.reduce((sum, item) => sum + item.quantity, 0);
+  const saleEligibleSubtotal = roundMoney(
+    saleItems.reduce((sum, item) => sum + item.totalPrice, 0)
+  );
+  const priorPaidOrders = await db.order.count({
+    where: {
+      userId: input.userId,
+      OR: [
+        { paidAt: { not: null } },
+        { status: { in: ["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED", "COMPLETED"] } },
+      ],
+    },
+  });
+  const saleOffer = getBlackFridayOffer(saleVialCount, priorPaidOrders === 0);
+  const blackFridayDiscountAmount = saleOffer.discountRate
+    ? roundMoney(saleEligibleSubtotal * (saleOffer.discountRate / 100))
+    : 0;
+
+  const promotion = await calculateDiscount(input.discountCode, subtotal);
   const affiliateDiscountAmount = affiliate
     ? roundMoney(subtotal * (AFFILIATE_CUSTOMER_DISCOUNT_RATE / 100))
     : 0;
+  // The sale stacks with existing coupon and affiliate discounts. Keep the
+  // combined reduction bounded by the merchandise subtotal.
   const discountAmount = Math.min(
     subtotal,
-    roundMoney(promotion.discountAmount + affiliateDiscountAmount)
+    roundMoney(
+      promotion.discountAmount +
+        affiliateDiscountAmount +
+        blackFridayDiscountAmount
+    )
   );
   const discountCode = promotion.discountCode;
 
-  const shippingAmount = input.deliveryMethod === "PICKUP" ? 0 : FLAT_SHIPPING_RATE;
+  const shippingAmount =
+    input.deliveryMethod === "PICKUP"
+      ? 0
+      : saleOffer.freeShipping
+        ? 0
+        : FLAT_SHIPPING_RATE;
   const taxAmount = 0;
   const total =
     Math.round((subtotal - discountAmount + shippingAmount + taxAmount) * 100) /
@@ -592,6 +623,9 @@ export async function createOrder(input: CreateOrderInput) {
         taxAmount,
         total,
         discountCode: discountCode ?? undefined,
+        notes: saleOffer.discountRate
+          ? "Black Friday 2026: " + saleOffer.discountRate + "% on " + saleVialCount + " peptide vials"
+          : undefined,
         affiliateCode: affiliate?.code,
         referralCode: input.referralCode?.trim() || undefined,
         shippingAddress: {

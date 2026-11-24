@@ -112,6 +112,21 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
   const [affiliateCodeState, setAffiliateCodeState] = useState<
     "idle" | "checking" | "valid" | "invalid"
   >("idle");
+  const [salePreview, setSalePreview] = useState<{
+    state: "upcoming" | "active" | "ended";
+    eligibleVialCount: number;
+    discountRate: number;
+    discountAmount: number;
+    freeShipping: boolean;
+    cartAvailable: boolean;
+  }>({
+    state: "upcoming",
+    eligibleVialCount: 0,
+    discountRate: 0,
+    discountAmount: 0,
+    freeShipping: false,
+    cartAvailable: true,
+  });
 
   const items = useCartStore((s) => s.items);
   const discountCode = useCartStore((s) => s.discountCode);
@@ -162,6 +177,36 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
     }
   }, [affiliateCode, setValue]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const updateSalePreview = async () => {
+      try {
+        const response = await fetch("/api/black-friday-preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: items.map((item) => ({
+              productId: item.productId,
+              variantId: item.variantId,
+              quantity: item.quantity,
+            })),
+          }),
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled) setSalePreview(data);
+      } catch {
+        // The order endpoint remains authoritative if the preview request fails.
+      }
+    };
+    void updateSalePreview();
+    const interval = window.setInterval(updateSalePreview, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [items]);
+
   const enteredAffiliateCode = watch("affiliateCode");
   const deliveryMethod = watch("deliveryMethod");
 
@@ -200,10 +245,19 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
       affiliateCodeState === "valid"
         ? Math.round(cartSubtotal * 0.05 * 100) / 100
         : 0;
-    const shippingAmount = deliveryMethod === "PICKUP" ? 0 : FLAT_SHIPPING_RATE;
-    const total = cartSubtotal - affiliateDiscountAmount + shippingAmount;
+    const shippingAmount =
+      deliveryMethod === "PICKUP"
+        ? 0
+        : salePreview.state === "active" && salePreview.freeShipping
+          ? 0
+          : FLAT_SHIPPING_RATE;
+    const total =
+      cartSubtotal -
+      affiliateDiscountAmount -
+      (salePreview.state === "active" ? salePreview.discountAmount : 0) +
+      shippingAmount;
     return { cartSubtotal, affiliateDiscountAmount, shippingAmount, total };
-  }, [affiliateCodeState, deliveryMethod, items, subtotal]);
+  }, [affiliateCodeState, deliveryMethod, items, salePreview, subtotal]);
 
   const onSubmit = async (values: CheckoutFormValues) => {
     if (!items.length) {
@@ -683,11 +737,28 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatCurrency(totals.cartSubtotal)}</span>
               </div>
+              {salePreview.state === "active" && salePreview.discountAmount > 0 ? (
+                <div className="flex justify-between text-success">
+                  <span>Black Friday sale ({salePreview.discountRate}% on {salePreview.eligibleVialCount} peptide vials)</span>
+                  <span>-{formatCurrency(salePreview.discountAmount)}</span>
+                </div>
+              ) : null}
               {totals.affiliateDiscountAmount > 0 ? (
                 <div className="flex justify-between text-success">
                   <span>Affiliate discount (5%)</span>
                   <span>-{formatCurrency(totals.affiliateDiscountAmount)}</span>
                 </div>
+              ) : null}
+              {salePreview.state !== "ended" ? (
+                <p className="rounded-xl bg-sky/5 p-3 text-xs font-medium text-sky">
+                  {salePreview.state === "active"
+                    ? salePreview.eligibleVialCount >= 10
+                      ? "20% off in-stock peptide vials and free shipping are applied to 10+ vials. Discounts stack."
+                      : salePreview.discountRate === 10
+                        ? "Your first order receives 10% off in-stock peptide vials. Add peptide vials to reach 10+ for 20% off and free shipping."
+                        : "Add in-stock peptide vials. First-time buyers receive 10% off under 10; all buyers receive 20% off and free shipping at 10+."
+                    : "Black Friday sale: Friday, November 27, 9:00 AM–11:50 PM EST. First-time buyers get 10% off under 10 peptide vials; 10+ gets 20% off and free shipping."}
+                </p>
               ) : null}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
@@ -697,7 +768,11 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
               </div>
               <p className="rounded-xl bg-sky/5 p-3 text-xs font-medium text-sky">
                 <Truck className="mr-1.5 inline h-3.5 w-3.5" />
-                {deliveryMethod === "PICKUP" ? "Pick Up — no shipping charge" : "$25 CAD flat-rate shipping"}
+                {deliveryMethod === "PICKUP"
+                  ? "Pick Up — no shipping charge"
+                  : totals.shippingAmount === 0
+                    ? "Free shipping applied"
+                    : "$25 CAD flat-rate shipping"}
               </p>
               <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
                 <span>Total</span>
