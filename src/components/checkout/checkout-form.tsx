@@ -757,7 +757,7 @@ export function CheckoutForm({ email, firstName, lastName, billingAddress, shipp
                       : salePreview.discountRate === 10
                         ? "Your first order receives 10% off in-stock peptide vials. Add peptide vials to reach 10+ for 20% off and free shipping."
                         : "Add in-stock peptide vials. First-time buyers receive 10% off under 10; all buyers receive 20% off and free shipping at 10+."
-                    : "Black Friday sale: Friday, November 27, 9:00 AM–11:50 PM EST. First-time buyers get 10% off under 10 peptide vials; 10+ gets 20% off and free shipping."}
+                    : "Black Friday sale: Friday, November 27, 9:00 AM–11:59 PM EST. First-time buyers get 10% off under 10 peptide vials; 10+ gets 20% off and free shipping."}
                 </p>
               ) : null}
               <div className="flex justify-between">
