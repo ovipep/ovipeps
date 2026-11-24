@@ -1,5 +1,5 @@
 export const BLACK_FRIDAY_START_AT = new Date("2026-11-27T14:00:00.000Z");
-export const BLACK_FRIDAY_END_AT = new Date("2026-11-28T04:59:00.000Z");
+export const BLACK_FRIDAY_END_AT = new Date("2026-11-28T05:00:00.000Z");
 
 export type BlackFridayOffer = {
   state: "upcoming" | "active" | "ended";
