@@ -61,13 +61,26 @@ export async function POST(request: Request) {
     }
   }
 
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "Your account could not be found." }, { status: 401 });
+  }
+
   const priorPaidOrders = await db.order.count({
     where: {
-      userId,
       OR: [
-        { paidAt: { not: null } },
-        { status: { in: ["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED", "COMPLETED"] } },
+        { userId },
+        { email: user.email.trim().toLowerCase() },
       ],
+      AND: [{
+        OR: [
+          { paidAt: { not: null } },
+          { status: { in: ["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED", "COMPLETED"] } },
+        ],
+      }],
     },
   });
   const offer = getBlackFridayOffer(eligiblePeptideVials, priorPaidOrders === 0);

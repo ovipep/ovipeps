@@ -530,11 +530,16 @@ export async function createOrder(input: CreateOrderInput) {
   );
   const priorPaidOrders = await db.order.count({
     where: {
-      userId: input.userId,
       OR: [
-        { paidAt: { not: null } },
-        { status: { in: ["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED", "COMPLETED"] } },
+        { userId: input.userId },
+        { email: input.email.trim().toLowerCase() },
       ],
+      AND: [{
+        OR: [
+          { paidAt: { not: null } },
+          { status: { in: ["PAYMENT_RECEIVED", "PROCESSING", "SHIPPED", "COMPLETED"] } },
+        ],
+      }],
     },
   });
   const saleOffer = getBlackFridayOffer(saleVialCount, priorPaidOrders === 0);
