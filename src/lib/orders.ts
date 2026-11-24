@@ -520,10 +520,10 @@ export async function createOrder(input: CreateOrderInput) {
     throw new Error("Affiliate code not found or inactive");
   }
 
-  const saleItems = orderItems.filter(
-    (item) =>
-      variantsById.get(item.variantId)?.product.category === "RESEARCH_PEPTIDE"
-  );
+  const saleItems = orderItems.filter((item) => {
+    const product = variantsById.get(item.variantId)?.product;
+    return product?.published && product.category === "RESEARCH_PEPTIDE";
+  });
   const saleVialCount = saleItems.reduce((sum, item) => sum + item.quantity, 0);
   const saleEligibleSubtotal = roundMoney(
     saleItems.reduce((sum, item) => sum + item.totalPrice, 0)
