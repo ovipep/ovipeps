@@ -23,10 +23,6 @@ const certificates = [
     label: "Reta 15 mg COA",
     url: "/coas/retatrutide-15mg-coa-2026-10-16.pdf",
   },
-  {
-    label: "Reta 10 mg COA",
-    url: "/coas/retatrutide-10mg-coa-2026-08-23.pdf",
-  },
 ];
 
 export default function RetatrutideCoasPage() {
