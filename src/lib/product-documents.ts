@@ -110,7 +110,7 @@ export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
   },
   "ss-31": {
     label: "SS-31 COA",
-    url: "/coas/GA-002-SS31.pdf",
+    url: "/coas/ss-31",
   },
   "glp-3": {
     label: "Retatrutide COA",
@@ -122,7 +122,7 @@ export const PRODUCT_COA_DOCUMENTS: Record<string, ProductCoaDocument> = {
   },
   "kpv": {
     label: "KPV COA",
-    url: "/coas/GA-002-KPV.pdf",
+    url: "/coas/kpv",
   },
   "ghk-cu": {
     label: "GHK-Cu COA",
