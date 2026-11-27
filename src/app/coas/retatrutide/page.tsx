@@ -3,10 +3,18 @@ import { FileText } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Retatrutide COAs",
-  description: "View Retatrutide certificates of analysis for 15 mg and 10 mg vials.",
+  description: "View Retatrutide analysis reports for 10 mg, 15 mg, and 30 mg samples.",
 };
 
 const certificates = [
+  {
+    label: "Reta 30 mg COA — Sample RET-992",
+    url: "/coas/retatrutide-30mg-coa-2026-11-27.pdf",
+  },
+  {
+    label: "Reta 30 mg Endotoxin Report — Sample ENDO-RET-992",
+    url: "/coas/retatrutide-30mg-endo-coa-2026-11-27.pdf",
+  },
   {
     label: "Reta 10 mg COA — Green Cap",
     url: "/coas/retatrutide-10mg-msd-001-2026-11-11.png",
@@ -27,6 +35,8 @@ export default function RetatrutideCoasPage() {
       <h1 className="text-3xl font-bold text-navy-deep">Retatrutide COAs</h1>
       <p className="mt-3 text-muted-foreground">
         Select a certificate of analysis. Each certificate opens in a new tab.
+        Reports for samples RET-992 and ENDO-RET-992 apply only to the submitted
+        samples and do not verify other vials, lots, or batches.
       </p>
       <ul className="mt-8 grid gap-4 sm:grid-cols-2">
         {certificates.map((certificate) => (
